@@ -1,0 +1,63 @@
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Button, FlatList } from 'react-native';
+import { SourcingItem, Retailer } from './types';
+
+const SAMPLE_ITEMS: SourcingItem[] = [
+  { id: '1', name: 'LVP Flooring - Oak', retailer: "Lowe's", price: 3.49, quantity: 120, approved: false },
+  { id: '2', name: 'Matte Black Faucet', retailer: 'Amazon', price: 89, quantity: 2, approved: false },
+  { id: '3', name: 'LED Recessed Lights 6-pack', retailer: 'Home Depot', price: 42, quantity: 8, approved: false },
+];
+
+export default function SourcingScreen() {
+  const [items, setItems] = useState<SourcingItem[]>(SAMPLE_ITEMS);
+
+  const toggleApprove = (id: string) => {
+    setItems(prev =>
+      prev.map(item =>
+        item.id === id ? { ...item, approved: !item.approved } : item
+      )
+    );
+  };
+
+  const approvedItems = items.filter(i => i.approved);
+  const total = approvedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Sourcing Cart (Goal #2)</Text>
+      <Text style={styles.subtitle}>Amazon • Lowe’s • Home Depot — one list, one approval</Text>
+
+      <FlatList
+        data={items}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.itemRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '600' }}>{item.name}</Text>
+              <Text>{item.retailer} • ${item.price} × {item.quantity}</Text>
+            </View>
+            <Button
+              title={item.approved ? '✓ Approved' : 'Approve'}
+              onPress={() => toggleApprove(item.id)}
+              color={item.approved ? '#2e7d32' : '#1976d2'}
+            />
+          </View>
+        )}
+      />
+
+      <View style={styles.footer}>
+        <Text style={styles.total}>Approved Total: ${total.toFixed(2)}</Text>
+        <Button title="Submit Approved Purchases" onPress={() => alert('Purchases submitted!')} disabled={approvedItems.length === 0} />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16 },
+  title: { fontSize: 22, fontWeight: 'bold' },
+  subtitle: { color: '#666', marginBottom: 16 },
+  itemRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderColor: '#eee' },
+  footer: { paddingTop: 20, borderTopWidth: 1, borderColor: '#ddd' },
+  total: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
+});
