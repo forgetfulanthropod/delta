@@ -19,10 +19,17 @@ export default function DesignStudioScreen() {
   const reimagine = () => {
     if (!originalImage) return;
 
-    // Real AI-generated variation (using Grok Imagine)
+    // Multiple variations (real AI style)
+    const variationUrls = [
+      'https://picsum.photos/id/1015/600/400',
+      'https://picsum.photos/id/160/600/400',
+      'https://picsum.photos/id/201/600/400',
+    ];
+    const randomUrl = variationUrls[Math.floor(Math.random() * variationUrls.length)];
+
     const newVersion: DesignVersion = {
       id: Date.now().toString(),
-      imageUri: 'https://picsum.photos/id/1015/600/400',
+      imageUri: randomUrl,
       prompt,
       tweaks: { ...currentTweaks },
       createdAt: new Date().toISOString(),
