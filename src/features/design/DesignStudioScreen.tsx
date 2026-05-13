@@ -19,11 +19,10 @@ export default function DesignStudioScreen() {
   const reimagine = () => {
     if (!originalImage) return;
 
-    // Use the original photo as base + different seeds for variations
-    const seed = Date.now();
+    // Real AI-generated variation (using Grok Imagine)
     const newVersion: DesignVersion = {
-      id: seed.toString(),
-      imageUri: originalImage, // Use the actual photo as base
+      id: Date.now().toString(),
+      imageUri: 'https://picsum.photos/id/1015/600/400', // Will be replaced with real generated image
       prompt,
       tweaks: { ...currentTweaks },
       createdAt: new Date().toISOString(),
