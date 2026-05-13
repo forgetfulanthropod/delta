@@ -5,12 +5,13 @@
  * @format
  */
 
-import React from 'react';
-import { StatusBar, StyleSheet, useColorScheme, View, Button } from 'react-native';
+import React, { useState } from 'react';
+import { StatusBar, StyleSheet, View, Button } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import LaborSchedulerScreen from './src/features/labor/LaborSchedulerScreen';
 import DesignStudioScreen from './src/features/design/DesignStudioScreen';
 import SourcingScreen from './src/features/sourcing/SourcingScreen';
+import OnboardingScreen from './src/onboarding/OnboardingScreen';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -24,7 +25,12 @@ function App() {
 }
 
 function AppContent() {
-  const [tab, setTab] = React.useState<'design' | 'sourcing' | 'labor'>('design');
+  const [role, setRole] = useState<'owner' | 'worker' | null>(null);
+  const [tab, setTab] = useState<'design' | 'sourcing' | 'labor'>('design');
+
+  if (!role) {
+    return <OnboardingScreen onSelectRole={setRole} />;
+  }
 
   return (
     <View style={styles.container}>
