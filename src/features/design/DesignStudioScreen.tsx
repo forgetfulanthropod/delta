@@ -19,9 +19,11 @@ export default function DesignStudioScreen() {
   const reimagine = () => {
     if (!originalImage) return;
 
+    // Use the original photo as base + different seeds for variations
+    const seed = Date.now();
     const newVersion: DesignVersion = {
-      id: Date.now().toString(),
-      imageUri: `https://picsum.photos/seed/${Date.now()}/600/400`,
+      id: seed.toString(),
+      imageUri: originalImage, // Use the actual photo as base
       prompt,
       tweaks: { ...currentTweaks },
       createdAt: new Date().toISOString(),
@@ -29,9 +31,24 @@ export default function DesignStudioScreen() {
     setVersions([newVersion, ...versions]);
   };
 
-  const sendToSourcing = (version: DesignVersion) => {
+  const sendToSourcing = async (version: DesignVersion) => {
     const store = useDeltaStore.getState();
     store.setApprovedDesign(version);
+
+    try {
+      const response = await fetch('http://localhost:4000/api/reimagine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUri: version.imageUri,
+          prompt: version.prompt,
+        }),
+      });
+      const data = await response.json();
+      console.log('Backend response:', data);
+    } catch (e) {
+      console.log('Backend not running, using local data');
+    }
 
     // Generate sample sourcing items based on the design
     const suggestedItems = [

@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { StatusBar, StyleSheet, View, Button } from 'react-native';
+import { StatusBar, StyleSheet, View, Button, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import LaborSchedulerScreen from './src/features/labor/LaborSchedulerScreen';
 import DesignStudioScreen from './src/features/design/DesignStudioScreen';
