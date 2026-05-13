@@ -7,18 +7,22 @@ interface Props {
 
 export default function OnboardingScreen({ onSelectRole }: Props) {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome to Delta</Text>
-      <Text style={styles.subtitle}>Rivvr Homes • Remodel smarter</Text>
+    <View className="flex-1 bg-white px-8 pt-20">
+      <Text className="text-5xl font-semibold text-[#222] tracking-tighter">Delta</Text>
+      <Text className="text-2xl text-[#666] mt-2">Remodel your space with AI.</Text>
 
-      <Text style={styles.question}>I want to…</Text>
+      <Text className="mt-12 text-2xl font-medium text-[#333]">I want to…</Text>
 
-      <TouchableOpacity style={styles.card} onPress={() => onSelectRole('owner')}>
+      <TouchableOpacity 
+        className="bg-white border border-[#F0F0F0] rounded-3xl p-8 mt-4 active:bg-[#FAFAFA]"
+        onPress={() => onSelectRole('owner')}>
         <Text style={styles.cardTitle}>Remodel my space</Text>
         <Text style={styles.cardDesc}>Take photos, reimagine, source materials, and hire workers</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.card} onPress={() => onSelectRole('worker')}>
+      <TouchableOpacity 
+        className="bg-white border border-[#F0F0F0] rounded-3xl p-8 mt-4 active:bg-[#FAFAFA]"
+        onPress={() => onSelectRole('worker')}>
         <Text style={styles.cardTitle}>Work on spaces</Text>
         <Text style={styles.cardDesc}>Join jobs, get paid $600 per day, manage your schedule</Text>
       </TouchableOpacity>
