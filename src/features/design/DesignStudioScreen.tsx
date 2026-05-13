@@ -23,7 +23,7 @@ export default function DesignStudioScreen() {
     const variationUrls = [
       '/ai-room-1.jpg',
       '/ai-room-2.jpg',
-      '/ai-room-1.jpg', // can expand with more generated images
+      '/ai-room-3.jpg',
     ];
     const randomUrl = variationUrls[Math.floor(Math.random() * variationUrls.length)];
 
