@@ -13,6 +13,7 @@ export default function DesignStudioScreen() {
   const [showCamera, setShowCamera] = useState(false);
   const [aiProvider, setAiProvider] = useState('x');
   const [aiApiKey, setAiApiKey] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handlePhotoTaken = (uri: string) => {
     setOriginalImage(uri);
@@ -21,6 +22,7 @@ export default function DesignStudioScreen() {
 
   const reimagine = async () => {
     if (!originalImage) return;
+    setIsGenerating(true);
 
     try {
       const res = await fetch('http://localhost:4000/api/reimagine', {
@@ -43,12 +45,14 @@ export default function DesignStudioScreen() {
           createdAt: new Date().toISOString(),
         };
         setVersions([newVersion, ...versions]);
+        setIsGenerating(false);
         return;
       }
     } catch (e) {
       console.log('Backend call failed, using local');
     }
 
+    setIsGenerating(false);
     // Fallback
     const variationUrls = ['/ai-room-1.jpg', '/ai-room-2.jpg', '/ai-room-3.jpg'];
     const randomUrl = variationUrls[Math.floor(Math.random() * variationUrls.length)];
@@ -120,8 +124,11 @@ export default function DesignStudioScreen() {
           />
           <TouchableOpacity 
         onPress={reimagine}
-        className="mt-4 bg-black py-4 rounded-2xl active:bg-[#222]">
-        <Text className="text-white text-center text-xl font-semibold tracking-tight">Reimagine with AI</Text>
+        disabled={isGenerating}
+        className={`mt-4 py-4 rounded-2xl active:bg-[#222] ${isGenerating ? 'bg-[#666]' : 'bg-black'}`}>
+        <Text className="text-white text-center text-xl font-semibold tracking-tight">
+          {isGenerating ? 'Generating with AI...' : 'Reimagine with AI'}
+        </Text>
       </TouchableOpacity>
         </View>
       )}
