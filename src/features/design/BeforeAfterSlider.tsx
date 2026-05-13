@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, PanResponder, Animated, Image, Dimensions } from 'react-native';
 
 interface Props {
@@ -8,27 +8,26 @@ interface Props {
 }
 
 const { width } = Dimensions.get('window');
-const IMAGE_HEIGHT = 280; // taller for better view
+const IMAGE_HEIGHT = 260;
 
 export default function BeforeAfterSlider({ before, after, autoAnimate = false }: Props) {
-  const [sliderX, setSliderX] = useState(width * 0.5);
-  const pan = useRef(new Animated.Value(width * 0.5)).current;
+  const sliderX = useRef(new Animated.Value(width * 0.5)).current;
   const animRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto animate
+  // Auto-animate
   useEffect(() => {
     if (!autoAnimate) return;
 
     let direction = 1;
     animRef.current = setInterval(() => {
       const target = direction === 1 ? width * 0.15 : width * 0.85;
-      Animated.timing(pan, {
+      Animated.timing(sliderX, {
         toValue: target,
-        duration: 1600,
+        duration: 1700,
         useNativeDriver: false,
-      }).start(() => setSliderX(target));
+      }).start();
       direction = direction === 1 ? -1 : 1;
-    }, 2000);
+    }, 2100);
 
     return () => {
       if (animRef.current) clearInterval(animRef.current);
@@ -38,47 +37,44 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false }
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onPanResponderMove: (_, gesture) => {
-      const newX = Math.max(40, Math.min(width - 40, gesture.moveX));
-      pan.setValue(newX);
-      setSliderX(newX);
+      const newX = Math.max(50, Math.min(width - 50, gesture.moveX));
+      sliderX.setValue(newX);
     },
   });
 
   return (
     <View style={styles.container}>
-      <View style={styles.imageWrapper}>
-        {/* Before Image (always visible) */}
+      <View style={styles.imageContainer}>
+        {/* Base image (Before) - fixed */}
         <Image 
           source={{ uri: before }} 
-          style={styles.fullImage} 
+          style={styles.baseImage} 
           resizeMode="cover" 
         />
 
-        {/* After Image (revealed from left) */}
+        {/* Revealing layer (After) */}
         <Animated.View 
           style={[
-            styles.afterReveal, 
-            { width: pan }
+            styles.revealLayer, 
+            { width: sliderX }
           ]}
         >
           <Image 
             source={{ uri: after }} 
-            style={styles.fullImage} 
+            style={styles.revealImage} 
             resizeMode="cover" 
           />
         </Animated.View>
 
-        {/* Slider Line + Handle */}
+        {/* Slider handle */}
         <Animated.View 
-          style={[styles.sliderLine, { left: Animated.subtract(pan, 2) }]} 
+          style={[styles.slider, { left: Animated.subtract(sliderX, 2) }]} 
           {...panResponder.panHandlers}
         >
-          <View style={styles.handle}>
-            <View style={styles.handleInner} />
-          </View>
+          <View style={styles.handle} />
         </Animated.View>
       </View>
-      <Text style={styles.hint}>Drag the slider to compare</Text>
+      <Text style={styles.hint}>Drag to compare before & after</Text>
     </View>
   );
 }
@@ -87,34 +83,41 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 28,
   },
-  imageWrapper: {
+  imageContainer: {
     height: IMAGE_HEIGHT,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#f2f2f2',
     position: 'relative',
   },
-  fullImage: {
+  baseImage: {
     position: 'absolute',
     width: '100%',
     height: '100%',
     top: 0,
     left: 0,
   },
-  afterReveal: {
+  revealLayer: {
     position: 'absolute',
     top: 0,
     left: 0,
     bottom: 0,
     overflow: 'hidden',
   },
-  sliderLine: {
+  revealImage: {
+    position: 'absolute',
+    width: width,           // fixed full width
+    height: IMAGE_HEIGHT,
+    top: 0,
+    left: 0,
+  },
+  slider: {
     position: 'absolute',
     top: 0,
     bottom: 0,
     width: 4,
     backgroundColor: '#fff',
-    zIndex: 10,
+    zIndex: 20,
   },
   handle: {
     position: 'absolute',
@@ -124,21 +127,12 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: '#fff',
-    borderWidth: 3,
+    borderWidth: 4,
     borderColor: '#FF385C',
-    justifyContent: 'center',
-    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  handleInner: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#FF385C',
+    shadowRadius: 8,
+    elevation: 6,
   },
   hint: {
     textAlign: 'center',
