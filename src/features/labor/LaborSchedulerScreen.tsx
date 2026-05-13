@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Button, TextInput } from 'react-native';
 import { generateSchedule, getHalfDayProgress } from './scheduler';
 import { Task } from './types';
+import { useDeltaStore } from '../../store/useDeltaStore';
 
 export default function LaborSchedulerScreen() {
   const [tasksInput, setTasksInput] = useState(
@@ -9,8 +10,10 @@ export default function LaborSchedulerScreen() {
   );
   const [result, setResult] = useState<any>(null);
 
+  const { laborTasks, setLaborTasks } = useDeltaStore();
+
   const runSchedule = () => {
-    const parsed: Task[] = tasksInput
+    const tasksToUse = laborTasks.length > 0 ? laborTasks : tasksInput
       .split('\n')
       .filter(Boolean)
       .map((line, index) => {
@@ -22,7 +25,7 @@ export default function LaborSchedulerScreen() {
         };
       });
 
-    const schedule = generateSchedule(parsed);
+    const schedule = generateSchedule(tasksToUse);
     setResult(schedule);
   };
 
@@ -30,6 +33,7 @@ export default function LaborSchedulerScreen() {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Labor Scheduler (Goal #3)</Text>
       <Text style={styles.subtitle}>8-hour days • 1hr breaks included • $600/laborer/day</Text>
+      {laborTasks.length > 0 && <Text style={{ color: '#2e7d32', marginBottom: 8 }}>Using tasks from Sourcing</Text>}
 
       <TextInput
         style={styles.input}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button, Image, ScrollView, TextInput } from 'react-native';
 import { DesignVersion } from './types';
+import { useDeltaStore } from '../../store/useDeltaStore';
 
 export default function DesignStudioScreen() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -25,6 +26,20 @@ export default function DesignStudioScreen() {
       createdAt: new Date().toISOString(),
     };
     setVersions([newVersion, ...versions]);
+  };
+
+  const sendToSourcing = (version: DesignVersion) => {
+    const store = useDeltaStore.getState();
+    store.setApprovedDesign(version);
+
+    // Generate sample sourcing items based on the design
+    const suggestedItems = [
+      { id: Date.now().toString(), name: 'LVP Flooring - Oak', retailer: "Lowe's" as const, price: 3.49, quantity: 120, approved: false },
+      { id: (Date.now()+1).toString(), name: 'Matte Black Faucet', retailer: 'Amazon' as const, price: 89, quantity: 2, approved: false },
+      { id: (Date.now()+2).toString(), name: 'LED Recessed Lights', retailer: 'Home Depot' as const, price: 42, quantity: 8, approved: false },
+    ];
+    store.addSourcingItems(suggestedItems);
+    alert('Design sent to Sourcing! Suggested materials added.');
   };
 
   return (
@@ -57,6 +72,7 @@ export default function DesignStudioScreen() {
               <Text style={{ fontWeight: '600' }}>{v.prompt}</Text>
               <Text>Style: {v.tweaks.style} • Colors: {v.tweaks.colorPalette} • Layout: {v.tweaks.layout}</Text>
               <Button title="Use this version" onPress={() => { /* TODO: set as current */ }} />
+              <Button title="→ Send to Sourcing" onPress={() => sendToSourcing(v)} color="#2e7d32" />
             </View>
           ))}
         </View>

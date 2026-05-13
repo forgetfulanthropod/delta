@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Button, FlatList } from 'react-native';
-import { SourcingItem, Retailer } from './types';
+import { SourcingItem } from './types';
+import { useDeltaStore } from '../../store/useDeltaStore';
 
 const SAMPLE_ITEMS: SourcingItem[] = [
   { id: '1', name: 'LVP Flooring - Oak', retailer: "Lowe's", price: 3.49, quantity: 120, approved: false },
@@ -9,18 +10,27 @@ const SAMPLE_ITEMS: SourcingItem[] = [
 ];
 
 export default function SourcingScreen() {
-  const [items, setItems] = useState<SourcingItem[]>(SAMPLE_ITEMS);
+  const { sourcingItems, toggleApproveItem, setLaborTasks } = useDeltaStore();
 
-  const toggleApprove = (id: string) => {
-    setItems(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, approved: !item.approved } : item
-      )
-    );
-  };
-
-  const approvedItems = items.filter(i => i.approved);
+  const approvedItems = sourcingItems.filter(i => i.approved);
   const total = approvedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+  const generateLaborSchedule = () => {
+    // Convert approved sourcing items into labor tasks
+    const tasks = approvedItems.map((item, index) => ({
+      id: `labor-${index}`,
+      name: `Install ${item.name}`,
+      estimatedHours: Math.max(2, Math.ceil(item.quantity / 40)), // rough estimate
+    }));
+
+    if (tasks.length === 0) {
+      alert('Approve some items first');
+      return;
+    }
+
+    setLaborTasks(tasks);
+    alert(`Labor schedule generated for ${tasks.length} tasks! Check the Labor tab.`);
+  };
 
   return (
     <View style={styles.container}>
@@ -28,7 +38,7 @@ export default function SourcingScreen() {
       <Text style={styles.subtitle}>Amazon • Lowe’s • Home Depot — one list, one approval</Text>
 
       <FlatList
-        data={items}
+        data={sourcingItems}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <View style={styles.itemRow}>
@@ -38,7 +48,7 @@ export default function SourcingScreen() {
             </View>
             <Button
               title={item.approved ? '✓ Approved' : 'Approve'}
-              onPress={() => toggleApprove(item.id)}
+              onPress={() => toggleApproveItem(item.id)}
               color={item.approved ? '#2e7d32' : '#1976d2'}
             />
           </View>
@@ -48,6 +58,8 @@ export default function SourcingScreen() {
       <View style={styles.footer}>
         <Text style={styles.total}>Approved Total: ${total.toFixed(2)}</Text>
         <Button title="Submit Approved Purchases" onPress={() => alert('Purchases submitted!')} disabled={approvedItems.length === 0} />
+        <View style={{ height: 12 }} />
+        <Button title="Generate Labor Schedule" onPress={generateLaborSchedule} disabled={approvedItems.length === 0} color="#c62828" />
       </View>
     </View>
   );
