@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button, Image, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Button, Image, ScrollView, TextInput, Modal } from 'react-native';
 import { DesignVersion } from './types';
 import { useDeltaStore } from '../../store/useDeltaStore';
+import CameraScreen from './CameraScreen';
 
 export default function DesignStudioScreen() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [versions, setVersions] = useState<DesignVersion[]>([]);
   const [prompt, setPrompt] = useState("Modern minimalist living room with more natural light");
   const [currentTweaks, setCurrentTweaks] = useState({ style: 'Modern', colorPalette: 'Warm neutrals', layout: 'Open plan' });
+  const [showCamera, setShowCamera] = useState(false);
 
-  const takePhoto = () => {
-    // TODO: integrate react-native-vision-camera
-    const fakeUri = 'https://picsum.photos/seed/room/600/400';
-    setOriginalImage(fakeUri);
+  const handlePhotoTaken = (uri: string) => {
+    setOriginalImage(uri);
+    setShowCamera(false);
   };
 
   const reimagine = () => {
@@ -47,7 +48,7 @@ export default function DesignStudioScreen() {
       <Text style={styles.title}>Design Studio (Goal #1)</Text>
       <Text style={styles.subtitle}>Take photo → Reimagine → Tweak until perfect</Text>
 
-      <Button title="📸 Take / Upload Photo" onPress={takePhoto} />
+      <Button title="📸 Take Photo" onPress={() => setShowCamera(true)} />
 
       {originalImage && (
         <View style={{ marginVertical: 12 }}>
@@ -77,6 +78,12 @@ export default function DesignStudioScreen() {
           ))}
         </View>
       )}
+      <Modal visible={showCamera} animationType="slide">
+        <CameraScreen
+          onPhotoTaken={handlePhotoTaken}
+          onCancel={() => setShowCamera(false)}
+        />
+      </Modal>
     </ScrollView>
   );
 }
