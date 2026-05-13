@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 
 const providers = [
   { id: 'x', name: 'X (Grok)', placeholder: 'xai-...' },
@@ -18,33 +19,81 @@ export default function AIProviderSelector({ onProviderChange }: { onProviderCha
     }
   };
 
-  return (
-    <div className="p-4 bg-gray-50 rounded-lg mb-4">
-      <div className="font-semibold mb-2">AI Image Provider</div>
-      <select
-        value={selected}
-        onChange={(e) => setSelected(e.target.value)}
-        className="border p-2 rounded w-full mb-2"
-      >
-        {providers.map(p => (
-          <option key={p.id} value={p.id}>{p.name}</option>
-        ))}
-      </select>
+  const currentProvider = providers.find(p => p.id === selected);
 
-      <input
-        type="password"
-        placeholder={providers.find(p => p.id === selected)?.placeholder}
+  return (
+    <View style={styles.container}>
+      <Text style={styles.label}>AI Image Provider</Text>
+      
+      <View style={styles.selectWrapper}>
+        <select
+          value={selected}
+          onChange={(e) => setSelected(e.target.value)}
+          style={styles.select}
+        >
+          {providers.map(p => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+      </View>
+
+      <TextInput
+        secureTextEntry
+        placeholder={currentProvider?.placeholder}
         value={apiKey}
-        onChange={(e) => setApiKey(e.target.value)}
-        className="border p-2 rounded w-full mb-3"
+        onChangeText={setApiKey}
+        style={styles.input}
       />
 
-      <button
-        onClick={handleSave}
-        className="bg-black text-white px-4 py-2 rounded text-sm"
-      >
-        Save Provider & Key
-      </button>
-    </div>
+      <TouchableOpacity onPress={handleSave} style={styles.button}>
+        <Text style={styles.buttonText}>Save Provider & Key</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  label: {
+    fontWeight: '600',
+    marginBottom: 8,
+    fontSize: 16,
+  },
+  selectWrapper: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  select: {
+    width: '100%',
+    padding: 12,
+    fontSize: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  button: {
+    backgroundColor: '#000',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+});

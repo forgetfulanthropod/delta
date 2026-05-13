@@ -96,16 +96,16 @@ export default function DesignStudioScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} className="bg-white">
-      <View className="px-6 pt-8 pb-4">
-        <Text className="text-4xl font-semibold text-[#222] tracking-tight">Design Studio</Text>
-        <Text className="text-xl text-[#666] mt-2">Take a photo of your space. Reimagine it. Make it yours.</Text>
+    <ScrollView style={styles.container}>
+      <View style={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 16 }}>
+        <Text style={{ fontSize: 36, fontWeight: '700', color: '#222', letterSpacing: -1 }}>Design Studio</Text>
+        <Text style={{ fontSize: 20, color: '#666', marginTop: 8 }}>Take a photo of your space. Reimagine it. Make it yours.</Text>
       </View>
 
       <TouchableOpacity 
         onPress={() => setShowCamera(true)}
-        className="bg-[#FF385C] py-4 rounded-2xl active:bg-[#E31C5F]">
-        <Text className="text-white text-center text-xl font-semibold tracking-tight">Take Photo of Your Space</Text>
+        style={{ backgroundColor: '#FF385C', paddingVertical: 18, borderRadius: 20, marginTop: 16 }}>
+        <Text style={{ color: 'white', textAlign: 'center', fontSize: 20, fontWeight: '600' }}>Take Photo of Your Space</Text>
       </TouchableOpacity>
       <AIProviderSelector onProviderChange={(provider, key) => {
         setAiProvider(provider);
@@ -125,8 +125,8 @@ export default function DesignStudioScreen() {
           <TouchableOpacity 
         onPress={reimagine}
         disabled={isGenerating}
-        className={`mt-4 py-4 rounded-2xl active:bg-[#222] ${isGenerating ? 'bg-[#666]' : 'bg-black'}`}>
-        <Text className="text-white text-center text-xl font-semibold tracking-tight">
+        style={{ backgroundColor: isGenerating ? '#666' : '#000', paddingVertical: 18, borderRadius: 20, marginTop: 16 }}>
+        <Text style={{ color: 'white', textAlign: 'center', fontSize: 20, fontWeight: '600' }}>
           {isGenerating ? 'Generating with AI...' : 'Reimagine with AI'}
         </Text>
       </TouchableOpacity>
@@ -137,7 +137,7 @@ export default function DesignStudioScreen() {
         <View>
           <Text style={styles.section}>Versions</Text>
           {versions.map((v, index) => (
-            <View key={v.id} style={styles.versionCard} className="bg-[#FAFAFA] border border-[#F0F0F0] shadow-sm">
+            <View key={v.id} style={styles.versionCard}>
               <Image source={{ uri: v.imageUri }} style={styles.image} />
               <Text style={{ fontWeight: '600' }}>{v.prompt}</Text>
               <Text style={{ color: '#2e7d32', fontSize: 12 }}>AI Generated Variation</Text>
@@ -145,8 +145,8 @@ export default function DesignStudioScreen() {
               <Button title="Use this version" onPress={() => { /* TODO: set as current */ }} />
               <TouchableOpacity 
               onPress={() => sendToSourcing(v)}
-              className="mt-3 bg-[#FF385C] py-3 rounded-2xl active:bg-[#E31C5F]">
-              <Text className="text-white text-center font-semibold text-lg">Send to Sourcing →</Text>
+              style={{ backgroundColor: '#FF385C', paddingVertical: 14, borderRadius: 20, marginTop: 12 }}>
+              <Text style={{ color: 'white', textAlign: 'center', fontSize: 18, fontWeight: '600' }}>Send to Sourcing →</Text>
             </TouchableOpacity>
             </View>
           ))}
