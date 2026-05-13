@@ -33,9 +33,9 @@ export default function SourcingScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sourcing Cart (Goal #2)</Text>
-      <Text style={styles.subtitle}>Amazon • Lowe’s • Home Depot — one list, one approval</Text>
+    <View className="flex-1 bg-white px-6 pt-8">
+      <Text className="text-4xl font-semibold tracking-tight text-[#222]">Sourcing</Text>
+      <Text className="text-xl text-[#666] mt-1">One list. One approval. From the best retailers.</Text>
 
       <FlatList
         data={sourcingItems}
@@ -46,11 +46,13 @@ export default function SourcingScreen() {
               <Text style={{ fontWeight: '600' }}>{item.name}</Text>
               <Text>{item.retailer} • ${item.price} × {item.quantity}</Text>
             </View>
-            <Button
-              title={item.approved ? '✓ Approved' : 'Approve'}
+            <TouchableOpacity
               onPress={() => toggleApproveItem(item.id)}
-              color={item.approved ? '#2e7d32' : '#1976d2'}
-            />
+              className={`px-5 py-2 rounded-2xl ${item.approved ? 'bg-[#E8F5E9]' : 'bg-[#FF385C]'}`}>
+              <Text className={`font-medium ${item.approved ? 'text-[#2E7D32]' : 'text-white'}`}>
+                {item.approved ? 'Approved ✓' : 'Approve'}
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
       />
