@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button, Image, ScrollView, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TextInput, Modal, TouchableOpacity } from 'react-native';
 import { DesignVersion } from './types';
 import { useDeltaStore } from '../../store/useDeltaStore';
 import CameraScreen from './CameraScreen';
@@ -92,11 +92,17 @@ export default function DesignStudioScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Design Studio (Goal #1)</Text>
-      <Text style={styles.subtitle}>Take photo → Reimagine → Tweak until perfect</Text>
+    <ScrollView style={styles.container} className="bg-white">
+      <View className="px-6 pt-8 pb-4">
+        <Text className="text-4xl font-semibold text-[#222] tracking-tight">Design Studio</Text>
+        <Text className="text-xl text-[#666] mt-2">Take a photo of your space. Reimagine it. Make it yours.</Text>
+      </View>
 
-      <Button title="📸 Take Photo" onPress={() => setShowCamera(true)} />
+      <TouchableOpacity 
+        onPress={() => setShowCamera(true)}
+        className="bg-[#FF385C] py-4 rounded-2xl active:bg-[#E31C5F]">
+        <Text className="text-white text-center text-xl font-semibold tracking-tight">Take Photo of Your Space</Text>
+      </TouchableOpacity>
       <AIProviderSelector onProviderChange={(provider, key) => {
         setAiProvider(provider);
         setAiApiKey(key);
@@ -112,7 +118,11 @@ export default function DesignStudioScreen() {
             placeholder="Describe your vision..."
             multiline
           />
-          <Button title="✨ Reimagine with AI" onPress={reimagine} />
+          <TouchableOpacity 
+        onPress={reimagine}
+        className="mt-4 bg-black py-4 rounded-2xl active:bg-[#222]">
+        <Text className="text-white text-center text-xl font-semibold tracking-tight">Reimagine with AI</Text>
+      </TouchableOpacity>
         </View>
       )}
 
@@ -120,13 +130,17 @@ export default function DesignStudioScreen() {
         <View>
           <Text style={styles.section}>Versions</Text>
           {versions.map((v, index) => (
-            <View key={v.id} style={styles.versionCard}>
+            <View key={v.id} style={styles.versionCard} className="bg-[#FAFAFA] border border-[#F0F0F0] shadow-sm">
               <Image source={{ uri: v.imageUri }} style={styles.image} />
               <Text style={{ fontWeight: '600' }}>{v.prompt}</Text>
               <Text style={{ color: '#2e7d32', fontSize: 12 }}>AI Generated Variation</Text>
               <Text>Style: {v.tweaks.style} • Colors: {v.tweaks.colorPalette} • Layout: {v.tweaks.layout}</Text>
               <Button title="Use this version" onPress={() => { /* TODO: set as current */ }} />
-              <Button title="→ Send to Sourcing" onPress={() => sendToSourcing(v)} color="#2e7d32" />
+              <TouchableOpacity 
+              onPress={() => sendToSourcing(v)}
+              className="mt-3 bg-[#FF385C] py-3 rounded-2xl active:bg-[#E31C5F]">
+              <Text className="text-white text-center font-semibold text-lg">Send to Sourcing →</Text>
+            </TouchableOpacity>
             </View>
           ))}
         </View>
