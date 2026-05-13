@@ -56,7 +56,7 @@ export default function DesignStudioScreen() {
       { id: (Date.now()+2).toString(), name: 'LED Recessed Lights', retailer: 'Home Depot' as const, price: 42, quantity: 8, approved: false },
     ];
     store.addSourcingItems(suggestedItems);
-    alert('Design sent to Sourcing! Suggested materials added.');
+    alert('Design sent to Sourcing!\nSuggested materials added.\n\nGo to Sourcing tab to approve items.');
   };
 
   return (
