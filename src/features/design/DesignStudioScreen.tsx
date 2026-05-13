@@ -21,9 +21,9 @@ export default function DesignStudioScreen() {
 
     // Multiple variations (real AI style)
     const variationUrls = [
-      'https://picsum.photos/id/1015/600/400',
-      'https://picsum.photos/id/160/600/400',
-      'https://picsum.photos/id/201/600/400',
+      '/ai-room-1.jpg',
+      '/ai-room-2.jpg',
+      '/ai-room-1.jpg', // can expand with more generated images
     ];
     const randomUrl = variationUrls[Math.floor(Math.random() * variationUrls.length)];
 
