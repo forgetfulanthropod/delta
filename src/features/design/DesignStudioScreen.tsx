@@ -4,6 +4,7 @@ import { DesignVersion } from './types';
 import { useDeltaStore } from '../../store/useDeltaStore';
 import CameraScreen from './CameraScreen';
 import AIProviderSelector from './AIProviderSelector';
+import BeforeAfterSlider from './BeforeAfterSlider';
 
 export default function DesignStudioScreen() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -111,6 +112,14 @@ export default function DesignStudioScreen() {
         setAiProvider(provider);
         setAiApiKey(key);
       }} />
+
+      {/* Before/After Demo */}
+      <View style={{ marginTop: 32, paddingHorizontal: 24 }}>
+        <Text style={{ fontSize: 22, fontWeight: '700', marginBottom: 12 }}>See the transformation</Text>
+        <BeforeAfterSlider before="/test-images/before-after/before-1.jpg" after="/test-images/before-after/after-1.jpg" autoAnimate />
+        <BeforeAfterSlider before="/test-images/before-after/before-2.jpg" after="/test-images/before-after/after-2.jpg" autoAnimate />
+        <BeforeAfterSlider before="/test-images/before-after/before-3.jpg" after="/test-images/before-after/after-3.jpg" autoAnimate />
+      </View>
 
       {originalImage && (
         <View style={{ marginVertical: 12 }}>
