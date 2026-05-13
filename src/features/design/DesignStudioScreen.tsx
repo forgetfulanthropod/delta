@@ -94,6 +94,7 @@ export default function DesignStudioScreen() {
             <View key={v.id} style={styles.versionCard}>
               <Image source={{ uri: v.imageUri }} style={styles.image} />
               <Text style={{ fontWeight: '600' }}>{v.prompt}</Text>
+              <Text style={{ color: '#2e7d32', fontSize: 12 }}>AI Generated Variation</Text>
               <Text>Style: {v.tweaks.style} • Colors: {v.tweaks.colorPalette} • Layout: {v.tweaks.layout}</Text>
               <Button title="Use this version" onPress={() => { /* TODO: set as current */ }} />
               <Button title="→ Send to Sourcing" onPress={() => sendToSourcing(v)} color="#2e7d32" />
