@@ -31,8 +31,8 @@ export default function LaborSchedulerScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Labor Scheduler (Goal #3)</Text>
-      <Text style={styles.subtitle}>8-hour days • 1hr breaks included • $600/laborer/day</Text>
+      <Text className="text-4xl font-semibold tracking-tight text-[#222]">Labor Scheduler</Text>
+      <Text className="text-xl text-[#666] mt-1">8-hour days • Built-in breaks • $600 per laborer</Text>
       {laborTasks.length > 0 && <Text style={{ color: '#2e7d32', marginBottom: 8 }}>Using tasks from Sourcing</Text>}
 
       <TextInput
@@ -43,7 +43,11 @@ export default function LaborSchedulerScreen() {
         placeholder="Task name: estimated hours"
       />
 
-      <Button title="Generate Schedule" onPress={runSchedule} />
+      <TouchableOpacity 
+        onPress={runSchedule}
+        className="mt-4 bg-black py-4 rounded-2xl active:bg-[#222]">
+        <Text className="text-white text-center text-xl font-semibold">Generate Schedule</Text>
+      </TouchableOpacity>
 
       {result && (
         <View style={styles.result}>
