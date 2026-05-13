@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Button, Image, ScrollView, TextInput, Modal } f
 import { DesignVersion } from './types';
 import { useDeltaStore } from '../../store/useDeltaStore';
 import CameraScreen from './CameraScreen';
+import AIProviderSelector from './AIProviderSelector';
 
 export default function DesignStudioScreen() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -10,23 +11,47 @@ export default function DesignStudioScreen() {
   const [prompt, setPrompt] = useState("Modern minimalist living room with more natural light");
   const [currentTweaks, setCurrentTweaks] = useState({ style: 'Modern', colorPalette: 'Warm neutrals', layout: 'Open plan' });
   const [showCamera, setShowCamera] = useState(false);
+  const [aiProvider, setAiProvider] = useState('x');
+  const [aiApiKey, setAiApiKey] = useState('');
 
   const handlePhotoTaken = (uri: string) => {
     setOriginalImage(uri);
     setShowCamera(false);
   };
 
-  const reimagine = () => {
+  const reimagine = async () => {
     if (!originalImage) return;
 
-    // Multiple variations (real AI style)
-    const variationUrls = [
-      '/ai-room-1.jpg',
-      '/ai-room-2.jpg',
-      '/ai-room-3.jpg',
-    ];
-    const randomUrl = variationUrls[Math.floor(Math.random() * variationUrls.length)];
+    try {
+      const res = await fetch('http://localhost:4000/api/reimagine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUri: originalImage,
+          prompt,
+          provider: aiProvider,
+          apiKey: aiApiKey,
+        }),
+      });
+      const data = await res.json();
+      if (data.imageUri) {
+        const newVersion: DesignVersion = {
+          id: Date.now().toString(),
+          imageUri: data.imageUri,
+          prompt,
+          tweaks: { ...currentTweaks },
+          createdAt: new Date().toISOString(),
+        };
+        setVersions([newVersion, ...versions]);
+        return;
+      }
+    } catch (e) {
+      console.log('Backend call failed, using local');
+    }
 
+    // Fallback
+    const variationUrls = ['/ai-room-1.jpg', '/ai-room-2.jpg', '/ai-room-3.jpg'];
+    const randomUrl = variationUrls[Math.floor(Math.random() * variationUrls.length)];
     const newVersion: DesignVersion = {
       id: Date.now().toString(),
       imageUri: randomUrl,
@@ -72,6 +97,10 @@ export default function DesignStudioScreen() {
       <Text style={styles.subtitle}>Take photo → Reimagine → Tweak until perfect</Text>
 
       <Button title="📸 Take Photo" onPress={() => setShowCamera(true)} />
+      <AIProviderSelector onProviderChange={(provider, key) => {
+        setAiProvider(provider);
+        setAiApiKey(key);
+      }} />
 
       {originalImage && (
         <View style={{ marginVertical: 12 }}>
