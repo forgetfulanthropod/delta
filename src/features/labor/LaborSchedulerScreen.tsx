@@ -48,6 +48,9 @@ export default function LaborSchedulerScreen() {
       {result && (
         <View style={styles.result}>
           <Text style={styles.summary}>{result.summary}</Text>
+          <Text style={{ marginBottom: 12, color: '#555' }}>
+            Total labor cost: ${result.totalCost} • {result.totalDays} day(s)
+          </Text>
 
           {result.days.map((day: any, idx: number) => {
             const halfDone = getHalfDayProgress(day);
