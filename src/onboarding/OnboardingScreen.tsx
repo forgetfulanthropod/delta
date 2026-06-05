@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import BeforeAfterSlider from '../features/design/BeforeAfterSlider';
 
 interface Props {
@@ -10,61 +10,44 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
   return (
     <View style={styles.screen}>
       <View style={styles.content}>
-        {/* Energetic, colored header */}
-        <View style={styles.header}>
+        {/* Minimal top branding */}
+        <View style={styles.topBar}>
           <Text style={styles.logo}>Delta</Text>
-          <Text style={styles.headline}>
-            Focus energy on changing{'\n'}the built environment.
-          </Text>
-          <Text style={styles.subhead}>
-            AI that turns vision into real transformation of the spaces we live and work in.
-          </Text>
+          <Text style={styles.tagline}>Transforming the built environment</Text>
         </View>
 
-        {/* Interactive before/after slider to line up dissimilar structures and inspect changes in detail */}
-        <View style={styles.visualSection}>
+        {/* Giant before & after slider - the main focus of the landing page */}
+        <View style={styles.heroSliderWrapper}>
           <BeforeAfterSlider
             before="/test-images/before-after/before-1.jpg"
             after="/test-images/before-after/after-1.jpg"
-            height={170}
-            autoAnimate={false}
+            height={420}
+            idleAnimate={true}
           />
-          <Text style={styles.visualCaption}>Drag the slider to align features and see the transformation in detail</Text>
+          <View style={styles.clickHint}>
+            <Text style={styles.clickHintText}>Drag the center line</Text>
+          </View>
         </View>
 
-        <Text style={styles.choiceTitle}>How do you want to shape the change?</Text>
+        {/* Large semitransparent action buttons below the slider */}
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.ownerAction]}
+            onPress={() => onSelectRole('owner')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.actionTitle}>Remodel my space</Text>
+            <Text style={styles.actionSubtitle}>Reimagine with AI • Make it real</Text>
+          </TouchableOpacity>
 
-        {/* Owner card - vibrant and action-oriented */}
-        <TouchableOpacity
-          style={[styles.card, styles.ownerCard]}
-          onPress={() => onSelectRole('owner')}
-          activeOpacity={0.9}
-        >
-          <Text style={styles.cardTitleLight}>I have a space to transform</Text>
-          <Text style={styles.cardDescLight}>
-            Capture it. Let AI reveal what's possible. Source materials and make it real.
-          </Text>
-          <Text style={styles.cardCta}>Start remodeling →</Text>
-        </TouchableOpacity>
-
-        {/* Worker card - energetic builder focus */}
-        <TouchableOpacity
-          style={[styles.card, styles.workerCard]}
-          onPress={() => onSelectRole('worker')}
-          activeOpacity={0.9}
-        >
-          <Text style={styles.cardTitleLight}>I want to build the transformation</Text>
-          <Text style={styles.cardDescLight}>
-            Join real projects reshaping buildings and spaces. $25 an hour guaranteed.
-          </Text>
-          <Text style={styles.cardCta}>Join the work →</Text>
-        </TouchableOpacity>
-
-        {/* Process focus line - brings attention to the act of changing */}
-        <View style={styles.process}>
-          <Text style={styles.processText}>
-            Capture  →  AI Reimagine  →  Source  →  Schedule  →  New Reality
-          </Text>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.workerAction]}
+            onPress={() => onSelectRole('worker')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.actionTitle}>Work on spaces</Text>
+            <Text style={styles.actionSubtitle}>Get paid $25 an hour guaranteed</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -76,109 +59,98 @@ const ACCENT = '#FF385C';
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#FFF5F7', // soft energetic tint
+    backgroundColor: '#0F0F12', // dark for dramatic giant slider
   },
   content: {
     flex: 1,
-    maxWidth: 620,
+    maxWidth: 720,
     alignSelf: 'center',
     width: '100%',
-    paddingHorizontal: 20,
-    paddingTop: 48,
-    paddingBottom: 32,
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 24,
   },
-  header: {
-    marginBottom: 16,
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   logo: {
-    fontSize: 52,
-    fontWeight: '800',
-    color: ACCENT,
-    letterSpacing: -2.5,
-  },
-  headline: {
     fontSize: 28,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    lineHeight: 34,
-    marginTop: 8,
-    letterSpacing: -0.5,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: -1,
   },
-  subhead: {
-    fontSize: 16,
-    color: '#444',
-    marginTop: 10,
-    lineHeight: 22,
-  },
-  visualSection: {
-    marginVertical: 20,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#F0E6E8',
-  },
-  visualCaption: {
-    textAlign: 'center',
-    marginTop: 6,
-    fontSize: 12,
-    color: '#555',
+  tagline: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.65)',
     fontWeight: '500',
   },
-  choiceTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#222',
-    marginBottom: 14,
-    marginTop: 8,
+  heroSliderWrapper: {
+    flex: 1,
+    minHeight: 380,
+    backgroundColor: '#000',
+    borderRadius: 18,
+    overflow: 'hidden',
+    marginBottom: 18,
+    position: 'relative',
   },
-  card: {
+  clickHint: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -60 }, { translateY: -10 }],
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingHorizontal: 14,
+    paddingVertical: 4,
     borderRadius: 20,
-    padding: 22,
-    marginBottom: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    pointerEvents: 'none',
   },
-  ownerCard: {
-    backgroundColor: ACCENT,
-  },
-  workerCard: {
-    backgroundColor: '#1F1F2E',
-  },
-  cardTitleLight: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: 'white',
-    marginBottom: 8,
-  },
-  cardDescLight: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.85)',
-    lineHeight: 21,
-    marginBottom: 14,
-  },
-  cardCta: {
-    fontSize: 14,
+  clickHintText: {
+    color: '#fff',
+    fontSize: 12,
     fontWeight: '600',
-    color: 'white',
-    opacity: 0.95,
+    opacity: 0.85,
   },
-  process: {
-    marginTop: 28,
-    paddingVertical: 12,
-    backgroundColor: 'white',
-    borderRadius: 999,
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#F0E6E8',
+    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  processText: {
+  ownerAction: {
+    backgroundColor: 'rgba(255, 56, 92, 0.15)',
+    borderColor: 'rgba(255, 56, 92, 0.4)',
+  },
+  workerAction: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  actionTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 3,
+  },
+  actionSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
     textAlign: 'center',
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#444',
-    letterSpacing: 0.5,
+  },
+  bottomHint: {
+    textAlign: 'center',
+    marginTop: 14,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.4)',
   },
 });

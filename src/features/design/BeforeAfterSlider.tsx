@@ -4,19 +4,22 @@ import { View, Text, StyleSheet, PanResponder, Animated, Image, Dimensions } fro
 interface Props {
   before: string;
   after: string;
-  autoAnimate?: boolean;
+  autoAnimate?: boolean;   // legacy wide auto-oscillation (for design demos)
   height?: number;
+  idleAnimate?: boolean;   // subtle slow animation 40%-60% when idle (for landing)
 }
 
 const { width: windowWidth } = Dimensions.get('window');
 
-export default function BeforeAfterSlider({ before, after, autoAnimate = false, height = 260 }: Props) {
+export default function BeforeAfterSlider({ before, after, autoAnimate = false, height = 260, idleAnimate = false }: Props) {
   const [displayWidth, setDisplayWidth] = useState(windowWidth);
   const [containerX, setContainerX] = useState(0);
   const sliderX = useRef(new Animated.Value(windowWidth * 0.5)).current;
   const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isInteractingRef = useRef(false);
+  const idleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-animate (uses current displayWidth)
+  // Legacy wide auto-animate for design demos
   useEffect(() => {
     if (!autoAnimate) return;
 
@@ -36,13 +39,94 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
     };
   }, [autoAnimate, displayWidth]);
 
+  // Idle subtle animation: slowly ease between 40% and 60% when not being interacted with
+  const startIdleAnimation = () => {
+    if (!idleAnimate || isInteractingRef.current) return;
+
+    const runCycle = () => {
+      if (!idleAnimate || isInteractingRef.current) return;
+
+      Animated.sequence([
+        Animated.timing(sliderX, {
+          toValue: displayWidth * 0.4,
+          duration: 3800,
+          easing: (t) => t * t * (3 - 2 * t), // smooth ease in out
+          useNativeDriver: false,
+        }),
+        Animated.timing(sliderX, {
+          toValue: displayWidth * 0.6,
+          duration: 3800,
+          easing: (t) => t * t * (3 - 2 * t),
+          useNativeDriver: false,
+        }),
+      ]).start(() => {
+        if (!isInteractingRef.current) {
+          runCycle();
+        }
+      });
+    };
+
+    // Start from current position toward 40% or 60%
+    const current = (sliderX as any)._value || displayWidth * 0.5;
+    const target = current > displayWidth * 0.5 ? displayWidth * 0.4 : displayWidth * 0.6;
+
+    Animated.timing(sliderX, {
+      toValue: target,
+      duration: 2200,
+      easing: (t) => t * t * (3 - 2 * t),
+      useNativeDriver: false,
+    }).start(() => {
+      if (!isInteractingRef.current) runCycle();
+    });
+  };
+
+  const stopIdleAnimation = () => {
+    if (idleTimeoutRef.current) {
+      clearTimeout(idleTimeoutRef.current);
+      idleTimeoutRef.current = null;
+    }
+  };
+
+  const resumeIdleAfterDelay = () => {
+    stopIdleAnimation();
+    idleTimeoutRef.current = setTimeout(() => {
+      if (!isInteractingRef.current) {
+        startIdleAnimation();
+      }
+    }, 1200);
+  };
+
+  // Start idle animation on mount / when enabled
+  useEffect(() => {
+    if (idleAnimate && displayWidth > 0) {
+      // initial position in middle
+      sliderX.setValue(displayWidth * 0.5);
+      // start after short delay
+      const t = setTimeout(startIdleAnimation, 800);
+      return () => clearTimeout(t);
+    }
+    return () => stopIdleAnimation();
+  }, [idleAnimate, displayWidth]);
+
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
+    onPanResponderGrant: () => {
+      isInteractingRef.current = true;
+      stopIdleAnimation();
+    },
     onPanResponderMove: (_, gesture) => {
       // Convert absolute screen position to local position within this slider
       const localX = gesture.moveX - containerX;
       const newX = Math.max(30, Math.min(displayWidth - 30, localX));
       sliderX.setValue(newX);
+    },
+    onPanResponderRelease: () => {
+      isInteractingRef.current = false;
+      resumeIdleAfterDelay();
+    },
+    onPanResponderTerminate: () => {
+      isInteractingRef.current = false;
+      resumeIdleAfterDelay();
     },
   });
 
