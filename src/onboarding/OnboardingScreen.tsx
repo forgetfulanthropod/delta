@@ -1,69 +1,170 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
-import Svg, { Defs, RadialGradient, Stop, Polygon, Path } from 'react-native-svg';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Platform } from 'react-native';
 import BeforeAfterSlider from '../features/design/BeforeAfterSlider';
 
-const AnimatedDeltaTriangle = ({ size = 32, style }: { size?: number; style?: any }) => {
-  const [phase, setPhase] = useState(0);
+const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: any }) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    let frame: number;
-    const animate = (t = 0) => {
-      setPhase((t / 1800) % (Math.PI * 2)); // slow ~1.8s cycle
-      frame = requestAnimationFrame(animate);
+    if (Platform.OS !== 'web' || !containerRef.current) return;
+
+    const container = containerRef.current as HTMLDivElement;
+    const svgNS = 'http://www.w3.org/2000/svg';
+
+    container.innerHTML = '';
+
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('viewBox', '0 0 100 95');
+    svg.style.display = 'block';
+    svg.style.cursor = 'pointer';
+    svg.style.touchAction = 'none';
+
+    const defs = document.createElementNS(svgNS, 'defs');
+    const grad = document.createElementNS(svgNS, 'radialGradient');
+    grad.setAttribute('id', 'deltaFluid');
+    grad.setAttribute('cx', '50%');
+    grad.setAttribute('cy', '46%');
+    grad.setAttribute('r', '52%');
+
+    // vibrant multi-stop for rich fluid color
+    const stopDefs = [
+      ['0%', '#67e8f9'],
+      ['22%', '#a78bfa'],
+      ['48%', '#f472b6'],
+      ['72%', '#fb923c'],
+      ['100%', '#f43f5e'],
+    ];
+    stopDefs.forEach(([offset, color]) => {
+      const s = document.createElementNS(svgNS, 'stop');
+      s.setAttribute('offset', offset);
+      s.setAttribute('stop-color', color);
+      grad.appendChild(s);
+    });
+    defs.appendChild(grad);
+    svg.appendChild(defs);
+
+    // main delta/triangle shape
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', 'M50,5 Q72,20 78,58 Q68,82 50,76 Q32,82 22,58 Q28,20 50,5 Z');
+    path.setAttribute('fill', 'url(#deltaFluid)');
+    path.setAttribute('stroke', '#ffffff');
+    path.setAttribute('stroke-width', '7.5');
+    path.setAttribute('stroke-linejoin', 'round');
+    path.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(path);
+
+    // subtle inner stroke for liquid depth
+    const inner = document.createElementNS(svgNS, 'path');
+    inner.setAttribute('d', 'M50,12 Q68,24 74,56 Q66,74 50,70 Q34,74 26,56 Q32,24 50,12 Z');
+    inner.setAttribute('fill', 'none');
+    inner.setAttribute('stroke', 'rgba(255,255,255,0.28)');
+    inner.setAttribute('stroke-width', '2.2');
+    inner.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(inner);
+
+    container.appendChild(svg);
+
+    // state for interaction + fluid idle
+    let targetCx = 50;
+    let targetCy = 46;
+    let isInteracting = false;
+    let currCx = 50;
+    let currCy = 46;
+    let currR = 52;
+    let rafId = 0;
+    let stopPhase = 0;
+
+    const onPointer = (e: PointerEvent) => {
+      const r = svg.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) return;
+      const px = ((e.clientX - r.left) / r.width) * 100;
+      const py = ((e.clientY - r.top) / r.height) * 100;
+      targetCx = Math.max(12, Math.min(88, px));
+      targetCy = Math.max(18, Math.min(78, py));
+      isInteracting = true;
     };
-    frame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frame);
-  }, []);
+    const endInteract = () => { isInteracting = false; };
 
-  // Moving radial center - circular motion inside the triangle
-  const cx = 50 + 18 * Math.cos(phase);
-  const cy = 48 + 14 * Math.sin(phase * 0.8);
+    svg.addEventListener('pointerdown', onPointer);
+    svg.addEventListener('pointermove', onPointer);
+    svg.addEventListener('pointerup', endInteract);
+    svg.addEventListener('pointerleave', endInteract);
 
-  // Rounded triangle path (upward delta △ with rounded corners)
-  const trianglePath =
-    'M50,6 Q72,18 80,68 Q68,86 50,80 Q32,86 20,68 Q28,18 50,6 Z';
+    const loop = () => {
+      const t = Date.now() / 1950;
 
+      // organic non-circular idle path using summed sines (fluid, not a dot)
+      const idleCx = 50 + Math.sin(t * 0.72) * 15.5 + Math.sin(t * 1.85) * 5.2 + Math.cos(t * 0.41) * 2.8;
+      const idleCy = 46 + Math.cos(t * 0.61) * 12.5 + Math.sin(t * 2.25) * 4.1 + Math.sin(t * 0.95) * 2.2;
+      const idleR = 47 + Math.sin(t * 1.05) * 13 + Math.cos(t * 0.78) * 5.5;
+
+      let goalCx = idleCx;
+      let goalCy = idleCy;
+      let goalR = idleR;
+
+      if (isInteracting) {
+        goalCx = targetCx;
+        goalCy = targetCy;
+        goalR = 62; // larger highlight when user is pointing
+      }
+
+      // inertia lerp for sloshy fluid response
+      currCx = currCx * 0.815 + goalCx * 0.185;
+      currCy = currCy * 0.815 + goalCy * 0.185;
+      currR = currR * 0.84 + goalR * 0.16;
+
+      grad.setAttribute('cx', `${currCx.toFixed(1)}%`);
+      grad.setAttribute('cy', `${currCy.toFixed(1)}%`);
+      grad.setAttribute('r', `${currR.toFixed(1)}%`);
+
+      // extra liquid: slowly shift an inner stop offset
+      stopPhase += 0.011;
+      const s2 = grad.children[1] as any;
+      if (s2 && s2.setAttribute) {
+        const off = 20 + Math.sin(stopPhase * 1.6) * 6.5;
+        s2.setAttribute('offset', `${off.toFixed(1)}%`);
+      }
+
+      rafId = requestAnimationFrame(loop);
+    };
+    rafId = requestAnimationFrame(loop);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      svg.removeEventListener('pointerdown', onPointer);
+      svg.removeEventListener('pointermove', onPointer);
+      svg.removeEventListener('pointerup', endInteract);
+      svg.removeEventListener('pointerleave', endInteract);
+      if (container.contains(svg)) container.removeChild(svg);
+    };
+  }, [size]);
+
+  if (Platform.OS === 'web') {
+    return (
+      <View
+        ref={containerRef as any}
+        style={[{ width: size, height: size * 0.95, overflow: 'hidden' }, style]}
+      />
+    );
+  }
+
+  // Native fallback
   return (
-    <View style={[{ width: size, height: size * 0.95 }, style]}>
-      <Svg width="100%" height="100%" viewBox="0 0 100 95">
-        <Defs>
-          <RadialGradient
-            id="deltaGrad"
-            cx={`${cx}%`}
-            cy={`${cy}%`}
-            r="55%"
-            fx="50%"
-            fy="45%"
-          >
-            <Stop offset="0%" stopColor="#00E5FF" stopOpacity="1" />
-            <Stop offset="25%" stopColor="#7C4DFF" stopOpacity="1" />
-            <Stop offset="55%" stopColor="#FF1A8C" stopOpacity="1" />
-            <Stop offset="80%" stopColor="#FF4D00" stopOpacity="0.95" />
-            <Stop offset="100%" stopColor="#FF1744" stopOpacity="0.9" />
-          </RadialGradient>
-        </Defs>
-
-        {/* Main triangle (rounded corners via path) with moving radial gradient */}
-        <Path
-          d="M50,6 Q70,16 82,65 Q72,82 50,78 Q28,82 18,65 Q30,16 50,6 Z"
-          fill="url(#deltaGrad)"
-          stroke="#fff"
-          strokeWidth="8"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-
-        {/* Subtle inner highlight for depth and rounded feel */}
-        <Path
-          d="M50,11 Q66,19 76,62 Q68,76 50,73 Q32,76 24,62 Q34,19 50,11 Z"
-          fill="none"
-          stroke="rgba(255,255,255,0.3)"
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-        />
-      </Svg>
-    </View>
+    <View
+      style={[
+        {
+          width: size,
+          height: size * 0.9,
+          backgroundColor: '#FF385C',
+          borderWidth: 4,
+          borderColor: '#fff',
+          borderRadius: 8,
+        },
+        style,
+      ]}
+    />
   );
 };
 
@@ -84,6 +185,7 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
           height={screenHeight}
           idleAnimate={true}
           showHint={false}
+          style={{ marginBottom: 0, flex: 1, width: '100%', height: '100%' }}
         />
       </View>
 
@@ -96,13 +198,13 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
               {/* rivur logo image integrated next to Delta */}
               <Image
                 source={{ uri: '/rivur-logo.webp' }}
-                style={{ width: 72, height: 28, marginRight: 10 }}
+                style={{ width: 108, height: 41, marginRight: 12 }}
                 resizeMode="contain"
               />
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={styles.logo}>Delta</Text>
-                {/* Animated Delta triangle with moving radial gradient + white rounded border */}
-                <AnimatedDeltaTriangle size={26} style={{ marginLeft: 6 }} />
+                {/* Animated Delta triangle - big, interactive, fluid gradient */}
+                <AnimatedDeltaTriangle size={120} style={{ marginLeft: 10 }} />
               </View>
             </View>
             <Text style={styles.tagline}>Transforming the built environment</Text>
@@ -171,7 +273,7 @@ const styles = StyleSheet.create({
   topBar: {
     backgroundColor: 'rgba(0,0,0,0.55)',
     paddingTop: 48,
-    paddingBottom: 12,
+    paddingBottom: 16,
   },
   // Bottom semitransparent bar
   bottomBar: {
@@ -187,15 +289,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   logo: {
-    fontSize: 26,
+    fontSize: 46,
     fontWeight: '800',
     color: '#fff',
     letterSpacing: -1,
   },
   tagline: {
-    fontSize: 13,
+    fontSize: 14,
     color: 'rgba(255,255,255,0.7)',
-    marginTop: 2,
+    marginTop: 4,
   },
   actionsRow: {
     flexDirection: 'row',

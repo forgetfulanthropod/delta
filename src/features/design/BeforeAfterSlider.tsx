@@ -12,7 +12,7 @@ interface Props {
 
 const { width: windowWidth } = Dimensions.get('window');
 
-export default function BeforeAfterSlider({ before, after, autoAnimate = false, height = 260, idleAnimate = false, showHint = true }: Props) {
+export default function BeforeAfterSlider({ before, after, autoAnimate = false, height = 260, idleAnimate = false, showHint = true, style }: any) {
   const [displayWidth, setDisplayWidth] = useState(windowWidth);
   const [containerX, setContainerX] = useState(0);
   const sliderX = useRef(new Animated.Value(windowWidth * 0.5)).current;
@@ -148,7 +148,7 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View 
         style={[styles.imageContainer, { height, cursor: 'col-resize' as any }]}
         onLayout={(e) => {
@@ -202,6 +202,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#f2f2f2',
     position: 'relative',
+    width: '100%',
   },
   baseImage: {
     position: 'absolute',
