@@ -27,13 +27,16 @@ export default function DesignStudioScreen() {
     if (!originalImage) return;
     setIsGenerating(true);
 
+    // Phase 1: always inject current tweaks into the prompt for the AI
+    const enhancedPrompt = `${prompt} (Style: ${currentTweaks.style}; Colors: ${currentTweaks.colorPalette}; Layout: ${currentTweaks.layout})`;
+
     try {
       const res = await fetch('http://localhost:4000/api/reimagine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageUri: originalImage,
-          prompt,
+          prompt: enhancedPrompt,
           provider: aiProvider,
           apiKey: aiApiKey,
         }),
@@ -43,7 +46,7 @@ export default function DesignStudioScreen() {
         const newVersion: DesignVersion = {
           id: Date.now().toString(),
           imageUri: data.imageUri,
-          prompt,
+          prompt: enhancedPrompt,
           tweaks: { ...currentTweaks },
           createdAt: new Date().toISOString(),
         };
@@ -62,7 +65,7 @@ export default function DesignStudioScreen() {
     const newVersion: DesignVersion = {
       id: Date.now().toString(),
       imageUri: randomUrl,
-      prompt,
+      prompt: enhancedPrompt,
       tweaks: { ...currentTweaks },
       createdAt: new Date().toISOString(),
     };
@@ -132,6 +135,43 @@ export default function DesignStudioScreen() {
             placeholder="Describe your vision..."
             multiline
           />
+
+          {/* Phase 1: editable tweaks that get injected into the AI prompt */}
+          <View style={styles.tweaksRow}>
+            <Text style={styles.tweaksLabel}>Tweaks:</Text>
+            {(['Modern', 'Rustic', 'Minimal', 'Industrial'] as const).map((s) => (
+              <TouchableOpacity
+                key={s}
+                onPress={() => setCurrentTweaks((t) => ({ ...t, style: s }))}
+                style={[styles.tweakChip, currentTweaks.style === s && styles.tweakChipActive]}
+              >
+                <Text style={[styles.tweakText, currentTweaks.style === s && styles.tweakTextActive]}>{s}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={styles.tweaksRow}>
+            {(['Warm neutrals', 'Bold colors', 'Cool tones', 'Earthy'] as const).map((c) => (
+              <TouchableOpacity
+                key={c}
+                onPress={() => setCurrentTweaks((t) => ({ ...t, colorPalette: c }))}
+                style={[styles.tweakChip, currentTweaks.colorPalette === c && styles.tweakChipActive]}
+              >
+                <Text style={[styles.tweakText, currentTweaks.colorPalette === c && styles.tweakTextActive]}>{c}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={styles.tweaksRow}>
+            {(['Open plan', 'Cozy nooks', 'Multi-zone', 'Studio'] as const).map((l) => (
+              <TouchableOpacity
+                key={l}
+                onPress={() => setCurrentTweaks((t) => ({ ...t, layout: l }))}
+                style={[styles.tweakChip, currentTweaks.layout === l && styles.tweakChipActive]}
+              >
+                <Text style={[styles.tweakText, currentTweaks.layout === l && styles.tweakTextActive]}>{l}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <TouchableOpacity 
         onPress={reimagine}
         disabled={isGenerating}
@@ -186,4 +226,10 @@ const styles = StyleSheet.create({
   promptInput: { borderWidth: 1, padding: 10, marginVertical: 8, height: 60 },
   section: { fontSize: 18, fontWeight: '600', marginTop: 20 },
   versionCard: { backgroundColor: '#f5f5f5', padding: 12, marginBottom: 12, borderRadius: 8 },
+  tweaksRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, gap: 6 },
+  tweaksLabel: { fontSize: 12, color: '#666', marginRight: 4, alignSelf: 'center' },
+  tweakChip: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: '#f0f0f0' },
+  tweakChipActive: { backgroundColor: '#222' },
+  tweakText: { fontSize: 11, color: '#333' },
+  tweakTextActive: { color: '#fff' },
 });
