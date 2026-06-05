@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
-import Svg, { Defs, RadialGradient, Stop, Polygon } from 'react-native-svg';
+import Svg, { Defs, RadialGradient, Stop, Polygon, Path } from 'react-native-svg';
 import BeforeAfterSlider from '../features/design/BeforeAfterSlider';
 
 const AnimatedDeltaTriangle = ({ size = 32, style }: { size?: number; style?: any }) => {
@@ -44,22 +44,22 @@ const AnimatedDeltaTriangle = ({ size = 32, style }: { size?: number; style?: an
           </RadialGradient>
         </Defs>
 
-        {/* Main triangle with moving gradient */}
-        <Polygon
-          points="50,8 18,82 82,82"
+        {/* Main triangle (rounded corners via path) with moving radial gradient */}
+        <Path
+          d="M50,6 Q70,16 82,65 Q72,82 50,78 Q28,82 18,65 Q30,16 50,6 Z"
           fill="url(#deltaGrad)"
           stroke="#fff"
-          strokeWidth="7"
+          strokeWidth="8"
           strokeLinejoin="round"
           strokeLinecap="round"
         />
 
-        {/* Subtle inner highlight for depth */}
-        <Polygon
-          points="50,12 24,76 76,76"
+        {/* Subtle inner highlight for depth and rounded feel */}
+        <Path
+          d="M50,11 Q66,19 76,62 Q68,76 50,73 Q32,76 24,62 Q34,19 50,11 Z"
           fill="none"
-          stroke="rgba(255,255,255,0.35)"
-          strokeWidth="2"
+          stroke="rgba(255,255,255,0.3)"
+          strokeWidth="2.5"
           strokeLinejoin="round"
         />
       </Svg>
