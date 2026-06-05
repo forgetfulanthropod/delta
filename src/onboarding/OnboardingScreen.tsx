@@ -3,17 +3,19 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Platform }
 import BeforeAfterSlider from '../features/design/BeforeAfterSlider';
 
 const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: any }) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<any>(null);
 
   useEffect(() => {
     if (Platform.OS !== 'web' || !containerRef.current) return;
 
-    const container = containerRef.current as HTMLDivElement;
+    const container = containerRef.current as any;
     const svgNS = 'http://www.w3.org/2000/svg';
+    const doc: any = (globalThis as any).document || null;
+    if (!doc) return;
 
     container.innerHTML = '';
 
-    const svg = document.createElementNS(svgNS, 'svg');
+    const svg = doc.createElementNS(svgNS, 'svg');
     svg.setAttribute('width', '100%');
     svg.setAttribute('height', '100%');
     svg.setAttribute('viewBox', '0 0 100 95');
@@ -21,8 +23,8 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
     svg.style.cursor = 'pointer';
     svg.style.touchAction = 'none';
 
-    const defs = document.createElementNS(svgNS, 'defs');
-    const grad = document.createElementNS(svgNS, 'radialGradient');
+    const defs = doc.createElementNS(svgNS, 'defs');
+    const grad = doc.createElementNS(svgNS, 'radialGradient');
     grad.setAttribute('id', 'deltaFluid');
     grad.setAttribute('cx', '50%');
     grad.setAttribute('cy', '46%');
@@ -37,7 +39,7 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
       ['100%', '#f43f5e'],
     ];
     stopDefs.forEach(([offset, color]) => {
-      const s = document.createElementNS(svgNS, 'stop');
+      const s = doc.createElementNS(svgNS, 'stop');
       s.setAttribute('offset', offset);
       s.setAttribute('stop-color', color);
       grad.appendChild(s);
@@ -46,7 +48,7 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
     svg.appendChild(defs);
 
     // main delta/triangle shape
-    const path = document.createElementNS(svgNS, 'path');
+    const path = doc.createElementNS(svgNS, 'path');
     path.setAttribute('d', 'M50,5 Q72,20 78,58 Q68,82 50,76 Q32,82 22,58 Q28,20 50,5 Z');
     path.setAttribute('fill', 'url(#deltaFluid)');
     path.setAttribute('stroke', '#ffffff');
@@ -56,7 +58,7 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
     svg.appendChild(path);
 
     // subtle inner stroke for liquid depth
-    const inner = document.createElementNS(svgNS, 'path');
+    const inner = doc.createElementNS(svgNS, 'path');
     inner.setAttribute('d', 'M50,12 Q68,24 74,56 Q66,74 50,70 Q34,74 26,56 Q32,24 50,12 Z');
     inner.setAttribute('fill', 'none');
     inner.setAttribute('stroke', 'rgba(255,255,255,0.28)');
@@ -76,7 +78,7 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
     let rafId = 0;
     let stopPhase = 0;
 
-    const onPointer = (e: PointerEvent) => {
+    const onPointer = (e: any) => {
       const r = svg.getBoundingClientRect();
       if (r.width === 0 || r.height === 0) return;
       const px = ((e.clientX - r.left) / r.width) * 100;
@@ -137,7 +139,7 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
       svg.removeEventListener('pointermove', onPointer);
       svg.removeEventListener('pointerup', endInteract);
       svg.removeEventListener('pointerleave', endInteract);
-      if (container.contains(svg)) container.removeChild(svg);
+      if (container.contains && container.contains(svg)) container.removeChild(svg);
     };
   }, [size]);
 
