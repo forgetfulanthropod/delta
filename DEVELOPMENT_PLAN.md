@@ -299,7 +299,7 @@ After Phase 0, reassess and slice the rest into GitHub issues.
 
 See git history or individual file diffs for exact changes.
 
-### Phase 1 Status (IN PROGRESS / PARTIAL)
+### Phase 1 Status (COMPLETED)
 - Improved tab UX with styled bar + icons (no full react-nav yet due to web bundling issues with latest @react-navigation + screens + gesture in RN 0.85 web).
 - Design tweaks UI added (chips for style/colors/layout) and wired into enhancedPrompt for reimagine (both real + fallback).
 - Worker role now renders a simple placeholder dashboard with switch back.
@@ -308,7 +308,14 @@ See git history or individual file diffs for exact changes.
 - Stuck with StyleSheet for consistency in Phase 1 (no NativeWind).
 - Committed to main.
 
-Next: Phase 2 (AI hardening).
+### Phase 2 Status (COMPLETED)
+- Backend /api/reimagine now uses image-aware prompts referencing the uploaded photo.
+- Provider param handled (xAI path full + key support; others return useful stub message).
+- Better error responses from backend.
+- Client continues to send provider/key; versions capture the enhanced prompt.
+- Committed to main.
+
+Next: Phase 3 (persistence + more features).
 
 Next action for team: pick Phase 0 items, start fixing, update this doc with progress checkboxes or links to PRs.
 

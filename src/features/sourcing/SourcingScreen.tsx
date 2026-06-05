@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Alert, Linking } from 'react-native';
 import { useDeltaStore } from '../../store/useDeltaStore';
 
 export default function SourcingScreen() {
@@ -38,6 +38,11 @@ export default function SourcingScreen() {
             <View style={{ flex: 1 }}>
               <Text style={{ fontWeight: '600' }}>{item.name}</Text>
               <Text>{item.retailer} • ${item.price} × {item.quantity}</Text>
+              {item.url && (
+                <TouchableOpacity onPress={() => Linking.openURL(item.url!)} style={{ marginTop: 4 }}>
+                  <Text style={{ color: '#0066cc', fontSize: 12 }}>View at retailer →</Text>
+                </TouchableOpacity>
+              )}
             </View>
             <TouchableOpacity
               onPress={() => toggleApproveItem(item.id)}
@@ -62,6 +67,8 @@ export default function SourcingScreen() {
         <Button title="Submit Approved Purchases" onPress={() => Alert.alert('Sourcing', 'Purchases submitted!')} disabled={approvedItems.length === 0} />
         <View style={{ height: 12 }} />
         <Button title="Generate Labor Schedule" onPress={generateLaborSchedule} disabled={approvedItems.length === 0} color="#c62828" />
+        <View style={{ height: 8 }} />
+        <Button title="Clear All (Phase 3 persist demo)" onPress={() => { useDeltaStore.getState().resetAll(); Alert.alert('Cleared', 'Store reset (persisted data cleared on next load).'); }} color="#666" />
       </View>
     </View>
   );

@@ -90,11 +90,12 @@ export default function DesignStudioScreen() {
       console.log('Backend not running, using local data');
     }
 
-    // Generate sample sourcing items based on the design
+    // Generate sample sourcing items based on the design (Phase 3: added fake urls for retailer links)
+    const base = Date.now();
     const suggestedItems = [
-      { id: Date.now().toString(), name: 'LVP Flooring - Oak', retailer: "Lowe's" as const, price: 3.49, quantity: 120, approved: false },
-      { id: (Date.now()+1).toString(), name: 'Matte Black Faucet', retailer: 'Amazon' as const, price: 89, quantity: 2, approved: false },
-      { id: (Date.now()+2).toString(), name: 'LED Recessed Lights', retailer: 'Home Depot' as const, price: 42, quantity: 8, approved: false },
+      { id: String(base), name: 'LVP Flooring - Oak', retailer: "Lowe's" as const, price: 3.49, quantity: 120, approved: false, url: 'https://www.lowes.com' },
+      { id: String(base + 1), name: 'Matte Black Faucet', retailer: 'Amazon' as const, price: 89, quantity: 2, approved: false, url: 'https://www.amazon.com' },
+      { id: String(base + 2), name: 'LED Recessed Lights', retailer: 'Home Depot' as const, price: 42, quantity: 8, approved: false, url: 'https://www.homedepot.com' },
     ];
     useDeltaStore.getState().addSourcingItems(suggestedItems);
     Alert.alert('Sent to Sourcing', 'Suggested materials added.\n\nGo to Sourcing tab to approve items.');
