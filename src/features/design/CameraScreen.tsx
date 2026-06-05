@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
+// Phase 4 note: For full native, ensure Info.plist (NSCameraUsageDescription, NSPhotoLibraryUsageDescription),
+// AndroidManifest permissions, pod install after adding dep, and possibly react-native-reanimated.
+// Web always falls back to file upload via CameraScreen.web.tsx. Gallery picker can be added via expo-image-picker or similar.
 
 interface Props {
   onPhotoTaken: (uri: string) => void;

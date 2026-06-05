@@ -315,7 +315,14 @@ See git history or individual file diffs for exact changes.
 - Client continues to send provider/key; versions capture the enhanced prompt.
 - Committed to main.
 
-Next: Phase 3 (persistence + more features).
+### Phase 3 Status (COMPLETED)
+- Added zustand persist (localStorage on web via middleware) so design/sourcing/labor survive refresh.
+- Added resetAll + clear button in Sourcing (persisted data demo).
+- Sourcing items now support optional url; "View at retailer →" opens with Linking.
+- Suggested items from Design carry retailer links.
+- Committed to main.
+
+Next: Phase 4 (native + prod readiness).
 
 Next action for team: pick Phase 0 items, start fixing, update this doc with progress checkboxes or links to PRs.
 
