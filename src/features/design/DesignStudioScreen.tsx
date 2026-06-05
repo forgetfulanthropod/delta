@@ -56,16 +56,14 @@ export default function DesignStudioScreen() {
     setProjectName('The Oak Street House');
     setIsExample(true);
 
-    // A lot of photos of ONE house (mix of real progress + AI concepts)
+    // Photos & AI concepts for ONE house (before/after of the same property + AI reimaginings of its rooms)
+    // Using only the most consistent assets so it actually reads as a single project/home
     const photos = [
       base,
       '/test-images/before-after/after-1.jpg',
       '/ai-room-1.jpg',
       '/ai-room-2.jpg',
-      '/test-images/before-after/before-2.jpg',
       '/ai-room-3.jpg',
-      '/test-images/before-after/after-2.jpg',
-      '/test-images/before-after/after-3.jpg',
     ];
     setProjectPhotos(photos);
 
@@ -259,7 +257,7 @@ export default function DesignStudioScreen() {
           >
             <Text style={[styles.choiceTitle, { color: '#222' }]}>Example Project</Text>
             <Text style={[styles.choiceSubtitle, { color: '#444' }]}>
-              The Oak Street House — 8 photos of the same home, 4 AI directions already explored, sourcing list with approvals in progress, labor tasks ready.
+              The Oak Street House — before + after + AI concepts for one home, 4 AI directions explored, sourcing list with approvals in progress, labor tasks ready.
             </Text>
             <Text style={[styles.choiceCta, { color: '#C45C26' }]}>Load full demo →</Text>
           </TouchableOpacity>
@@ -310,7 +308,9 @@ export default function DesignStudioScreen() {
       {/* House photo gallery — "a lot of photos of one house" */}
       {projectPhotos.length > 1 && (
         <View style={{ marginTop: 16, paddingHorizontal: 16 }}>
-          <Text style={styles.section}>Photos of this house ({projectPhotos.length})</Text>
+          <Text style={styles.section}>
+            {isExample ? 'Before, after & AI concepts for this house' : 'Photos of this house'} ({projectPhotos.length})
+          </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
             {projectPhotos.map((photo, idx) => (
               <TouchableOpacity key={idx} onPress={() => setBaseImage(photo)} style={{ marginRight: 10 }}>
