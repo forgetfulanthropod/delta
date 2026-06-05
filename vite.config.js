@@ -10,6 +10,7 @@ export default defineConfig({
     alias: {
       'react-native': 'react-native-web',
       'react-native-safe-area-context': 'react-native-safe-area-context',
+      'react-native-svg': 'react-native-svg/lib/module/ReactNativeSVG',
     },
     extensions: ['.web.js', '.web.tsx', '.js', '.jsx', '.ts', '.tsx'],
   },
@@ -20,11 +21,11 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react-native-web'],
-    exclude: ['react-native-vision-camera', 'react-native-safe-area-context'],
+    exclude: ['react-native-svg', 'react-native-vision-camera', 'react-native-safe-area-context'],
   },
   build: {
     rollupOptions: {
-      external: ['react-native-vision-camera'],
+      external: ['react-native-vision-camera', 'react-native-svg'],
     },
   },
 });

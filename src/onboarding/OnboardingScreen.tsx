@@ -1,6 +1,71 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
+import Svg, { Defs, RadialGradient, Stop, Polygon } from 'react-native-svg';
 import BeforeAfterSlider from '../features/design/BeforeAfterSlider';
+
+const AnimatedDeltaTriangle = ({ size = 32, style }: { size?: number; style?: any }) => {
+  const [phase, setPhase] = useState(0);
+
+  useEffect(() => {
+    let frame: number;
+    const animate = (t = 0) => {
+      setPhase((t / 1800) % (Math.PI * 2)); // slow ~1.8s cycle
+      frame = requestAnimationFrame(animate);
+    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  // Moving radial center - circular motion inside the triangle
+  const cx = 50 + 18 * Math.cos(phase);
+  const cy = 48 + 14 * Math.sin(phase * 0.8);
+
+  // Rounded triangle path (upward delta △ with rounded corners)
+  const trianglePath =
+    'M50,6 Q72,18 80,68 Q68,86 50,80 Q32,86 20,68 Q28,18 50,6 Z';
+
+  return (
+    <View style={[{ width: size, height: size * 0.95 }, style]}>
+      <Svg width="100%" height="100%" viewBox="0 0 100 95">
+        <Defs>
+          <RadialGradient
+            id="deltaGrad"
+            cx={`${cx}%`}
+            cy={`${cy}%`}
+            r="55%"
+            fx="50%"
+            fy="45%"
+          >
+            <Stop offset="0%" stopColor="#00E5FF" stopOpacity="1" />
+            <Stop offset="25%" stopColor="#7C4DFF" stopOpacity="1" />
+            <Stop offset="55%" stopColor="#FF1A8C" stopOpacity="1" />
+            <Stop offset="80%" stopColor="#FF4D00" stopOpacity="0.95" />
+            <Stop offset="100%" stopColor="#FF1744" stopOpacity="0.9" />
+          </RadialGradient>
+        </Defs>
+
+        {/* Main triangle with moving gradient */}
+        <Polygon
+          points="50,8 18,82 82,82"
+          fill="url(#deltaGrad)"
+          stroke="#fff"
+          strokeWidth="7"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+
+        {/* Subtle inner highlight for depth */}
+        <Polygon
+          points="50,12 24,76 76,76"
+          fill="none"
+          stroke="rgba(255,255,255,0.35)"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+      </Svg>
+    </View>
+  );
+};
 
 interface Props {
   onSelectRole: (role: 'owner' | 'worker') => void;
@@ -27,7 +92,19 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
         {/* Top branding bar - semitransparent */}
         <View style={styles.topBar}>
           <View style={styles.constrained}>
-            <Text style={styles.logo}>Delta</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {/* rivur logo image integrated next to Delta */}
+              <Image
+                source={{ uri: '/rivur-logo.webp' }}
+                style={{ width: 72, height: 28, marginRight: 10 }}
+                resizeMode="contain"
+              />
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.logo}>Delta</Text>
+                {/* Animated Delta triangle with moving radial gradient + white rounded border */}
+                <AnimatedDeltaTriangle size={26} style={{ marginLeft: 6 }} />
+              </View>
+            </View>
             <Text style={styles.tagline}>Transforming the built environment</Text>
           </View>
         </View>
