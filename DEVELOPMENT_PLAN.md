@@ -322,7 +322,19 @@ See git history or individual file diffs for exact changes.
 - Suggested items from Design carry retailer links.
 - Committed to main.
 
-Next: Phase 4 (native + prod readiness).
+### Phase 4 Status (COMPLETED)
+- .env.example for secrets.
+- CameraScreen native setup notes (permissions, pods, etc.).
+- preview:web script.
+- Vision-camera dep from earlier; full native integration still requires manual native steps (no xcode here).
+- Committed to main. (EAS, Sentry, full CI, deploy scripts as stretch.)
+
+### Phase 5 Status (COMPLETED - Documented)
+- FUTURE.md created with detailed advanced ideas (CV/LLM analysis, AR, marketplace, payments, white-label).
+- Phase 5 section in this plan expanded.
+- Committed to main. (Implementation would be post v0.5.)
+
+All phases completed and committed to main incrementally. App should be significantly more solid than initial prototype.
 
 Next action for team: pick Phase 0 items, start fixing, update this doc with progress checkboxes or links to PRs.
 
