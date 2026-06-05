@@ -297,7 +297,18 @@ After Phase 0, reassess and slice the rest into GitHub issues.
 - Servers restarted; HMR picked changes; backend key path verified via curl.
 - Web demo at http://localhost:3000 should now be much cleaner for owner flow.
 
-See git history or individual file diffs for exact changes. Next: Phase 1 (navigation, deeper styling strategy decision, etc.).
+See git history or individual file diffs for exact changes.
+
+### Phase 1 Status (IN PROGRESS / PARTIAL)
+- Improved tab UX with styled bar + icons (no full react-nav yet due to web bundling issues with latest @react-navigation + screens + gesture in RN 0.85 web).
+- Design tweaks UI added (chips for style/colors/layout) and wired into enhancedPrompt for reimagine (both real + fallback).
+- Worker role now renders a simple placeholder dashboard with switch back.
+- Tailwind v4 PostCSS fixed (added @tailwindcss/postcss, updated css import and postcss.config).
+- src/navigation/ and MainTabNavigator.tsx prepared (can be wired once web compat resolved or by downgrading nav versions).
+- Stuck with StyleSheet for consistency in Phase 1 (no NativeWind).
+- Committed to main.
+
+Next: Phase 2 (AI hardening).
 
 Next action for team: pick Phase 0 items, start fixing, update this doc with progress checkboxes or links to PRs.
 

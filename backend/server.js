@@ -9,11 +9,10 @@ const PORT = 4000;
 const XAI_API_KEY = process.env.XAI_API_KEY || '';
 
 app.post('/api/reimagine', async (req, res) => {
-  const { imageUri, prompt, provider, apiKey } = req.body;
+  const { imageUri, prompt, provider = 'x', apiKey } = req.body;
 
-  console.log('Generating reimagination for prompt:', prompt, 'provider:', provider || 'x');
+  console.log('Generating reimagination provider:', provider, 'prompt:', prompt);
 
-  // Support client-provided key (from UI) or server env. For demo, client key takes precedence if sent.
   const effectiveKey = apiKey || XAI_API_KEY;
 
   if (!effectiveKey) {
@@ -25,35 +24,54 @@ app.post('/api/reimagine', async (req, res) => {
     });
   }
 
-  // Currently only xAI supported end-to-end; others can be extended here.
-  try {
-    const response = await fetch('https://api.x.ai/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${effectiveKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'grok-imagine-image-quality',
-        prompt: prompt || 'Modern home interior renovation',
-        n: 1,
-      }),
-    });
+  // Phase 2: better prompt that references the source image + provider aware stub
+  const basePrompt = prompt || 'Modern home interior renovation';
+  const imageAwarePrompt = `${basePrompt} — reimagine this exact uploaded room photo, preserve architecture and lighting where possible`;
 
-    const data = await response.json();
-    const generatedUrl = data?.data?.[0]?.url || imageUri;
+  if (provider === 'x' || !provider) {
+    try {
+      const response = await fetch('https://api.x.ai/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${effectiveKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'grok-imagine-image-quality',
+          prompt: imageAwarePrompt,
+          n: 1,
+        }),
+      });
 
-    res.json({
-      success: true,
-      imageUri: generatedUrl,
-      prompt,
-      generated: true,
-      message: 'Generated with xAI Grok Imagine',
-    });
-  } catch (error) {
-    console.error('xAI API error:', error);
-    res.json({ success: false, error: error.message });
+      const data = await response.json();
+      if (!response.ok || data?.error) {
+        throw new Error(data?.error?.message || 'xAI generation failed');
+      }
+      const generatedUrl = data?.data?.[0]?.url || imageUri;
+
+      return res.json({
+        success: true,
+        imageUri: generatedUrl,
+        prompt: imageAwarePrompt,
+        generated: true,
+        provider: 'x',
+        message: 'Generated with xAI Grok Imagine (image-aware prompt)',
+      });
+    } catch (error) {
+      console.error('xAI API error:', error);
+      return res.json({ success: false, error: error.message || String(error) });
+    }
   }
+
+  // Stub for other providers (extend with real calls + their keys in future)
+  // For demo, return a variant or the original
+  return res.json({
+    success: true,
+    imageUri: imageUri,
+    prompt: imageAwarePrompt,
+    provider,
+    message: `Provider "${provider}" stub: using original image. Add real integration + key support in backend.`,
+  });
 });
 
 app.listen(PORT, () => {
