@@ -1,26 +1,28 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, PanResponder, Animated, Image, Dimensions } from 'react-native';
 
 interface Props {
   before: string;
   after: string;
   autoAnimate?: boolean;
+  height?: number;
 }
 
-const { width } = Dimensions.get('window');
-const IMAGE_HEIGHT = 260;
+const { width: windowWidth } = Dimensions.get('window');
 
-export default function BeforeAfterSlider({ before, after, autoAnimate = false }: Props) {
-  const sliderX = useRef(new Animated.Value(width * 0.5)).current;
+export default function BeforeAfterSlider({ before, after, autoAnimate = false, height = 260 }: Props) {
+  const [displayWidth, setDisplayWidth] = useState(windowWidth);
+  const [containerX, setContainerX] = useState(0);
+  const sliderX = useRef(new Animated.Value(windowWidth * 0.5)).current;
   const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Auto-animate
+  // Auto-animate (uses current displayWidth)
   useEffect(() => {
     if (!autoAnimate) return;
 
     let direction = 1;
     animRef.current = setInterval(() => {
-      const target = direction === 1 ? width * 0.15 : width * 0.85;
+      const target = direction === 1 ? displayWidth * 0.15 : displayWidth * 0.85;
       Animated.timing(sliderX, {
         toValue: target,
         duration: 1700,
@@ -32,19 +34,30 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false }
     return () => {
       if (animRef.current) clearInterval(animRef.current);
     };
-  }, [autoAnimate]);
+  }, [autoAnimate, displayWidth]);
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onPanResponderMove: (_, gesture) => {
-      const newX = Math.max(50, Math.min(width - 50, gesture.moveX));
+      // Convert absolute screen position to local position within this slider
+      const localX = gesture.moveX - containerX;
+      const newX = Math.max(30, Math.min(displayWidth - 30, localX));
       sliderX.setValue(newX);
     },
   });
 
   return (
     <View style={styles.container}>
-      <View style={styles.imageContainer}>
+      <View 
+        style={[styles.imageContainer, { height }]}
+        onLayout={(e) => {
+          const { x, width: w } = e.nativeEvent.layout;
+          setContainerX(x);
+          setDisplayWidth(w);
+          // Center the slider on first layout
+          sliderX.setValue(w * 0.5);
+        }}
+      >
         {/* Base image (Before) - fixed */}
         <Image 
           source={{ uri: before }} 
@@ -61,7 +74,7 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false }
         >
           <Image 
             source={{ uri: after }} 
-            style={styles.revealImage} 
+            style={[styles.revealImage, { width: displayWidth, height }]} 
             resizeMode="cover" 
           />
         </Animated.View>
@@ -84,7 +97,6 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   imageContainer: {
-    height: IMAGE_HEIGHT,
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#f2f2f2',
@@ -106,8 +118,6 @@ const styles = StyleSheet.create({
   },
   revealImage: {
     position: 'absolute',
-    width: width,           // fixed full width
-    height: IMAGE_HEIGHT,
     top: 0,
     left: 0,
   },

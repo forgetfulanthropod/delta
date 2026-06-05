@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import BeforeAfterSlider from '../features/design/BeforeAfterSlider';
 
 interface Props {
   onSelectRole: (role: 'owner' | 'worker') => void;
@@ -20,30 +21,15 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
           </Text>
         </View>
 
-        {/* Visual proof of the transformation process */}
+        {/* Interactive before/after slider to line up dissimilar structures and inspect changes in detail */}
         <View style={styles.visualSection}>
-          <View style={styles.visualRow}>
-            <View style={styles.visualWrapper}>
-              <Image
-                source={{ uri: '/test-images/before-after/before-1.jpg' }}
-                style={styles.visualImage}
-                resizeMode="cover"
-              />
-              <Text style={styles.visualLabel}>Before</Text>
-            </View>
-
-            <Text style={styles.visualArrow}>→</Text>
-
-            <View style={styles.visualWrapper}>
-              <Image
-                source={{ uri: '/test-images/before-after/after-1.jpg' }}
-                style={styles.visualImage}
-                resizeMode="cover"
-              />
-              <Text style={styles.visualLabel}>After</Text>
-            </View>
-          </View>
-          <Text style={styles.visualCaption}>Real change, powered by AI</Text>
+          <BeforeAfterSlider
+            before="/test-images/before-after/before-1.jpg"
+            after="/test-images/before-after/after-1.jpg"
+            height={170}
+            autoAnimate={false}
+          />
+          <Text style={styles.visualCaption}>Drag the slider to align features and see the transformation in detail</Text>
         </View>
 
         <Text style={styles.choiceTitle}>How do you want to shape the change?</Text>
@@ -128,46 +114,15 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     backgroundColor: 'white',
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#F0E6E8',
   },
-  visualRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  visualWrapper: {
-    width: '42%',
-    position: 'relative',
-  },
-  visualImage: {
-    width: '100%',
-    height: 92,
-    borderRadius: 10,
-  },
-  visualLabel: {
-    position: 'absolute',
-    bottom: 6,
-    left: 6,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    color: 'white',
-    fontSize: 10,
-    fontWeight: '600',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  visualArrow: {
-    fontSize: 22,
-    color: ACCENT,
-    fontWeight: '700',
-  },
   visualCaption: {
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 6,
     fontSize: 12,
-    color: '#666',
+    color: '#555',
     fontWeight: '500',
   },
   choiceTitle: {
