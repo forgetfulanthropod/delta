@@ -18,7 +18,7 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
     const svg = doc.createElementNS(svgNS, 'svg');
     svg.setAttribute('width', '100%');
     svg.setAttribute('height', '100%');
-    svg.setAttribute('viewBox', '0 0 100 95');
+    svg.setAttribute('viewBox', '0 0 100 100');
     svg.style.display = 'block';
     svg.style.cursor = 'pointer';
     svg.style.touchAction = 'none';
@@ -26,16 +26,17 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
     const defs = doc.createElementNS(svgNS, 'defs');
     const grad = doc.createElementNS(svgNS, 'radialGradient');
     grad.setAttribute('id', 'deltaFluid');
+    // larger r + slightly lower cy so the fluid gradient washes across most of the triangle
     grad.setAttribute('cx', '50%');
-    grad.setAttribute('cy', '46%');
-    grad.setAttribute('r', '52%');
+    grad.setAttribute('cy', '52%');
+    grad.setAttribute('r', '72%');
 
     // vibrant multi-stop for rich fluid color
     const stopDefs = [
       ['0%', '#67e8f9'],
-      ['22%', '#a78bfa'],
-      ['48%', '#f472b6'],
-      ['72%', '#fb923c'],
+      ['20%', '#a78bfa'],
+      ['46%', '#f472b6'],
+      ['70%', '#fb923c'],
       ['100%', '#f43f5e'],
     ];
     stopDefs.forEach(([offset, color]) => {
@@ -47,22 +48,23 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
     defs.appendChild(grad);
     svg.appendChild(defs);
 
-    // main delta/triangle shape
+    // Clean, sharp upward Delta (Δ) triangle - straight sides, flat base, pointed top.
+    // Rounded corners come from thick rounded stroke (no weird bottom line).
     const path = doc.createElementNS(svgNS, 'path');
-    path.setAttribute('d', 'M50,5 Q72,20 78,58 Q68,82 50,76 Q32,82 22,58 Q28,20 50,5 Z');
+    path.setAttribute('d', 'M50,8 L86,80 L14,80 Z');
     path.setAttribute('fill', 'url(#deltaFluid)');
     path.setAttribute('stroke', '#ffffff');
-    path.setAttribute('stroke-width', '7.5');
+    path.setAttribute('stroke-width', '8.5');
     path.setAttribute('stroke-linejoin', 'round');
     path.setAttribute('stroke-linecap', 'round');
     svg.appendChild(path);
 
-    // subtle inner stroke for liquid depth
+    // subtle inner triangle stroke for liquid depth / highlight ring
     const inner = doc.createElementNS(svgNS, 'path');
-    inner.setAttribute('d', 'M50,12 Q68,24 74,56 Q66,74 50,70 Q34,74 26,56 Q32,24 50,12 Z');
+    inner.setAttribute('d', 'M50,17 L78,73 L22,73 Z');
     inner.setAttribute('fill', 'none');
-    inner.setAttribute('stroke', 'rgba(255,255,255,0.28)');
-    inner.setAttribute('stroke-width', '2.2');
+    inner.setAttribute('stroke', 'rgba(255,255,255,0.32)');
+    inner.setAttribute('stroke-width', '2.5');
     inner.setAttribute('stroke-linejoin', 'round');
     svg.appendChild(inner);
 
@@ -70,11 +72,11 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
 
     // state for interaction + fluid idle
     let targetCx = 50;
-    let targetCy = 46;
+    let targetCy = 52;
     let isInteracting = false;
     let currCx = 50;
-    let currCy = 46;
-    let currR = 52;
+    let currCy = 52;
+    let currR = 72;
     let rafId = 0;
     let stopPhase = 0;
 
@@ -83,8 +85,8 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
       if (r.width === 0 || r.height === 0) return;
       const px = ((e.clientX - r.left) / r.width) * 100;
       const py = ((e.clientY - r.top) / r.height) * 100;
-      targetCx = Math.max(12, Math.min(88, px));
-      targetCy = Math.max(18, Math.min(78, py));
+      targetCx = Math.max(20, Math.min(80, px));
+      targetCy = Math.max(28, Math.min(70, py));
       isInteracting = true;
     };
     const endInteract = () => { isInteracting = false; };
@@ -95,12 +97,12 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
     svg.addEventListener('pointerleave', endInteract);
 
     const loop = () => {
-      const t = Date.now() / 1950;
+      const t = Date.now() / 1850;
 
-      // organic non-circular idle path using summed sines (fluid, not a dot)
-      const idleCx = 50 + Math.sin(t * 0.72) * 15.5 + Math.sin(t * 1.85) * 5.2 + Math.cos(t * 0.41) * 2.8;
-      const idleCy = 46 + Math.cos(t * 0.61) * 12.5 + Math.sin(t * 2.25) * 4.1 + Math.sin(t * 0.95) * 2.2;
-      const idleR = 47 + Math.sin(t * 1.05) * 13 + Math.cos(t * 0.78) * 5.5;
+      // organic non-circular idle - summed sines so it never feels like a simple orbiting dot
+      const idleCx = 50 + Math.sin(t * 0.65) * 12 + Math.sin(t * 1.75) * 4.8 + Math.cos(t * 0.38) * 2.5;
+      const idleCy = 52 + Math.cos(t * 0.52) * 10 + Math.sin(t * 2.1) * 3.8 + Math.sin(t * 0.88) * 2.0;
+      const idleR = 68 + Math.sin(t * 0.92) * 12 + Math.cos(t * 0.7) * 4;
 
       let goalCx = idleCx;
       let goalCy = idleCy;
@@ -109,24 +111,36 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
       if (isInteracting) {
         goalCx = targetCx;
         goalCy = targetCy;
-        goalR = 62; // larger highlight when user is pointing
+        goalR = 82; // bloom the highlight toward the pointer for fluid "color follows you" feel
       }
 
-      // inertia lerp for sloshy fluid response
-      currCx = currCx * 0.815 + goalCx * 0.185;
-      currCy = currCy * 0.815 + goalCy * 0.185;
-      currR = currR * 0.84 + goalR * 0.16;
+      // inertia lerp - sloshy, fluid response instead of direct/snappy dot
+      currCx = currCx * 0.80 + goalCx * 0.20;
+      currCy = currCy * 0.80 + goalCy * 0.20;
+      currR = currR * 0.82 + goalR * 0.18;
 
       grad.setAttribute('cx', `${currCx.toFixed(1)}%`);
       grad.setAttribute('cy', `${currCy.toFixed(1)}%`);
       grad.setAttribute('r', `${currR.toFixed(1)}%`);
 
-      // extra liquid: slowly shift an inner stop offset
-      stopPhase += 0.011;
-      const s2 = grad.children[1] as any;
-      if (s2 && s2.setAttribute) {
-        const off = 20 + Math.sin(stopPhase * 1.6) * 6.5;
-        s2.setAttribute('offset', `${off.toFixed(1)}%`);
+      // strong fluid color mixing: animate multiple stop offsets at different rates.
+      // This makes the colors inside the triangle keep shifting and blending even when the
+      // radial center is moving slowly - the whole fill feels alive/liquid, not a hard dot.
+      stopPhase += 0.012;
+      const s1 = grad.children[1] as any;
+      if (s1 && s1.setAttribute) {
+        const off1 = 16 + Math.sin(stopPhase * 1.4) * 8.5;
+        s1.setAttribute('offset', `${off1.toFixed(1)}%`);
+      }
+      const s3 = grad.children[3] as any;
+      if (s3 && s3.setAttribute) {
+        const off3 = 62 + Math.cos(stopPhase * 0.85) * 9;
+        s3.setAttribute('offset', `${off3.toFixed(1)}%`);
+      }
+      const s4 = grad.children[4] as any;
+      if (s4 && s4.setAttribute) {
+        const off4 = 88 + Math.sin(stopPhase * 1.1 + 1.2) * 5;
+        s4.setAttribute('offset', `${Math.max(80, Math.min(96, off4)).toFixed(1)}%`);
       }
 
       rafId = requestAnimationFrame(loop);
@@ -147,22 +161,22 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
     return (
       <View
         ref={containerRef as any}
-        style={[{ width: size, height: size * 0.95, overflow: 'hidden' }, style]}
+        style={[{ width: size, height: size, overflow: 'hidden' }, style]}
       />
     );
   }
 
-  // Native fallback
+  // Native fallback (web is the primary demo target for the living logo)
   return (
     <View
       style={[
         {
           width: size,
-          height: size * 0.9,
+          height: size * 0.85,
           backgroundColor: '#FF385C',
-          borderWidth: 4,
+          borderWidth: 5,
           borderColor: '#fff',
-          borderRadius: 8,
+          borderRadius: 6,
         },
         style,
       ]}
