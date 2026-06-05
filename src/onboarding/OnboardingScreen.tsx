@@ -213,8 +213,8 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
           </View>
         </View>
 
-        {/* Spacer to push bottom UI down */}
-        <View style={{ flex: 1 }} />
+        {/* Spacer to push bottom UI down. pointerEvents none so middle screen area passes touches to the full-bleed slider underneath (for drag-to-compare) */}
+        <View style={{ flex: 1 }} pointerEvents="none" />
 
         {/* Bottom action buttons - large, semitransparent, overlayed */}
         <View style={styles.bottomBar}>
@@ -250,6 +250,7 @@ const ACCENT = '#FF385C';
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+    position: 'relative', // ensure absolute children are contained (important for web stacking + events)
     backgroundColor: '#000', // full bleed dark
   },
   // Full screen slider background
@@ -276,12 +277,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.55)',
     paddingTop: 48,
     paddingBottom: 16,
+    pointerEvents: 'auto',
   },
   // Bottom semitransparent bar
   bottomBar: {
     backgroundColor: 'rgba(0,0,0,0.55)',
     paddingTop: 12,
     paddingBottom: 40,
+    pointerEvents: 'auto',
   },
   // Constrain UI width for readability, centered
   constrained: {
@@ -307,8 +310,9 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 20,
+    paddingVertical: 22,
     paddingHorizontal: 18,
+    minHeight: 82,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
@@ -325,13 +329,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.25)',
   },
   actionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#fff',
     marginBottom: 4,
   },
   actionSubtitle: {
-    fontSize: 13,
+    fontSize: 14,
     color: 'rgba(255,255,255,0.75)',
     textAlign: 'center',
   },
