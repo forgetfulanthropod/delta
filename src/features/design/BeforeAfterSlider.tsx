@@ -12,7 +12,7 @@ const IMAGE_HEIGHT = 260;
 
 export default function BeforeAfterSlider({ before, after, autoAnimate = false }: Props) {
   const sliderX = useRef(new Animated.Value(width * 0.5)).current;
-  const animRef = useRef<NodeJS.Timeout | null>(null);
+  const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Auto-animate
   useEffect(() => {

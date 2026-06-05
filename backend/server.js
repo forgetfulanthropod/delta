@@ -9,24 +9,28 @@ const PORT = 4000;
 const XAI_API_KEY = process.env.XAI_API_KEY || '';
 
 app.post('/api/reimagine', async (req, res) => {
-  const { imageUri, prompt } = req.body;
+  const { imageUri, prompt, provider, apiKey } = req.body;
 
-  console.log('Generating reimagination for prompt:', prompt);
+  console.log('Generating reimagination for prompt:', prompt, 'provider:', provider || 'x');
 
-  if (!XAI_API_KEY) {
+  // Support client-provided key (from UI) or server env. For demo, client key takes precedence if sent.
+  const effectiveKey = apiKey || XAI_API_KEY;
+
+  if (!effectiveKey) {
     return res.json({
       success: true,
       imageUri: imageUri,
       prompt,
-      message: 'Add XAI_API_KEY to backend to enable real generation',
+      message: 'Add XAI_API_KEY to backend env or provide via UI to enable real generation',
     });
   }
 
+  // Currently only xAI supported end-to-end; others can be extended here.
   try {
     const response = await fetch('https://api.x.ai/v1/images/generations', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${XAI_API_KEY}`,
+        'Authorization': `Bearer ${effectiveKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

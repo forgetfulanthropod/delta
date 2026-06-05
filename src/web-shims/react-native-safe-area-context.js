@@ -1,5 +1,6 @@
 // Web shim for react-native-safe-area-context
-import { useSafeAreaInsets } from './useSafeAreaInsets';
+// Note: simplified shim; real insets are zeroed for web simplicity.
+// The real 'react-native-safe-area-context/web' provides the providers.
 
 export { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context/web';
 

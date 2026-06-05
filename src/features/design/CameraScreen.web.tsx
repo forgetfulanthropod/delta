@@ -7,11 +7,11 @@ interface Props {
 }
 
 export default function CameraScreen({ onPhotoTaken, onCancel }: Props) {
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileSelect = (event: React.ChangeEvent<any>) => {
+    const file = event.target?.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = (e: any) => {
         if (e.target?.result) {
           onPhotoTaken(e.target.result as string);
         }
@@ -28,7 +28,7 @@ export default function CameraScreen({ onPhotoTaken, onCancel }: Props) {
         type="file"
         accept="image/*"
         onChange={handleFileSelect}
-        style={{ marginVertical: 20 }}
+        style={{ margin: '20px 0' } as any}
       />
 
       <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>

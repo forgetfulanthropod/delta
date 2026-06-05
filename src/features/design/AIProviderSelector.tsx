@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert } from 'react-native';
 
 const providers = [
   { id: 'x', name: 'X (Grok)', placeholder: 'xai-...' },
@@ -15,7 +15,7 @@ export default function AIProviderSelector({ onProviderChange }: { onProviderCha
   const handleSave = () => {
     if (apiKey) {
       onProviderChange(selected, apiKey);
-      alert('Provider saved. Your tokens will be used for generation.');
+      Alert.alert('Provider saved', 'Your tokens will be used for generation (if supported by backend).');
     }
   };
 
@@ -24,17 +24,28 @@ export default function AIProviderSelector({ onProviderChange }: { onProviderCha
   return (
     <View style={styles.container}>
       <Text style={styles.label}>AI Image Provider</Text>
-      
-      <View style={styles.selectWrapper}>
-        <select
-          value={selected}
-          onChange={(e) => setSelected(e.target.value)}
-          style={styles.select}
-        >
-          {providers.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+
+      {/* Cross-platform provider selector (buttons instead of <select>) */}
+      <View style={styles.providerRow}>
+        {providers.map((p) => (
+          <TouchableOpacity
+            key={p.id}
+            onPress={() => setSelected(p.id)}
+            style={[
+              styles.providerChip,
+              selected === p.id && styles.providerChipActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.providerText,
+                selected === p.id && styles.providerTextActive,
+              ]}
+            >
+              {p.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <TextInput
@@ -64,17 +75,30 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontSize: 16,
   },
-  selectWrapper: {
+  providerRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 12,
+    gap: 8,
+  },
+  providerChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
-    marginBottom: 12,
-    overflow: 'hidden',
+    backgroundColor: '#fff',
   },
-  select: {
-    width: '100%',
-    padding: 12,
-    fontSize: 16,
+  providerChipActive: {
+    backgroundColor: '#000',
+    borderColor: '#000',
+  },
+  providerText: {
+    fontSize: 12,
+    color: '#333',
+  },
+  providerTextActive: {
+    color: '#fff',
   },
   input: {
     borderWidth: 1,

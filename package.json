@@ -8,8 +8,10 @@
     "web": "vite",
     "build:web": "vite build",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit --skipLibCheck",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "dev:backend": "node backend/server.js"
   },
   "dependencies": {
     "@react-native/new-app-screen": "0.85.3",
@@ -17,6 +19,7 @@
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
     "react-native-safe-area-context": "^5.5.2",
+    "react-native-vision-camera": "^4.6.0",
     "react-native-web": "^0.21.2",
     "zustand": "^5.0.13"
   },

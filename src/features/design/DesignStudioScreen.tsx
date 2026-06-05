@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TextInput, Modal, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TextInput, Modal, TouchableOpacity, Button, Alert } from 'react-native';
 import { DesignVersion } from './types';
 import { useDeltaStore } from '../../store/useDeltaStore';
 import CameraScreen from './CameraScreen';
@@ -15,6 +15,8 @@ export default function DesignStudioScreen() {
   const [aiProvider, setAiProvider] = useState('x');
   const [aiApiKey, setAiApiKey] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const { approvedDesign, setApprovedDesign } = useDeltaStore();
 
   const handlePhotoTaken = (uri: string) => {
     setOriginalImage(uri);
@@ -68,8 +70,7 @@ export default function DesignStudioScreen() {
   };
 
   const sendToSourcing = async (version: DesignVersion) => {
-    const store = useDeltaStore.getState();
-    store.setApprovedDesign(version);
+    setApprovedDesign(version);
 
     try {
       const response = await fetch('http://localhost:4000/api/reimagine', {
@@ -92,8 +93,8 @@ export default function DesignStudioScreen() {
       { id: (Date.now()+1).toString(), name: 'Matte Black Faucet', retailer: 'Amazon' as const, price: 89, quantity: 2, approved: false },
       { id: (Date.now()+2).toString(), name: 'LED Recessed Lights', retailer: 'Home Depot' as const, price: 42, quantity: 8, approved: false },
     ];
-    store.addSourcingItems(suggestedItems);
-    alert('Design sent to Sourcing!\nSuggested materials added.\n\nGo to Sourcing tab to approve items.');
+    useDeltaStore.getState().addSourcingItems(suggestedItems);
+    Alert.alert('Sent to Sourcing', 'Suggested materials added.\n\nGo to Sourcing tab to approve items.');
   };
 
   return (
@@ -151,7 +152,13 @@ export default function DesignStudioScreen() {
               <Text style={{ fontWeight: '600' }}>{v.prompt}</Text>
               <Text style={{ color: '#2e7d32', fontSize: 12 }}>AI Generated Variation</Text>
               <Text>Style: {v.tweaks.style} • Colors: {v.tweaks.colorPalette} • Layout: {v.tweaks.layout}</Text>
-              <Button title="Use this version" onPress={() => { /* TODO: set as current */ }} />
+              <Button
+                title={approvedDesign?.id === v.id ? 'Current Design ✓' : 'Use this version'}
+                onPress={() => {
+                  setApprovedDesign(v);
+                  Alert.alert('Version selected', 'This design is now the current approved version.');
+                }}
+              />
               <TouchableOpacity 
               onPress={() => sendToSourcing(v)}
               style={{ backgroundColor: '#FF385C', paddingVertical: 14, borderRadius: 20, marginTop: 12 }}>

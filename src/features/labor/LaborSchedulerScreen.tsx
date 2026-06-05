@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Button, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Button, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { generateSchedule, getHalfDayProgress } from './scheduler';
 import { Task } from './types';
 import { useDeltaStore } from '../../store/useDeltaStore';
@@ -31,8 +31,8 @@ export default function LaborSchedulerScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text className="text-4xl font-semibold tracking-tight text-[#222]">Labor Scheduler</Text>
-      <Text className="text-xl text-[#666] mt-1">8-hour days • Built-in breaks • $600 per laborer</Text>
+      <Text style={styles.title}>Labor Scheduler</Text>
+      <Text style={styles.subtitle}>8-hour days • Built-in breaks • $600 per laborer</Text>
       {laborTasks.length > 0 && <Text style={{ color: '#2e7d32', marginBottom: 8 }}>Using tasks from Sourcing</Text>}
 
       <TextInput
@@ -45,8 +45,8 @@ export default function LaborSchedulerScreen() {
 
       <TouchableOpacity 
         onPress={runSchedule}
-        className="mt-4 bg-black py-4 rounded-2xl active:bg-[#222]">
-        <Text className="text-white text-center text-xl font-semibold">Generate Schedule</Text>
+        style={styles.generateBtn}>
+        <Text style={styles.generateText}>Generate Schedule</Text>
       </TouchableOpacity>
 
       {result && (
@@ -86,9 +86,21 @@ export default function LaborSchedulerScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
-  subtitle: { fontSize: 13, color: '#666', marginBottom: 16 },
+  title: { fontSize: 36, fontWeight: '700', color: '#222', letterSpacing: -1, marginBottom: 4 },
+  subtitle: { fontSize: 20, color: '#666', marginTop: 4, marginBottom: 16 },
   input: { borderWidth: 1, borderColor: '#ccc', padding: 12, height: 120, marginBottom: 12, fontSize: 16 },
+  generateBtn: {
+    marginTop: 16,
+    backgroundColor: '#000',
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  generateText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
   result: { marginTop: 20 },
   summary: { fontSize: 16, fontWeight: '600', marginBottom: 12 },
   dayCard: { backgroundColor: '#f8f8f8', padding: 14, borderRadius: 8, marginBottom: 16 },

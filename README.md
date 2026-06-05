@@ -1,97 +1,121 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Delta
 
-# Getting Started
+**Remodel your space with AI.**
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+Delta is a cross-platform (React Native + Web) prototype for an AI-powered home remodeling assistant. Homeowners ("owners") take photos of spaces, reimagine them with AI, source materials from retailers, and generate realistic labor schedules. Workers can join jobs.
 
-## Step 1: Start Metro
+- **Web (easiest demo)**: http://localhost:3000 after `pnpm web`
+- **Backend** (for real AI image gen): `cd backend && node server.js` (port 4000)
+- Full owner flow: Onboarding → Design Studio (camera/upload + prompt + AI) → Sourcing (approve items) → Labor (auto-schedule with breaks & costing)
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Features (current prototype)
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- **Design Studio**: Camera (web file upload + native vision-camera), prompt + AI reimagine (xAI Grok Imagine via backend, or static fallbacks), before/after comparison sliders, multiple versions, "use this version" + send to sourcing.
+- **Sourcing**: Dynamic list from designs, approve items from Lowe's/Amazon/Home Depot, running total, generate labor tasks.
+- **Labor Scheduler**: 8-hour days, built-in breaks (lunch + short), largest-first packing, per-day breakdown with start/end times, half-day progress, $600/day costing.
+- **State**: Zustand store flows approved design → sourcing items → labor tasks.
+- **AI**: Client provider/key UI (x/Gemini/OpenAI/Anthropic). Backend supports xAI (via env `XAI_API_KEY` or per-request key). Image gen is currently prompt-driven (image URI passed but not yet vision/img2img).
+- Cross-platform intent with web shims and .web.tsx files.
 
-```sh
-# Using npm
-npm start
+## Tech Stack
 
-# OR using Yarn
-yarn start
-```
+- React Native 0.85 + react-native-web + Vite (web on :3000)
+- TypeScript, Zustand, Tailwind (web via PostCSS), StyleSheet (native)
+- Express backend (simple AI proxy)
+- Intended native camera: react-native-vision-camera (added; requires extra native setup for full mobile)
+- No persistence yet (in-memory + localStorage planned)
 
-## Step 2: Build and run your app
+## Getting Started
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### Prerequisites
+- Node >= 22.11
+- pnpm (recommended, lockfile present)
+- For iOS: Ruby + CocoaPods (see Gemfile)
+- (Optional) `XAI_API_KEY` for real Grok image generation
 
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+### Run the Web Demo (recommended for Phase 0+)
 
 ```sh
-bundle install
+# Terminal 1: web app
+cd ~/git/delta
+pnpm web
+# Open http://localhost:3000
+
+# Terminal 2: backend (for AI calls)
+cd ~/git/delta/backend
+node server.js
+# Or: pnpm dev:backend (from root)
 ```
 
-Then, and every time you update your native dependencies, run:
+To use **real AI images**:
+- Get an xAI key
+- `XAI_API_KEY=your_key node server.js` (or export it)
+- In the app UI, you can also "Save Provider & Key" (xAI key will be sent to backend and used)
+
+On web, "Take Photo" opens file picker. Reimagine calls backend or falls back to bundled demo images.
+
+### Mobile (Android/iOS)
 
 ```sh
-bundle exec pod install
+pnpm start          # Metro
+pnpm android        # or pnpm ios
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+**Notes**:
+- iOS first time: `bundle install && bundle exec pod install` (in ios/)
+- Native camera (`react-native-vision-camera`) is declared but requires full native integration (permissions in Info.plist/AndroidManifest, pod/gradle updates, possibly reanimated). Web upload always works as fallback.
+- Backend calls from device/emulator need to target your dev machine's LAN IP (not localhost) or use a tunnel.
+
+### Other commands
 
 ```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+pnpm lint
+pnpm typecheck     # tsc --noEmit --skipLibCheck (should be clean)
+pnpm test
+pnpm build:web
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## Project Structure
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+```
+src/
+  features/
+    design/          # Camera, AIProviderSelector, DesignStudioScreen, BeforeAfterSlider, realImageGen (stub)
+    labor/           # LaborSchedulerScreen + scheduler.ts (core logic)
+    sourcing/        # SourcingScreen + types
+  onboarding/
+  store/             # useDeltaStore.ts (design -> sourcing -> labor)
+  web-shims/
+backend/server.js    # Express, /api/reimagine (xAI)
+public/              # demo images
+```
 
-## Step 3: Modify your app
+## Current Status & Phase 0
 
-Now that you have successfully run the app, let's make changes!
+This is an early prototype. Phase 0 focused on:
+- Making the web demo clean and usable (no TS errors, consistent styling, working provider UI, implemented TODOs, proper alerts, postcss for Tailwind, web shims, vision-camera declared).
+- `tsc --noEmit --skipLibCheck` is clean.
+- See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the full roadmap, known gaps, and next phases (real AI wiring, persistence, navigation, native polish, etc.).
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## Known Limitations (as of Phase 0)
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+- AI generation is text-prompt only (no full image understanding/img2img yet); multi-provider UI is present but backend only fully supports xAI.
+- No real persistence (refresh loses state).
+- Sourcing items are sample/hardcoded when sending a design.
+- Native mobile camera not fully wired (web file upload works).
+- Some hardcoded data and alerts for demo.
+- No auth, backend storage, or real retailer APIs.
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## Contributing / Next
 
-## Congratulations! :tada:
+See DEVELOPMENT_PLAN.md for prioritized tasks (start with remaining Phase 0 doc polish if needed, then Phase 1 cross-platform etc.).
 
-You've successfully run and modified your React Native App. :partying_face:
+PRs welcome. Update the plan as things evolve.
 
-### Now what?
+## License
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+TBD (prototype).
 
-# Troubleshooting
+---
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Built with React Native, Vite, and a bit of imagination.

@@ -1,13 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Button, FlatList } from 'react-native';
-import { SourcingItem } from './types';
+import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useDeltaStore } from '../../store/useDeltaStore';
-
-const SAMPLE_ITEMS: SourcingItem[] = [
-  { id: '1', name: 'LVP Flooring - Oak', retailer: "Lowe's", price: 3.49, quantity: 120, approved: false },
-  { id: '2', name: 'Matte Black Faucet', retailer: 'Amazon', price: 89, quantity: 2, approved: false },
-  { id: '3', name: 'LED Recessed Lights 6-pack', retailer: 'Home Depot', price: 42, quantity: 8, approved: false },
-];
 
 export default function SourcingScreen() {
   const { sourcingItems, toggleApproveItem, setLaborTasks } = useDeltaStore();
@@ -24,18 +17,18 @@ export default function SourcingScreen() {
     }));
 
     if (tasks.length === 0) {
-      alert('Approve some items first');
+      Alert.alert('Sourcing', 'Approve some items first');
       return;
     }
 
     setLaborTasks(tasks);
-    alert(`Labor schedule generated for ${tasks.length} tasks! Check the Labor tab.`);
+    Alert.alert('Labor', `Labor schedule generated for ${tasks.length} tasks! Check the Labor tab.`);
   };
 
   return (
-    <View className="flex-1 bg-white px-6 pt-8">
-      <Text className="text-4xl font-semibold tracking-tight text-[#222]">Sourcing</Text>
-      <Text className="text-xl text-[#666] mt-1">One list. One approval. From the best retailers.</Text>
+    <View style={styles.screen}>
+      <Text style={styles.title}>Sourcing</Text>
+      <Text style={styles.subtitle}>One list. One approval. From the best retailers.</Text>
 
       <FlatList
         data={sourcingItems}
@@ -48,8 +41,15 @@ export default function SourcingScreen() {
             </View>
             <TouchableOpacity
               onPress={() => toggleApproveItem(item.id)}
-              className={`px-5 py-2 rounded-2xl ${item.approved ? 'bg-[#E8F5E9]' : 'bg-[#FF385C]'}`}>
-              <Text className={`font-medium ${item.approved ? 'text-[#2E7D32]' : 'text-white'}`}>
+              style={[
+                styles.approveBtn,
+                item.approved ? styles.approveBtnActive : styles.approveBtnInactive,
+              ]}>
+              <Text
+                style={[
+                  styles.approveText,
+                  item.approved ? styles.approveTextActive : styles.approveTextInactive,
+                ]}>
                 {item.approved ? 'Approved ✓' : 'Approve'}
               </Text>
             </TouchableOpacity>
@@ -59,7 +59,7 @@ export default function SourcingScreen() {
 
       <View style={styles.footer}>
         <Text style={styles.total}>Approved Total: ${total.toFixed(2)}</Text>
-        <Button title="Submit Approved Purchases" onPress={() => alert('Purchases submitted!')} disabled={approvedItems.length === 0} />
+        <Button title="Submit Approved Purchases" onPress={() => Alert.alert('Sourcing', 'Purchases submitted!')} disabled={approvedItems.length === 0} />
         <View style={{ height: 12 }} />
         <Button title="Generate Labor Schedule" onPress={generateLaborSchedule} disabled={approvedItems.length === 0} color="#c62828" />
       </View>
@@ -68,10 +68,16 @@ export default function SourcingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  title: { fontSize: 22, fontWeight: 'bold' },
-  subtitle: { color: '#666', marginBottom: 16 },
+  screen: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 24, paddingTop: 32 },
+  title: { fontSize: 36, fontWeight: '700', color: '#222', letterSpacing: -1 },
+  subtitle: { fontSize: 20, color: '#666', marginTop: 8, marginBottom: 16 },
   itemRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderColor: '#eee' },
+  approveBtn: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 16 },
+  approveBtnInactive: { backgroundColor: '#FF385C' },
+  approveBtnActive: { backgroundColor: '#E8F5E9' },
+  approveText: { fontWeight: '500' },
+  approveTextInactive: { color: '#fff' },
+  approveTextActive: { color: '#2E7D32' },
   footer: { paddingTop: 20, borderTopWidth: 1, borderColor: '#ddd' },
   total: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
 });

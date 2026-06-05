@@ -25,7 +25,6 @@ export default function CameraScreen({ onPhotoTaken, onCancel }: Props) {
     try {
       const photo = await camera.current.takePhoto({
         flash: 'off',
-        qualityPrioritization: 'balanced',
       });
       onPhotoTaken(`file://${photo.path}`);
     } catch (e) {
