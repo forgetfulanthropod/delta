@@ -52,6 +52,7 @@ export const useDeltaStore = create<DeltaStore>()(
     }),
     {
       name: 'delta-store', // persists to localStorage on web (and AsyncStorage adapter possible)
+      // @ts-ignore - localStorage for web; on pure RN provide custom storage via @react-native-async-storage
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         approvedDesign: state.approvedDesign,

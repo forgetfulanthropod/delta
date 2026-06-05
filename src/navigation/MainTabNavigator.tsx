@@ -1,45 +1,18 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+// @ts-nocheck - prepared for future; @react-navigation/* removed temporarily for web bundle stability (see plan)
+// import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, StyleSheet } from 'react-native';
 import DesignStudioScreen from '../features/design/DesignStudioScreen';
 import SourcingScreen from '../features/sourcing/SourcingScreen';
 import LaborSchedulerScreen from '../features/labor/LaborSchedulerScreen';
 
-const Tab = createBottomTabNavigator();
-
-function TabBarIcon({ name, focused }: { name: string; focused: boolean }) {
-  return (
-    <View style={[styles.iconContainer, focused && styles.iconActive]}>
-      <Text style={[styles.iconText, focused && styles.iconTextActive]}>
-        {name === 'Design' ? '🎨' : name === 'Sourcing' ? '🛒' : '👷'}
-      </Text>
-    </View>
-  );
-}
-
+// Stub for future wiring of react-navigation (see DEVELOPMENT_PLAN.md Phase 1/4)
+// When re-adding deps, uncomment and use real Tab.Navigator
 export default function MainTabNavigator() {
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused }) => (
-          <TabBarIcon name={route.name} focused={focused} />
-        ),
-        tabBarActiveTintColor: '#FF385C',
-        tabBarInactiveTintColor: '#888',
-        tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopWidth: 1,
-          borderTopColor: '#eee',
-          paddingBottom: 4,
-          height: 60,
-        },
-        headerShown: false,
-      })}
-    >
-      <Tab.Screen name="Design" component={DesignStudioScreen} />
-      <Tab.Screen name="Sourcing" component={SourcingScreen} />
-      <Tab.Screen name="Labor" component={LaborSchedulerScreen} />
-    </Tab.Navigator>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>Navigation placeholder (react-nav prepared but not active - using custom tabs in App.tsx)</Text>
+    </View>
   );
 }
 
