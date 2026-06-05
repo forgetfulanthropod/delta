@@ -234,14 +234,14 @@ export default function DesignStudioScreen() {
   if (!baseImage) {
     return (
       <ScrollView style={styles.container}>
-        <View style={{ paddingHorizontal: 24, paddingTop: 40, paddingBottom: 20 }}>
+        <View style={{ paddingHorizontal: 24, paddingTop: 40, paddingBottom: 20, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
           <Text style={{ fontSize: 36, fontWeight: '700', color: '#222', letterSpacing: -1 }}>Design Studio</Text>
           <Text style={{ fontSize: 18, color: '#555', marginTop: 8, lineHeight: 24 }}>
             One house. Real photos. AI variations. Then straight into sourcing and scheduling.
           </Text>
         </View>
 
-        <View style={{ paddingHorizontal: 20, gap: 16 }}>
+        <View style={{ paddingHorizontal: 20, gap: 16, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
           <TouchableOpacity
             onPress={startNewProject}
             style={[styles.choiceCard, { backgroundColor: '#111' }]}
@@ -283,7 +283,7 @@ export default function DesignStudioScreen() {
   return (
     <ScrollView style={styles.container}>
       {/* Project header */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', maxWidth: 720, alignSelf: 'center', width: '100%' }}>
         <View>
           <Text style={{ fontSize: 28, fontWeight: '700', color: '#222', letterSpacing: -0.5 }}>{projectName}</Text>
           <Text style={{ color: '#666', fontSize: 14 }}>{isExample ? 'Example • full pipeline in progress' : 'Your project'}</Text>
@@ -307,7 +307,7 @@ export default function DesignStudioScreen() {
 
       {/* House photo gallery — "a lot of photos of one house" */}
       {projectPhotos.length > 1 && (
-        <View style={{ marginTop: 16, paddingHorizontal: 16 }}>
+        <View style={{ marginTop: 16, paddingHorizontal: 16, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
           <Text style={styles.section}>
             {isExample ? 'Before, after & AI concepts for this house' : 'Photos of this house'} ({projectPhotos.length})
           </Text>
@@ -323,7 +323,7 @@ export default function DesignStudioScreen() {
       )}
 
       {/* Clean login buttons instead of API keys */}
-      <View style={{ marginTop: 24, paddingHorizontal: 16 }}>
+      <View style={{ marginTop: 24, paddingHorizontal: 16, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
         <Text style={styles.section}>AI Generation</Text>
 
         {!connectedProvider ? (
@@ -355,7 +355,7 @@ export default function DesignStudioScreen() {
 
       {/* Prompt + tweaks (only make sense once we have a base photo) */}
       {baseImage && (
-        <View style={{ marginTop: 16, paddingHorizontal: 16 }}>
+        <View style={{ marginTop: 16, paddingHorizontal: 16, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
           <TextInput
             style={styles.promptInput}
             value={prompt}
@@ -416,7 +416,7 @@ export default function DesignStudioScreen() {
 
       {/* AI Variations for this project */}
       {versions.length > 0 && (
-        <View style={{ marginTop: 24, paddingHorizontal: 16 }}>
+        <View style={{ marginTop: 24, paddingHorizontal: 16, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
           <Text style={styles.section}>AI Variations for {projectName}</Text>
           {versions.map((v) => (
             <View key={v.id} style={styles.versionCard}>
@@ -471,6 +471,11 @@ export default function DesignStudioScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
+  constrained: {
+    maxWidth: 720,
+    width: '100%',
+    alignSelf: 'center',
+  },
   title: { fontSize: 22, fontWeight: 'bold' },
   subtitle: { color: '#666', marginBottom: 12 },
   tweakTextActive: { color: '#fff' },

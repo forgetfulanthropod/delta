@@ -75,7 +75,16 @@ export default function SourcingScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 24, paddingTop: 32 },
+  screen: { 
+    flex: 1, 
+    backgroundColor: '#fff', 
+    maxWidth: 720,
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: 20, 
+    paddingTop: 32,
+    paddingBottom: 40,
+  },
   title: { fontSize: 36, fontWeight: '700', color: '#222', letterSpacing: -1 },
   subtitle: { fontSize: 20, color: '#666', marginTop: 8, marginBottom: 16 },
   itemRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderColor: '#eee' },
