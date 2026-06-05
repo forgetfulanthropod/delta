@@ -8,7 +8,7 @@ export interface Task {
 export interface Laborer {
   id: string;
   name: string;
-  ratePerJob: number; // $600 default
+  ratePerJob: number; // $200/day default ($25/hr * 8 hours)
 }
 
 export interface DaySchedule {

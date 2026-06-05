@@ -8,7 +8,7 @@ const PRODUCTIVE_HOURS = WORKDAY_HOURS - TOTAL_BREAKS; // 7 hours
 
 export function generateSchedule(
   tasks: Task[],
-  laborers: Laborer[] = [{ id: 'l1', name: 'Crew', ratePerJob: 600 }]
+  laborers: Laborer[] = [{ id: 'l1', name: 'Crew', ratePerJob: 200 }]
 ): ScheduleResult {
   // Sort tasks by size (largest first) for better packing
   const sortedTasks = [...tasks].sort((a, b) => b.estimatedHours - a.estimatedHours);

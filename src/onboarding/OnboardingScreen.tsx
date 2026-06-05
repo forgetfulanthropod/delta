@@ -24,7 +24,7 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
         style={{ backgroundColor: 'white', borderWidth: 1, borderColor: '#F0F0F0', borderRadius: 24, padding: 24, marginTop: 16 }}
         onPress={() => onSelectRole('worker')}>
         <Text style={styles.cardTitle}>Work on spaces</Text>
-        <Text style={styles.cardDesc}>Join jobs, get paid $600 per day, manage your schedule</Text>
+        <Text style={styles.cardDesc}>Join jobs, get paid $25 an hour guaranteed, manage your schedule</Text>
       </TouchableOpacity>
     </View>
   );

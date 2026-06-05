@@ -32,7 +32,7 @@ export default function LaborSchedulerScreen() {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Labor Scheduler</Text>
-      <Text style={styles.subtitle}>8-hour days • Built-in breaks • $600 per laborer</Text>
+      <Text style={styles.subtitle}>8-hour days • Built-in breaks • $25/hr guaranteed</Text>
       {laborTasks.length > 0 && <Text style={{ color: '#2e7d32', marginBottom: 8 }}>Using tasks from Sourcing</Text>}
 
       <TextInput
