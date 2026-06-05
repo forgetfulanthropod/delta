@@ -19,7 +19,7 @@ The existing [README.md](./README.md) is 100% untouched React Native Community C
 
 ### Critical missing content:
 1. **Project overview & value prop** — What is Delta? Who is it for (homeowners + contractors/workers)? Owner flow (photo → AI viz → source materials → schedule labor) vs Worker flow.
-2. **Key features** — Design Studio (camera, prompt, AI reimagine, before/after sliders, versions), Sourcing (multi-retailer list, approvals, cost totals), Labor Scheduler (realistic 8h days, built-in breaks, $600/day costing, half-day progress).
+2. **Key features** — Design Studio (camera, prompt, AI reimagine, before/after sliders, versions), Sourcing (multi-retailer list, approvals, cost totals), Labor Scheduler (realistic 8h days, built-in breaks, $25/hr guaranteed costing, half-day progress).
 3. **Tech stack & architecture** — RN 0.85 + react-native-web + Vite, Zustand store for design→sourcing→labor flow, Express backend (AI proxy), Tailwind (web), no persistence yet.
 4. **How to run (this project, not generic RN)**:
    - Web (easiest): `pnpm web` (or `npm run web`)
@@ -48,7 +48,7 @@ The existing [README.md](./README.md) is 100% untouched React Native Community C
 - Design Studio: photo capture/upload (web file input works; native vision-camera declared but broken), prompt input, reimagine button (calls backend or falls back to 3 static ai-room jpgs), versions list, before/after demo sliders (nice PanResponder + auto-animate, 3 examples), "Send to Sourcing" (populates store + hardcoded 3 items + extra backend call).
 - Sourcing: renders store items, toggle approve (visual), total calc, "Submit" (just alert), "Generate Labor Schedule" (derives tasks from approved, calls store).
 - Labor: demo/manual task input or from store, calls scheduler, renders day cards with times, productive/break split, half-day progress, costs.
-- Scheduler logic (`labor/scheduler.ts`): solid largest-first packing, 8h days, 1h total breaks (45m lunch + 2x15m), $600 default per day, summary.
+- Scheduler logic (`labor/scheduler.ts`): solid largest-first packing, 8h days, 1h total breaks (45m lunch + 2x15m), $200/day default ($25/hr guaranteed), summary.
 - Backend: simple Express + CORS, /api/reimagine that calls x.ai (grok-imagine-image-quality) if env key present, else echoes + message. Tested working.
 - Zustand store: basic approvedDesign + sourcingItems + laborTasks wiring.
 - Web entry (index.web.js + vite alias to react-native-web), some shims.

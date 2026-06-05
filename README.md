@@ -12,7 +12,7 @@ Delta is a cross-platform (React Native + Web) prototype for an AI-powered home 
 
 - **Design Studio**: Camera (web file upload + native vision-camera), prompt + AI reimagine (xAI Grok Imagine via backend, or static fallbacks), before/after comparison sliders, multiple versions, "use this version" + send to sourcing.
 - **Sourcing**: Dynamic list from designs, approve items from Lowe's/Amazon/Home Depot, running total, generate labor tasks.
-- **Labor Scheduler**: 8-hour days, built-in breaks (lunch + short), largest-first packing, per-day breakdown with start/end times, half-day progress, $600/day costing.
+- **Labor Scheduler**: 8-hour days, built-in breaks (lunch + short), largest-first packing, per-day breakdown with start/end times, half-day progress, $25/hr guaranteed costing.
 - **State**: Zustand store flows approved design → sourcing items → labor tasks.
 - **AI**: Client provider/key UI (x/Gemini/OpenAI/Anthropic). Backend supports xAI (via env `XAI_API_KEY` or per-request key). Image gen is currently prompt-driven (image URI passed but not yet vision/img2img).
 - Cross-platform intent with web shims and .web.tsx files.
