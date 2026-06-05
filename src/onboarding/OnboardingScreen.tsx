@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import BeforeAfterSlider from '../features/design/BeforeAfterSlider';
 
 interface Props {
@@ -7,47 +7,57 @@ interface Props {
 }
 
 export default function OnboardingScreen({ onSelectRole }: Props) {
+  const screenHeight = Dimensions.get('window').height;
+
   return (
     <View style={styles.screen}>
-      <View style={styles.content}>
-        {/* Minimal top branding */}
-        <View style={styles.topBar}>
-          <Text style={styles.logo}>Delta</Text>
-          <Text style={styles.tagline}>Transforming the built environment</Text>
-        </View>
+      {/* Full screen before/after slider as background */}
+      <View style={styles.sliderBackground}>
+        <BeforeAfterSlider
+          before="/test-images/before-after/before-1.jpg"
+          after="/test-images/before-after/after-1.jpg"
+          height={screenHeight}
+          idleAnimate={true}
+          showHint={false}
+        />
+      </View>
 
-        {/* Giant before & after slider - the main focus of the landing page */}
-        <View style={styles.heroSliderWrapper}>
-          <BeforeAfterSlider
-            before="/test-images/before-after/before-1.jpg"
-            after="/test-images/before-after/after-1.jpg"
-            height={420}
-            idleAnimate={true}
-          />
-          <View style={styles.clickHint}>
-            <Text style={styles.clickHintText}>Drag the center line</Text>
+      {/* Semitransparent UI overlayed on top */}
+      <View style={styles.overlay}>
+        {/* Top branding bar - semitransparent */}
+        <View style={styles.topBar}>
+          <View style={styles.constrained}>
+            <Text style={styles.logo}>Delta</Text>
+            <Text style={styles.tagline}>Transforming the built environment</Text>
           </View>
         </View>
 
-        {/* Large semitransparent action buttons below the slider */}
-        <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.ownerAction]}
-            onPress={() => onSelectRole('owner')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.actionTitle}>Remodel my space</Text>
-            <Text style={styles.actionSubtitle}>Reimagine with AI • Make it real</Text>
-          </TouchableOpacity>
+        {/* Spacer to push bottom UI down */}
+        <View style={{ flex: 1 }} />
 
-          <TouchableOpacity
-            style={[styles.actionButton, styles.workerAction]}
-            onPress={() => onSelectRole('worker')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.actionTitle}>Work on spaces</Text>
-            <Text style={styles.actionSubtitle}>Get paid $25 an hour guaranteed</Text>
-          </TouchableOpacity>
+        {/* Bottom action buttons - large, semitransparent, overlayed */}
+        <View style={styles.bottomBar}>
+          <View style={styles.constrained}>
+            <View style={styles.actionsRow}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.ownerAction]}
+                onPress={() => onSelectRole('owner')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.actionTitle}>Remodel my space</Text>
+                <Text style={styles.actionSubtitle}>Reimagine with AI • Make it real</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionButton, styles.workerAction]}
+                onPress={() => onSelectRole('worker')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.actionTitle}>Work on spaces</Text>
+                <Text style={styles.actionSubtitle}>Get paid $25 an hour guaranteed</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </View>
     </View>
@@ -59,98 +69,89 @@ const ACCENT = '#FF385C';
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#0F0F12', // dark for dramatic giant slider
+    backgroundColor: '#000', // full bleed dark
   },
-  content: {
-    flex: 1,
-    maxWidth: 720,
-    alignSelf: 'center',
-    width: '100%',
-    paddingHorizontal: 16,
-    paddingTop: 24,
-    paddingBottom: 24,
+  // Full screen slider background
+  sliderBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  // Overlay container for all UI on top of the full screen slider
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
     justifyContent: 'space-between',
-    marginBottom: 12,
+  },
+  // Top semitransparent bar
+  topBar: {
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingTop: 48,
+    paddingBottom: 12,
+  },
+  // Bottom semitransparent bar
+  bottomBar: {
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingTop: 12,
+    paddingBottom: 40,
+  },
+  // Constrain UI width for readability, centered
+  constrained: {
+    maxWidth: 720,
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: 20,
   },
   logo: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '800',
     color: '#fff',
     letterSpacing: -1,
   },
   tagline: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.65)',
-    fontWeight: '500',
-  },
-  heroSliderWrapper: {
-    flex: 1,
-    minHeight: 380,
-    backgroundColor: '#000',
-    borderRadius: 18,
-    overflow: 'hidden',
-    marginBottom: 18,
-    position: 'relative',
-  },
-  clickHint: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -60 }, { translateY: -10 }],
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-    borderRadius: 20,
-    pointerEvents: 'none',
-  },
-  clickHintText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-    opacity: 0.85,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 18,
-    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   ownerAction: {
-    backgroundColor: 'rgba(255, 56, 92, 0.15)',
-    borderColor: 'rgba(255, 56, 92, 0.4)',
+    backgroundColor: 'rgba(255, 56, 92, 0.25)',
+    borderColor: 'rgba(255, 56, 92, 0.5)',
   },
   workerAction: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.25)',
   },
   actionTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
     color: '#fff',
-    marginBottom: 3,
+    marginBottom: 4,
   },
   actionSubtitle: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.75)',
     textAlign: 'center',
-  },
-  bottomHint: {
-    textAlign: 'center',
-    marginTop: 14,
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.4)',
   },
 });

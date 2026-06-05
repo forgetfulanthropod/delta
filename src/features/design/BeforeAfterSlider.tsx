@@ -7,11 +7,12 @@ interface Props {
   autoAnimate?: boolean;   // legacy wide auto-oscillation (for design demos)
   height?: number;
   idleAnimate?: boolean;   // subtle slow animation 40%-60% when idle (for landing)
+  showHint?: boolean;
 }
 
 const { width: windowWidth } = Dimensions.get('window');
 
-export default function BeforeAfterSlider({ before, after, autoAnimate = false, height = 260, idleAnimate = false }: Props) {
+export default function BeforeAfterSlider({ before, after, autoAnimate = false, height = 260, idleAnimate = false, showHint = true }: Props) {
   const [displayWidth, setDisplayWidth] = useState(windowWidth);
   const [containerX, setContainerX] = useState(0);
   const sliderX = useRef(new Animated.Value(windowWidth * 0.5)).current;
@@ -187,7 +188,7 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
           <View style={styles.handle} />
         </Animated.View>
       </View>
-      <Text style={styles.hint}>Drag to compare before & after</Text>
+      {showHint && <Text style={styles.hint}>Drag to compare before & after</Text>}
     </View>
   );
 }
