@@ -40,13 +40,15 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
   }, [autoAnimate, displayWidth]);
 
   // Idle subtle animation: slowly ease between 40% and 60% when not being interacted with
+  const currentAnimRef = useRef<Animated.CompositeAnimation | null>(null);
+
   const startIdleAnimation = () => {
     if (!idleAnimate || isInteractingRef.current) return;
 
     const runCycle = () => {
       if (!idleAnimate || isInteractingRef.current) return;
 
-      Animated.sequence([
+      const seq = Animated.sequence([
         Animated.timing(sliderX, {
           toValue: displayWidth * 0.4,
           duration: 3800,
@@ -59,7 +61,10 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
           easing: (t) => t * t * (3 - 2 * t),
           useNativeDriver: false,
         }),
-      ]).start(() => {
+      ]);
+      currentAnimRef.current = seq;
+      seq.start(() => {
+        currentAnimRef.current = null;
         if (!isInteractingRef.current) {
           runCycle();
         }
@@ -70,12 +75,15 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
     const current = (sliderX as any)._value || displayWidth * 0.5;
     const target = current > displayWidth * 0.5 ? displayWidth * 0.4 : displayWidth * 0.6;
 
-    Animated.timing(sliderX, {
+    const initialTiming = Animated.timing(sliderX, {
       toValue: target,
       duration: 2200,
       easing: (t) => t * t * (3 - 2 * t),
       useNativeDriver: false,
-    }).start(() => {
+    });
+    currentAnimRef.current = initialTiming;
+    initialTiming.start(() => {
+      currentAnimRef.current = null;
       if (!isInteractingRef.current) runCycle();
     });
   };
@@ -84,6 +92,10 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
     if (idleTimeoutRef.current) {
       clearTimeout(idleTimeoutRef.current);
       idleTimeoutRef.current = null;
+    }
+    if (currentAnimRef.current) {
+      currentAnimRef.current.stop();
+      currentAnimRef.current = null;
     }
   };
 
@@ -110,9 +122,13 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
-    onPanResponderGrant: () => {
+    onPanResponderGrant: (_, gesture) => {
       isInteractingRef.current = true;
       stopIdleAnimation();
+      // Support click/tap to position the slider immediately (click anywhere on the image area)
+      const localX = gesture.moveX - containerX;
+      const newX = Math.max(30, Math.min(displayWidth - 30, localX));
+      sliderX.setValue(newX);
     },
     onPanResponderMove: (_, gesture) => {
       // Convert absolute screen position to local position within this slider
@@ -133,7 +149,7 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
   return (
     <View style={styles.container}>
       <View 
-        style={[styles.imageContainer, { height }]}
+        style={[styles.imageContainer, { height, cursor: 'col-resize' as any }]}
         onLayout={(e) => {
           const { x, width: w } = e.nativeEvent.layout;
           setContainerX(x);
@@ -141,6 +157,7 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
           // Center the slider on first layout
           sliderX.setValue(w * 0.5);
         }}
+        {...panResponder.panHandlers}
       >
         {/* Base image (Before) - fixed */}
         <Image 
@@ -163,10 +180,9 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
           />
         </Animated.View>
 
-        {/* Slider handle */}
+        {/* Slider handle (visual only; dragging works on the whole image area) */}
         <Animated.View 
           style={[styles.slider, { left: Animated.subtract(sliderX, 2) }]} 
-          {...panResponder.panHandlers}
         >
           <View style={styles.handle} />
         </Animated.View>
@@ -209,7 +225,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: 4,
+    width: 8,  // slightly thicker for easier clicking
     backgroundColor: '#fff',
     zIndex: 20,
   },
