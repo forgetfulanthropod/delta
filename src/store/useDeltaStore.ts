@@ -12,6 +12,7 @@ interface ProjectData {
   approvedDesign: DesignVersion | null;
   sourcingItems: SourcingItem[];
   laborTasks: Task[];
+  versions: DesignVersion[];
 }
 
 interface DeltaStore {
@@ -28,6 +29,12 @@ interface DeltaStore {
   // Labor (current project view)
   laborTasks: Task[];
   setLaborTasks: (tasks: Task[]) => void;
+
+  // Design versions (Phase 1: per-project persistence for versions list)
+  versions: DesignVersion[];
+  addVersion: (version: DesignVersion) => void;
+  setProjectVersions: (versions: DesignVersion[]) => void;
+  clearVersions: () => void;
 
   // Worker experience (Priority #4): claiming/assignment flows, my assigned jobs, owner data integration
   workerAssignedJobs: any[];
@@ -79,6 +86,7 @@ export const useDeltaStore = create<DeltaStore>()(
                 approvedDesign: design,
                 sourcingItems: state.sourcingItems || [],
                 laborTasks: state.laborTasks || [],
+                versions: state.versions || [],
               },
             };
           } else if (projects[currentId]) {
@@ -113,6 +121,7 @@ export const useDeltaStore = create<DeltaStore>()(
                 approvedDesign: state.approvedDesign || null,
                 sourcingItems: newSourcing,
                 laborTasks: state.laborTasks || [],
+                versions: state.versions || [],
               },
             };
           } else if (projects[currentId]) {
@@ -147,6 +156,7 @@ export const useDeltaStore = create<DeltaStore>()(
                 approvedDesign: state.approvedDesign || null,
                 sourcingItems: newSourcing,
                 laborTasks: state.laborTasks || [],
+                versions: state.versions || [],
               },
             };
           } else if (projects[currentId]) {
@@ -178,6 +188,7 @@ export const useDeltaStore = create<DeltaStore>()(
                 approvedDesign: state.approvedDesign || null,
                 sourcingItems: [],
                 laborTasks: state.laborTasks || [],
+                versions: state.versions || [],
               },
             };
           } else if (projects[currentId]) {
@@ -211,6 +222,7 @@ export const useDeltaStore = create<DeltaStore>()(
                 approvedDesign: state.approvedDesign || null,
                 sourcingItems: state.sourcingItems || [],
                 laborTasks: tasks,
+                versions: state.versions || [],
               },
             };
           } else if (projects[currentId]) {
@@ -224,6 +236,106 @@ export const useDeltaStore = create<DeltaStore>()(
             };
           }
           return { laborTasks: tasks, currentProjectId: currentId, projects };
+        }),
+
+      // Design versions per project (Phase 1 persistence - not just local component state)
+      versions: [],
+      addVersion: (version) =>
+        set((state) => {
+          const newVersions = [version, ...(state.versions || [])];
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (!currentId) {
+            currentId = `proj_${Date.now()}_auto`;
+            const now = new Date().toISOString();
+            projects = {
+              ...projects,
+              [currentId]: {
+                id: currentId,
+                name: 'My Project',
+                createdAt: now,
+                updatedAt: now,
+                approvedDesign: state.approvedDesign || null,
+                sourcingItems: state.sourcingItems || [],
+                laborTasks: state.laborTasks || [],
+                versions: newVersions,
+              },
+            };
+          } else if (projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                versions: newVersions,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { versions: newVersions, currentProjectId: currentId, projects };
+        }),
+      setProjectVersions: (vers) =>
+        set((state) => {
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (!currentId) {
+            currentId = `proj_${Date.now()}_auto`;
+            const now = new Date().toISOString();
+            projects = {
+              ...projects,
+              [currentId]: {
+                id: currentId,
+                name: 'My Project',
+                createdAt: now,
+                updatedAt: now,
+                approvedDesign: state.approvedDesign || null,
+                sourcingItems: state.sourcingItems || [],
+                laborTasks: state.laborTasks || [],
+                versions: vers,
+              },
+            };
+          } else if (projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                versions: vers,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { versions: vers, currentProjectId: currentId, projects };
+        }),
+      clearVersions: () =>
+        set((state) => {
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (!currentId) {
+            currentId = `proj_${Date.now()}_auto`;
+            const now = new Date().toISOString();
+            projects = {
+              ...projects,
+              [currentId]: {
+                id: currentId,
+                name: 'My Project',
+                createdAt: now,
+                updatedAt: now,
+                approvedDesign: state.approvedDesign || null,
+                sourcingItems: state.sourcingItems || [],
+                laborTasks: state.laborTasks || [],
+                versions: [],
+              },
+            };
+          } else if (projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                versions: [],
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { versions: [], currentProjectId: currentId, projects };
         }),
 
       // Worker state (top-level for demo role separation; integrates with laborTasks on claim; kept out of per-owner-project)
@@ -246,6 +358,7 @@ export const useDeltaStore = create<DeltaStore>()(
             approvedDesign: null as DesignVersion | null,
             sourcingItems: [] as SourcingItem[],
             laborTasks: [] as Task[],
+            versions: [] as DesignVersion[],
           };
           let projects = state.projects || {};
           if (state.currentProjectId && projects[state.currentProjectId]) {
@@ -277,6 +390,7 @@ export const useDeltaStore = create<DeltaStore>()(
           approvedDesign: null,
           sourcingItems: [],
           laborTasks: [],
+          versions: [],
         };
         set((state) => ({
           projects: { ...(state.projects || {}), [id]: newProj },
@@ -284,6 +398,7 @@ export const useDeltaStore = create<DeltaStore>()(
           approvedDesign: null,
           sourcingItems: [],
           laborTasks: [],
+          versions: [],
         }));
         return id;
       },
@@ -296,6 +411,7 @@ export const useDeltaStore = create<DeltaStore>()(
             approvedDesign: proj.approvedDesign,
             sourcingItems: proj.sourcingItems || [],
             laborTasks: proj.laborTasks || [],
+            versions: proj.versions || [],
           };
         }),
       saveCurrentProject: () =>
@@ -311,6 +427,7 @@ export const useDeltaStore = create<DeltaStore>()(
                 approvedDesign: state.approvedDesign,
                 sourcingItems: state.sourcingItems,
                 laborTasks: state.laborTasks,
+                versions: state.versions,
                 updatedAt: new Date().toISOString(),
               },
             },
@@ -332,6 +449,7 @@ export const useDeltaStore = create<DeltaStore>()(
               approvedDesign: null,
               sourcingItems: [],
               laborTasks: [],
+              versions: [],
             };
           }
           const nextId = remaining[0];
@@ -342,6 +460,7 @@ export const useDeltaStore = create<DeltaStore>()(
             approvedDesign: nextProj.approvedDesign,
             sourcingItems: nextProj.sourcingItems || [],
             laborTasks: nextProj.laborTasks || [],
+            versions: nextProj.versions || [],
           };
         }),
       renameProject: (id: string, newName: string) =>
@@ -380,6 +499,7 @@ export const useDeltaStore = create<DeltaStore>()(
           approvedDesign: state.approvedDesign,
           sourcingItems: state.sourcingItems,
           laborTasks: state.laborTasks,
+          versions: state.versions || [],
         };
         try {
           const res = await fetch('http://localhost:4000/api/projects', {
@@ -391,6 +511,7 @@ export const useDeltaStore = create<DeltaStore>()(
               approvedDesign: proj.approvedDesign,
               sourcingItems: proj.sourcingItems,
               laborTasks: proj.laborTasks,
+              versions: proj.versions || state.versions || [],
             }),
           });
           const data = await res.json().catch(() => ({}));
@@ -417,6 +538,7 @@ export const useDeltaStore = create<DeltaStore>()(
               approvedDesign: p.approvedDesign || null,
               sourcingItems: p.sourcingItems || [],
               laborTasks: p.laborTasks || [],
+              versions: p.versions || [],
             };
             set((s: any) => ({
               projects: { ...(s.projects || {}), [localId]: loaded },
@@ -424,6 +546,7 @@ export const useDeltaStore = create<DeltaStore>()(
               approvedDesign: loaded.approvedDesign,
               sourcingItems: loaded.sourcingItems,
               laborTasks: loaded.laborTasks,
+              versions: loaded.versions,
             }));
             console.log('[persist] Loaded project from backend:', localId);
           }
@@ -457,13 +580,14 @@ export const useDeltaStore = create<DeltaStore>()(
         approvedDesign: state.approvedDesign,
         sourcingItems: state.sourcingItems,
         laborTasks: state.laborTasks,
+        versions: state.versions,
         workerAssignedJobs: state.workerAssignedJobs,
       }),
       version: 2,
       migrate: (persistedState: any, version: number) => {
         if (version < 2 || !persistedState || !persistedState.projects) {
           const ps = persistedState || {};
-          const hasOldData = ps.approvedDesign || (ps.sourcingItems && ps.sourcingItems.length > 0) || (ps.laborTasks && ps.laborTasks.length > 0);
+          const hasOldData = ps.approvedDesign || (ps.sourcingItems && ps.sourcingItems.length > 0) || (ps.laborTasks && ps.laborTasks.length > 0) || (ps.versions && ps.versions.length > 0);
           if (hasOldData) {
             const id = `proj_${Date.now()}_legacy`;
             const now = new Date().toISOString();
@@ -475,6 +599,7 @@ export const useDeltaStore = create<DeltaStore>()(
               approvedDesign: ps.approvedDesign || null,
               sourcingItems: ps.sourcingItems || [],
               laborTasks: ps.laborTasks || [],
+              versions: ps.versions || [],
             };
             return {
               ...ps,

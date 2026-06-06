@@ -8,7 +8,6 @@ export default function DesignStudioScreen() {
   // Project workspace state (focused on ONE house)
   const [baseImage, setBaseImage] = useState<string | null>(null);
   const [projectPhotos, setProjectPhotos] = useState<string[]>([]);
-  const [versions, setVersions] = useState<DesignVersion[]>([]);
   const [projectName, setProjectName] = useState('');
   const [isExample, setIsExample] = useState(false);
 
@@ -20,7 +19,7 @@ export default function DesignStudioScreen() {
   // Replaced clunky API key UI with clean "login" simulation
   const [connectedProvider, setConnectedProvider] = useState<string | null>(null);
 
-  const { approvedDesign, setApprovedDesign, sourcingItems, laborTasks, clearSourcing, addSourcingItems, setLaborTasks } = useDeltaStore();
+  const { approvedDesign, setApprovedDesign, sourcingItems, laborTasks, clearSourcing, addSourcingItems, setLaborTasks, versions, addVersion, setProjectVersions, clearVersions } = useDeltaStore();
 
   const providerLabel = (id: string) => {
     if (id === 'x') return 'X (Grok)';
@@ -40,7 +39,7 @@ export default function DesignStudioScreen() {
       setBaseImage(uri);
       setProjectPhotos([uri]);
       setProjectName('My New Project');
-      setVersions([]);
+      clearVersions();
       setIsExample(false);
       setPrompt('Bright modern kitchen with natural materials and better flow');
     } else {
@@ -98,9 +97,7 @@ export default function DesignStudioScreen() {
         createdAt: new Date().toISOString(),
       },
     ];
-    setVersions(exVersions);
-
-    // Seed the global store so Sourcing + Labor tabs have real "in progress" data for this house
+    // Use store for per-project versions persistence (Phase 1)
     const store = useDeltaStore.getState();
     store.clearSourcing();
 
@@ -129,6 +126,9 @@ export default function DesignStudioScreen() {
     // Pick a strong version as the current approved design
     store.setApprovedDesign(exVersions[0]);
 
+    // Persist versions to the multi-project store shape (ties list to current project, survives refresh)
+    store.setProjectVersions(exVersions);
+
     setPrompt('Bright modern kitchen with natural materials and better flow');
     Alert.alert('Example Loaded', 'The Oak Street House is now active.\n\nSourcing has 8 items (some already approved).\nLabor tasks are ready.\n\nCost transparency: approved design now shows prominent summary panel with full materials+labor estimate (ready to go). Variations cards have highlighted cost pills. Send to Sourcing now confirms the total upfront.\nCheck Design (for costs), Sourcing and Labor tabs.');
   };
@@ -141,7 +141,7 @@ export default function DesignStudioScreen() {
   const resetToChooser = () => {
     setBaseImage(null);
     setProjectPhotos([]);
-    setVersions([]);
+    clearVersions();
     setProjectName('');
     setIsExample(false);
     setConnectedProvider(null);
@@ -156,7 +156,9 @@ export default function DesignStudioScreen() {
     }
     setIsGenerating(true);
 
-    const enhancedPrompt = `${prompt} (Style: ${currentTweaks.style}; Colors: ${currentTweaks.colorPalette}; Layout: ${currentTweaks.layout})`;
+    // Task 1: fully feed tweaks into the *sent* AI prompt using natural language phrasing (e.g. as specified in Phase 1 plan).
+    // Raw user prompt kept in version.prompt; enhanced only for the backend call + cost/sourcing analysis (which already used tweaks strongly).
+    const enhancedPrompt = `${prompt} in ${currentTweaks.style} style with ${currentTweaks.colorPalette} color palette and ${currentTweaks.layout} layout.`;
 
     try {
       const res = await fetch('http://localhost:4000/api/reimagine', {
@@ -174,11 +176,11 @@ export default function DesignStudioScreen() {
         const newVersion: DesignVersion = {
           id: Date.now().toString(),
           imageUri: data.imageUri,
-          prompt: enhancedPrompt,
+          prompt: prompt, // store the raw descriptive prompt; tweaks are authoritative + shown separately
           tweaks: { ...currentTweaks },
           createdAt: new Date().toISOString(),
         };
-        setVersions((prev) => [newVersion, ...prev]);
+        addVersion(newVersion);
         // Also add the new render to the house photo gallery so it feels like part of the project documentation
         setProjectPhotos((prev) => [...prev, data.imageUri]);
         setIsGenerating(false);
@@ -195,11 +197,11 @@ export default function DesignStudioScreen() {
     const newVersion: DesignVersion = {
       id: Date.now().toString(),
       imageUri: randomUrl,
-      prompt: enhancedPrompt,
+      prompt: prompt, // raw
       tweaks: { ...currentTweaks },
       createdAt: new Date().toISOString(),
     };
-    setVersions((prev) => [newVersion, ...prev]);
+    addVersion(newVersion);
     setProjectPhotos((prev) => [...prev, randomUrl]);
   };
 
@@ -611,17 +613,38 @@ export default function DesignStudioScreen() {
                 );
               })()}
 
-              <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+              {/* Polished actions: Use this version (make current), Send (with cost confirm), + Re-edit support (Phase 1) */}
+              <View style={{ flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <TouchableOpacity
+                    onPress={() => makeCurrent(v)}
+                    style={[styles.actionBtn, approvedDesign?.id === v.id && styles.actionBtnActive]}
+                  >
+                    <Text style={styles.actionBtnText}>
+                      {approvedDesign?.id === v.id ? 'Current Design ✓' : 'Use this version'}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => sendToSourcing(v)} style={[styles.actionBtn, { backgroundColor: '#FF385C' }]}>
+                    <Text style={[styles.actionBtnText, { color: '#fff' }]}>Send to Sourcing →</Text>
+                  </TouchableOpacity>
+                </View>
                 <TouchableOpacity
-                  onPress={() => makeCurrent(v)}
-                  style={[styles.actionBtn, approvedDesign?.id === v.id && styles.actionBtnActive]}
+                  onPress={() => {
+                    // Re-edit a past version (task 2): load its prompt + tweaks into the active editor,
+                    // set its image as the base for generation (builds on "selected design first" hero + gallery tap-to-base logic).
+                    // User can further tweak then hit Reimagine to produce a *new* variation (does not mutate the source version).
+                    setPrompt(v.prompt);
+                    setCurrentTweaks({ ...v.tweaks });
+                    setBaseImage(v.imageUri);
+                    setProjectPhotos((prev) => (prev.includes(v.imageUri) ? prev : [...prev, v.imageUri]));
+                    Alert.alert(
+                      'Re-edit loaded',
+                      'Prompt and tweaks from this version loaded into the editor (and its image set as current base photo for the next AI generation). Adjust the description or chips if you like, then tap Reimagine to generate a new variation from it.'
+                    );
+                  }}
+                  style={[styles.actionBtn, { backgroundColor: '#444' }]}
                 >
-                  <Text style={styles.actionBtnText}>
-                    {approvedDesign?.id === v.id ? 'Current Design ✓' : 'Make current'}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => sendToSourcing(v)} style={[styles.actionBtn, { backgroundColor: '#FF385C' }]}>
-                  <Text style={[styles.actionBtnText, { color: '#fff' }]}>Send to Sourcing →</Text>
+                  <Text style={styles.actionBtnText}>Re-edit &amp; re-generate →</Text>
                 </TouchableOpacity>
               </View>
             </View>

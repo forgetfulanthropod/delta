@@ -101,7 +101,7 @@ See the historical audit below for the original long list of issues (many of whi
 - **Hardcoded / sample data**: Sourcing items always the same 3 when sending design. Labor demo text. No dynamic pricing, catalogs, or retailer deep links.
 - **Mobile / native readiness low**:
   - Camera requires vision-camera install + native config (Info.plist, AndroidManifest, pod, gradle, permissions at runtime).
-  - No Metro issues tested here; iOS/Android builds would surface more (e.g. new arch? RN 0.85 is recent).
+  - No Metro issues tested here; iOS/Android builds would surface more (e.g., new arch? RN 0.85 is recent).
   - Gemfile + Podfile present but un-run in this env.
 - **Other DX / code quality**:
   - App.tsx has old sample comment header.
@@ -168,18 +168,18 @@ Goal: `pnpm web` + backend = clean, working end-to-end demo on web with no conso
   - Option A (recommended for speed): Standardize on React Native StyleSheet + a few shared constants. Remove all className from RN components. Keep Tailwind only for pure web parts if desired (or drop).
   - Option B: Add NativeWind (or @tailwindcss/react-native, or react-native-tailwindcss) + configure for both RN and web. Update all screens. More powerful long-term but adds deps/config.
 - Replace crude tabs with real navigation:
-  - Option: `@react-navigation/native` + bottom tabs (or material). Works on web too with react-native-web.
+  - [x] Option: `@react-navigation/native` + bottom tabs (or material). Works on web too with react-native-web. **DONE (this Phase 1 Navigation sub-task)**: Added via `pnpm add @react-navigation/native @react-navigation/bottom-tabs @react-navigation/elements`; implemented real `Tab.Navigator` (bottom tabs) in `src/navigation/MainTabNavigator.tsx` (screens: Sourcing, Scoping, Scheduling; labels+emojis match recent custom, initial=Scoping to preserve default; NavigationContainer scoped; headerShown=false); updated App.tsx to use navigator for owner role (wrapping/replacing custom tabBar + state); removed tab state/conditionals/imports for owner screens; preserved ALL worker dashboard + role switch + store/flows/Scoping burndown/etc. Updated vite.config.js (optimizeDeps include for nav pkgs to aid web bundle/RNW stability). pnpm typecheck clean. Custom option kept in history only. (See commit "feat(phase1): ..."; other Phase 1 bullets still open.)
   - Keep simple stack + tab for now.
-  - Populate src/navigation/.
+  - Populate src/navigation/. (done for tabs)
 - Make Camera work on web (already decent) + prepare for native:
   - Add `react-native-vision-camera` to package.json + peer deps (react-native-reanimated, etc. often required).
   - Document or script the native steps (Info.plist NSPhotoLibraryUsage etc., pod install, gradle).
   - Add fallback "pick from gallery" using react-native-image-picker or expo-image-picker (lighter?).
   - Handle file:// vs https vs data: URIs consistently (perhaps upload to backend or convert).
 - Improve Design Studio:
-  - Feed tweaks into the prompt sent to AI (e.g. append "in ${style} style with ${colors} palette, ${layout} layout").
-  - Allow editing a version's prompt/tweaks and re-generate.
-  - Persist versions per "project" in store (or simple localStorage hook).
+  - [x] Feed tweaks into the prompt sent to AI (e.g. append "in ${style} style with ${colors} palette, ${layout} layout"). **DONE (Phase 1 Design Studio slice)**: reimagine() now constructs natural-language enhancedPrompt (e.g. "... in Modern style with Warm neutrals color palette and Open plan layout.") and sends it; raw descriptive prompt stored in DesignVersion + tweaks separate (used for display + cost/sourcing). Backend receives the full intent including tweaks.
+  - [x] Allow editing a version's prompt/tweaks and re-generate. **DONE**: "Re-edit & re-generate" action on every version card. Loads the version's prompt + tweaks into the active editor fields, sets that version's imageUri as the current base photo (builds directly on the "selected design first" hero + gallery tap-to-base logic), user can further adjust then hit Reimagine to produce a *new* variation (prepended to list; original version untouched).
+  - [x] Persist versions per "project" in store (or simple localStorage hook). **DONE**: Extended ProjectData + DeltaStore (versions: DesignVersion[], addVersion, setProjectVersions, clearVersions). All auto-project creation / switch / save / reset / partialize / migrate / backend-save paths now carry versions (mirrors approvedDesign/sourcing/labor patterns). DesignStudioScreen now sources versions + mutates exclusively via store (no local useState for the list). Example load / new photo / reset all route through store clear/set. Backend /api/projects now roundtrips versions. Multi-project shape respected; versions survive refresh for the currentProject.
 - Make Sourcing & Labor use consistent components (extract shared cards, buttons, lists into src/shared/).
 - Add basic theming / dark mode support (currently light only; RN has useColorScheme).
 - Worker role placeholder screens (list of jobs, claim task, schedule view).
@@ -302,6 +302,8 @@ Key recent additions not fully anticipated in the early phases:
 - Worker jobs list + trade filter + Flickity photo carousels.
 - Direct estimated costs on worker jobs ("ready to go") instead of always routing through sourcing.
 - Desktop content-width constraints.
+- Phase 1 real react-navigation owner tabs (Sourcing/Scoping/Scheduling) replacing custom bar.
+- **Phase 1 Design Studio completion (this slice)**: tweaks fully fed into actual reimagine AI prompt (natural phrasing); re-edit a past version (prompt/tweaks + base image) then re-generate new variation; versions list now lives in multi-project store (useDeltaStore + ProjectData + all sync paths + backend), not component-local state. "Use this version" label polish. Cost transparency, Scoping approvedDesign hero, $25/hr math, RN+web all untouched. typecheck + commit.
 
 Treat the detailed Phase 0–5 "Status (COMPLETED)" blocks below as a historical log of what was tackled, not a current completion certificate. Update this document when new work is done.
 
@@ -313,6 +315,8 @@ Treat the detailed Phase 0–5 "Status (COMPLETED)" blocks below as a historical
 - ... (rest of original bullet list omitted for brevity in this cleaned version; see git history for details)
 
 ### Phase 1–5 Status (Historical)
+- **Phase 1 nav sub-task complete** (incremental, this work): real `@react-navigation` bottom tabs for owner phases, per DEVELOPMENT_PLAN.md + task spec. Custom owner tabs removed from App.tsx; worker + all flows preserved; web/RN/Vite compatible (with vite tweaks); typecheck clean; docs + commit updated. (Full Phase 1 styling/camera/etc. still pending.)
+- **Phase 1 Design Studio sub-task complete** (this commit "feat(phase1): Design Studio tweaks-to-prompts, re-edit versions, per-project persistence"): all three bullets done + polish + docs + typecheck + commit. See details in the Phase 1 section above and the commit message.
 Similar notes apply. See git commits and the "Remaining Work" section above for current priorities.
 
 ---

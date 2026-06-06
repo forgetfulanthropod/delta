@@ -105,9 +105,9 @@ app.post('/api/reimagine', async (req, res) => {
 });
 
 // --- Persistence routes (Priority #2: Data & Persistence) ---
-// In-memory demo store for multi-project save/load (designs, sourcing, labor + metadata).
+// In-memory demo store for multi-project save/load (designs, sourcing, labor, versions + metadata).
 // Used by the enhanced useDeltaStore (saveProjectToBackend etc). No file I/O for simplicity (in-mem only while running).
-// Does not affect AI route.
+// Does not affect AI route. Now includes versions array for Phase 1 Design Studio per-project persistence.
 const projectsStore = {};
 
 app.get('/api/projects', (req, res) => {
@@ -115,7 +115,7 @@ app.get('/api/projects', (req, res) => {
 });
 
 app.post('/api/projects', (req, res) => {
-  const { id, name = 'Untitled', approvedDesign = null, sourcingItems = [], laborTasks = [] } = req.body || {};
+  const { id, name = 'Untitled', approvedDesign = null, sourcingItems = [], laborTasks = [], versions = [] } = req.body || {};
   const projId = id || `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
   const now = new Date().toISOString();
   const existing = projectsStore[projId] || {};
@@ -127,6 +127,7 @@ app.post('/api/projects', (req, res) => {
     approvedDesign,
     sourcingItems,
     laborTasks,
+    versions,
   };
   res.json({ success: true, project: projectsStore[projId] });
 });
