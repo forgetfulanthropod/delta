@@ -208,6 +208,30 @@ export default function DesignStudioScreen() {
     Alert.alert('Current Design', 'This version is now your approved design for sourcing & labor.');
   };
 
+  // Simple estimator to surface costs directly in Design Studio (owner-side "ready to go" costs)
+  function estimateProjectCost(v: DesignVersion) {
+    const p = (v.prompt + ' ' + Object.values(v.tweaks).join(' ')).toLowerCase();
+    let materials = 1200;
+    let laborHours = 18;
+
+    if (p.includes('kitchen') || p.includes('cabinet')) { materials += 1800; laborHours += 12; }
+    if (p.includes('floor') || p.includes('lvp') || p.includes('hardwood')) { materials += 900; laborHours += 8; }
+    if (p.includes('light') || p.includes('electrical')) { materials += 450; laborHours += 6; }
+    if (p.includes('paint') || p.includes('wall')) { materials += 350; laborHours += 5; }
+    if (v.tweaks.style === 'Modern' || v.tweaks.layout === 'Open plan') { laborHours += 4; materials += 300; }
+    if (v.tweaks.colorPalette === 'Bold colors') { materials += 250; }
+
+    const labor = Math.round(laborHours * 25);
+    const total = materials + labor;
+
+    return {
+      materials: Math.round(materials / 50) * 50,
+      labor,
+      total: Math.round(total / 50) * 50,
+      hours: laborHours,
+    };
+  }
+
   const sendToSourcing = async (version: DesignVersion) => {
     setApprovedDesign(version);
 
@@ -219,15 +243,30 @@ export default function DesignStudioScreen() {
       });
     } catch {}
 
-    // Realistic items for a full-house project (user can approve in Sourcing tab)
+    // Dynamic items based on the version's prompt + tweaks (much less hardcoded)
     const base = Date.now();
-    const suggested = [
-      { id: String(base), name: 'LVP Flooring - Oak', retailer: "Lowe's" as const, price: 3.49, quantity: 120, approved: false, url: 'https://www.lowes.com' },
-      { id: String(base + 1), name: 'Matte Black Faucet', retailer: 'Amazon' as const, price: 89, quantity: 2, approved: false, url: 'https://www.amazon.com' },
-      { id: String(base + 2), name: 'LED Recessed Lights', retailer: 'Home Depot' as const, price: 42, quantity: 8, approved: false, url: 'https://www.homedepot.com' },
-    ];
+    const p = (version.prompt + ' ' + Object.values(version.tweaks).join(' ')).toLowerCase();
+    const suggested: any[] = [];
+
+    if (p.includes('floor') || p.includes('kitchen') || p.includes('living')) {
+      suggested.push({ id: String(base), name: 'LVP Flooring - Oak', retailer: "Lowe's" as const, price: 3.49, quantity: 140, approved: false, url: 'https://www.lowes.com' });
+    }
+    if (p.includes('light') || p.includes('electrical') || p.includes('modern')) {
+      suggested.push({ id: String(base + 10), name: 'LED Recessed Lights (12-pack)', retailer: 'Home Depot' as const, price: 42, quantity: 2, approved: false, url: 'https://www.homedepot.com' });
+    }
+    if (p.includes('cabinet') || p.includes('kitchen') || p.includes('bath')) {
+      suggested.push({ id: String(base + 20), name: 'Matte Black Cabinet Hardware Set', retailer: 'Amazon' as const, price: 68, quantity: 1, approved: false, url: 'https://www.amazon.com' });
+    }
+    if (p.includes('paint') || p.includes('wall')) {
+      suggested.push({ id: String(base + 30), name: 'Interior Paint - Warm White (5 gal)', retailer: "Lowe's" as const, price: 48, quantity: 2, approved: false, url: 'https://www.lowes.com' });
+    }
+    if (suggested.length === 0) {
+      suggested.push({ id: String(base), name: 'LVP Flooring - Oak', retailer: "Lowe's" as const, price: 3.49, quantity: 100, approved: false, url: 'https://www.lowes.com' });
+    }
+
     useDeltaStore.getState().addSourcingItems(suggested);
-    Alert.alert('Sent to Sourcing', 'Materials added to the shared list.\n\nSwitch to the Sourcing tab to review, approve, and generate labor.');
+    const c = estimateProjectCost(version);
+    Alert.alert('Sent to Sourcing', `Materials added (est. total project cost $${c.total}).\n\nSwitch to the Sourcing tab to review, approve, and generate labor.`);
   };
 
   // Initial clean chooser (no clunky keys, no 4-house grid)
@@ -425,6 +464,15 @@ export default function DesignStudioScreen() {
               <Text style={{ color: '#666', fontSize: 12, marginTop: 2 }}>
                 {v.tweaks.style} • {v.tweaks.colorPalette} • {v.tweaks.layout}
               </Text>
+
+              {(() => {
+                const c = estimateProjectCost(v);
+                return (
+                  <Text style={{ color: '#2e7d32', fontWeight: '600', marginTop: 6, fontSize: 14 }}>
+                    Est. materials ${c.materials} • Labor ${c.labor} ({c.hours}h) • Total ${c.total} (ready to go)
+                  </Text>
+                );
+              })()}
 
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
                 <TouchableOpacity

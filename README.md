@@ -10,7 +10,7 @@ Delta is a cross-platform (React Native + Web) prototype for an AI-powered home 
 
 ## Features (current prototype)
 
-- **Design Studio**: Camera (web file upload + native vision-camera), prompt + AI reimagine (xAI Grok Imagine via backend, or static fallbacks), before/after comparison sliders, multiple versions, "use this version" + send to sourcing.
+- **Design Studio**: Camera (web file upload + native vision-camera), prompt + AI reimagine (xAI Grok Imagine via backend, or static fallbacks), before/after comparison sliders, multiple versions with direct project cost estimates (materials + labor "ready to go"), "use this version" + send to sourcing.
 - **Sourcing**: Dynamic list from designs, approve items from Lowe's/Amazon/Home Depot, running total, generate labor tasks.
 - **Labor Scheduler**: 8-hour days, built-in breaks (lunch + short), largest-first packing, per-day breakdown with start/end times, half-day progress, $25/hr guaranteed costing.
 - **State**: Zustand store flows approved design → sourcing items → labor tasks.
@@ -23,7 +23,7 @@ Delta is a cross-platform (React Native + Web) prototype for an AI-powered home 
 - TypeScript, Zustand, Tailwind (web via PostCSS), StyleSheet (native)
 - Express backend (simple AI proxy)
 - Intended native camera: react-native-vision-camera (added; requires extra native setup for full mobile)
-- No persistence yet (in-memory + localStorage planned)
+- Basic persistence (Zustand + localStorage on web for approved design, sourcing, and labor tasks)
 
 ## Getting Started
 
@@ -94,7 +94,7 @@ public/              # demo images
 
 This is a functional prototype focused on the web experience (easiest to demo and iterate).
 
-**Owner flow**: Onboarding (role selection + full-screen before/after hero) → Design Studio (photo + prompt + AI variations with tweaks + photo carousels in some views) → Sourcing (approve items, totals, retailer links) → Labor (realistic schedules with breaks and $25/hr costing).
+**Owner flow**: Onboarding (role selection + full-screen before/after hero) → Design Studio (photo + prompt + AI variations with tweaks + direct estimated project costs shown on each version + photo carousels in some views) → Sourcing (approve items, totals, retailer links) → Labor (realistic schedules with breaks and $25/hr costing).
 
 **Worker flow**: Dedicated dashboard showing interesting jobs with trade filter (Carpentry, Electrical, Painting, Flooring, etc.), project photos that can be flicked through (using Flickity on web), bullet-point task lists, and **estimated total cost** displayed directly on each job card ("ready to go") instead of a "send to sourcing" handoff. "Claim job" surfaces the locked-in estimate.
 
@@ -108,7 +108,7 @@ This is a functional prototype focused on the web experience (easiest to demo an
 - AI generation is still primarily text-prompt driven (image is referenced in prompts but full vision/img2img understanding is limited).
 - Persistence is basic (Zustand + localStorage on web); no backend storage or multi-project history yet.
 - Native mobile (especially camera with vision-camera) requires additional setup and is not fully turnkey.
-- Some demo data, alerts, and flows remain (especially for rapid iteration).
+- Some demo data, alerts, and flows remain (rapid iteration); owner-side cost estimates and sourcing suggestions are now more dynamic based on design prompt + tweaks.
 - No real auth, multi-user, or production retailer APIs.
 - Worker experience is web-focused (Flickity carousels for photos); native fallbacks are simpler.
 
