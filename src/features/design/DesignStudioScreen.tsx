@@ -461,14 +461,20 @@ export default function DesignStudioScreen() {
         </View>
       </View>
 
-      {/* Hero base / current image */}
-      {baseImage && (
+      {/* Main view: for the example project, show the selected design first, then the other stuff (references, concepts) */}
+      {(isExample && approvedDesign ? approvedDesign.imageUri : baseImage) && (
         <View style={{ paddingHorizontal: 16 }}>
-          <Image source={{ uri: baseImage }} style={styles.heroImage} />
+          <Text style={{ fontSize: 14, fontWeight: '600', color: '#2e7d32', marginBottom: 4 }}>
+            {isExample ? 'Selected Design (example)' : 'Current Photo'}
+          </Text>
+          <Image
+            source={{ uri: isExample && approvedDesign ? approvedDesign.imageUri : baseImage }}
+            style={styles.heroImage}
+          />
         </View>
       )}
 
-      {/* House photo gallery — "a lot of photos of one house" */}
+      {/* House photo gallery — "a lot of photos of one house" / other stuff */}
       {projectPhotos.length > 1 && (
         <View style={{ marginTop: 16, paddingHorizontal: 16, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
           <Text style={styles.section}>
