@@ -20,8 +20,18 @@ export default defineConfig({
     process: { env: {} },
   },
   optimizeDeps: {
-    include: ['react-native-web'],
-    exclude: ['react-native-svg', 'react-native-vision-camera', 'react-native-safe-area-context'],
+    include: [
+      'react-native-web',
+    ],
+    exclude: [
+      'react-native-svg',
+      'react-native-vision-camera',
+      'react-native-safe-area-context',
+      'react-native-screens',
+      '@react-navigation/native',
+      '@react-navigation/bottom-tabs',
+      '@react-navigation/elements',
+    ],
   },
   build: {
     rollupOptions: {

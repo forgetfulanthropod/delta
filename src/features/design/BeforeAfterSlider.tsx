@@ -1,151 +1,78 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, PanResponder, Animated, Image, Dimensions } from 'react-native';
+import { getImageSource } from '../../shared/media';
 
-interface Props {
+interface BeforeAfterSliderProps {
   before: string;
   after: string;
-  autoAnimate?: boolean;   // legacy wide auto-oscillation (for design demos)
   height?: number;
-  idleAnimate?: boolean;   // subtle slow animation 40%-60% when idle (for landing)
+  style?: any;
+  idleAnimate?: boolean;
   showHint?: boolean;
 }
 
-const { width: windowWidth } = Dimensions.get('window');
-
-export default function BeforeAfterSlider({ before, after, autoAnimate = false, height = 260, idleAnimate = false, showHint = true, style }: any) {
-  const [displayWidth, setDisplayWidth] = useState(windowWidth);
+export default function BeforeAfterSlider({
+  before,
+  after,
+  height = 420,
+  style,
+  idleAnimate = false,
+  showHint = true,
+}: BeforeAfterSliderProps) {
   const [containerX, setContainerX] = useState(0);
-  const sliderX = useRef(new Animated.Value(windowWidth * 0.5)).current;
-  const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isInteractingRef = useRef(false);
-  const idleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [displayWidth, setDisplayWidth] = useState(0);
+  const sliderX = useRef(new Animated.Value(0)).current;
+  const animRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Legacy wide auto-animate for design demos
-  useEffect(() => {
-    if (!autoAnimate) return;
-
-    let direction = 1;
-    animRef.current = setInterval(() => {
-      const target = direction === 1 ? displayWidth * 0.15 : displayWidth * 0.85;
-      Animated.timing(sliderX, {
-        toValue: target,
-        duration: 1700,
-        useNativeDriver: false,
-      }).start();
-      direction = direction === 1 ? -1 : 1;
-    }, 2100);
-
-    return () => {
-      if (animRef.current) clearInterval(animRef.current);
-    };
-  }, [autoAnimate, displayWidth]);
-
-  // Idle subtle animation: slowly ease between 40% and 60% when not being interacted with
-  const currentAnimRef = useRef<Animated.CompositeAnimation | null>(null);
-
-  const startIdleAnimation = () => {
-    if (!idleAnimate || isInteractingRef.current) return;
-
-    const runCycle = () => {
-      if (!idleAnimate || isInteractingRef.current) return;
-
-      const seq = Animated.sequence([
-        Animated.timing(sliderX, {
-          toValue: displayWidth * 0.4,
-          duration: 3800,
-          easing: (t) => t * t * (3 - 2 * t), // smooth ease in out
-          useNativeDriver: false,
-        }),
-        Animated.timing(sliderX, {
-          toValue: displayWidth * 0.6,
-          duration: 3800,
-          easing: (t) => t * t * (3 - 2 * t),
-          useNativeDriver: false,
-        }),
-      ]);
-      currentAnimRef.current = seq;
-      seq.start(() => {
-        currentAnimRef.current = null;
-        if (!isInteractingRef.current) {
-          runCycle();
+  // PanResponder for drag to reveal
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        if (animRef.current) {
+          clearTimeout(animRef.current);
+          animRef.current = null;
         }
+      },
+      onPanResponderMove: (_, gesture) => {
+        const newX = Math.max(0, Math.min(gesture.moveX - containerX, displayWidth));
+        sliderX.setValue(newX);
+      },
+      onPanResponderRelease: () => {
+        // optional snap or idle resume
+      },
+    })
+  ).current;
+
+  // Idle auto-animate (demo polish)
+  useEffect(() => {
+    if (!idleAnimate || displayWidth === 0) return;
+
+    const animate = () => {
+      Animated.sequence([
+        Animated.timing(sliderX, { toValue: displayWidth * 0.2, duration: 900, useNativeDriver: false }),
+        Animated.timing(sliderX, { toValue: displayWidth * 0.8, duration: 1100, useNativeDriver: false }),
+        Animated.timing(sliderX, { toValue: displayWidth * 0.5, duration: 700, useNativeDriver: false }),
+      ]).start(() => {
+        animRef.current = setTimeout(animate, 1600);
       });
     };
 
-    // Start from current position toward 40% or 60%
-    const current = (sliderX as any)._value || displayWidth * 0.5;
-    const target = current > displayWidth * 0.5 ? displayWidth * 0.4 : displayWidth * 0.6;
+    // start after layout
+    const start = setTimeout(animate, 800);
+    return () => {
+      clearTimeout(start);
+      if (animRef.current) clearTimeout(animRef.current);
+    };
+  }, [idleAnimate, displayWidth, sliderX]);
 
-    const initialTiming = Animated.timing(sliderX, {
-      toValue: target,
-      duration: 2200,
-      easing: (t) => t * t * (3 - 2 * t),
-      useNativeDriver: false,
-    });
-    currentAnimRef.current = initialTiming;
-    initialTiming.start(() => {
-      currentAnimRef.current = null;
-      if (!isInteractingRef.current) runCycle();
-    });
-  };
-
-  const stopIdleAnimation = () => {
-    if (idleTimeoutRef.current) {
-      clearTimeout(idleTimeoutRef.current);
-      idleTimeoutRef.current = null;
-    }
-    if (currentAnimRef.current) {
-      currentAnimRef.current.stop();
-      currentAnimRef.current = null;
-    }
-  };
-
-  const resumeIdleAfterDelay = () => {
-    stopIdleAnimation();
-    idleTimeoutRef.current = setTimeout(() => {
-      if (!isInteractingRef.current) {
-        startIdleAnimation();
-      }
-    }, 1200);
-  };
-
-  // Start idle animation on mount / when enabled
+  // Reset on prop change
   useEffect(() => {
-    if (idleAnimate && displayWidth > 0) {
-      // initial position in middle
+    if (displayWidth > 0) {
       sliderX.setValue(displayWidth * 0.5);
-      // start after short delay
-      const t = setTimeout(startIdleAnimation, 800);
-      return () => clearTimeout(t);
     }
-    return () => stopIdleAnimation();
-  }, [idleAnimate, displayWidth]);
-
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onPanResponderGrant: (_, gesture) => {
-      isInteractingRef.current = true;
-      stopIdleAnimation();
-      // Support click/tap to position the slider immediately (click anywhere on the image area)
-      const localX = gesture.moveX - containerX;
-      const newX = Math.max(30, Math.min(displayWidth - 30, localX));
-      sliderX.setValue(newX);
-    },
-    onPanResponderMove: (_, gesture) => {
-      // Convert absolute screen position to local position within this slider
-      const localX = gesture.moveX - containerX;
-      const newX = Math.max(30, Math.min(displayWidth - 30, localX));
-      sliderX.setValue(newX);
-    },
-    onPanResponderRelease: () => {
-      isInteractingRef.current = false;
-      resumeIdleAfterDelay();
-    },
-    onPanResponderTerminate: () => {
-      isInteractingRef.current = false;
-      resumeIdleAfterDelay();
-    },
-  });
+  }, [before, after, displayWidth, sliderX]);
 
   return (
     <View style={[styles.container, style]}>
@@ -160,9 +87,9 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
         }}
         {...panResponder.panHandlers}
       >
-        {/* Base image (Before) - fixed */}
+        {/* Base image (Before) - fixed + normalized URI */}
         <Image 
-          source={{ uri: before }} 
+          source={getImageSource(before)} 
           style={styles.baseImage} 
           resizeMode="cover" 
         />
@@ -175,7 +102,7 @@ export default function BeforeAfterSlider({ before, after, autoAnimate = false, 
           ]}
         >
           <Image 
-            source={{ uri: after }} 
+            source={getImageSource(after)} 
             style={[styles.revealImage, { width: displayWidth, height }]} 
             resizeMode="cover" 
           />
@@ -198,18 +125,18 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   imageContainer: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: '#f2f2f2',
     position: 'relative',
-    width: '100%',
+    overflow: 'hidden',
+    backgroundColor: '#111',
   },
   baseImage: {
     position: 'absolute',
-    width: '100%',
-    height: '100%',
     top: 0,
     left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
   revealLayer: {
     position: 'absolute',
@@ -222,34 +149,31 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
+    height: '100%',
   },
   slider: {
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: 8,  // slightly thicker for easier clicking
+    width: 4,
     backgroundColor: '#fff',
-    zIndex: 20,
   },
   handle: {
     position: 'absolute',
-    top: '42%',
-    left: -22,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    top: '50%',
+    left: -10,
+    width: 24,
+    height: 24,
+    marginTop: -12,
     backgroundColor: '#fff',
-    borderWidth: 4,
-    borderColor: '#FF385C',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#000',
   },
   hint: {
     textAlign: 'center',
     color: '#888',
-    marginTop: 8,
-    fontSize: 13,
+    fontSize: 12,
+    marginTop: 6,
   },
 });
