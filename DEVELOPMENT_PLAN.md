@@ -164,25 +164,15 @@ Goal: `pnpm web` + backend = clean, working end-to-end demo on web with no conso
 **Effort estimate**: 1-3 days (mostly fixes + doc).
 
 ### Phase 1: Consistent Cross-Platform & UX Foundation
-- Decide on styling strategy (critical):
-  - Option A (recommended for speed): Standardize on React Native StyleSheet + a few shared constants. Remove all className from RN components. Keep Tailwind only for pure web parts if desired (or drop).
-  - Option B: Add NativeWind (or @tailwindcss/react-native, or react-native-tailwindcss) + configure for both RN and web. Update all screens. More powerful long-term but adds deps/config.
-- Replace crude tabs with real navigation:
-  - Option: `@react-navigation/native` + bottom tabs (or material). Works on web too with react-native-web.
-  - Keep simple stack + tab for now.
-  - Populate src/navigation/.
-- Make Camera work on web (already decent) + prepare for native:
-  - Add `react-native-vision-camera` to package.json + peer deps (react-native-reanimated, etc. often required).
-  - Document or script the native steps (Info.plist NSPhotoLibraryUsage etc., pod install, gradle).
-  - Add fallback "pick from gallery" using react-native-image-picker or expo-image-picker (lighter?).
-  - Handle file:// vs https vs data: URIs consistently (perhaps upload to backend or convert).
-- Improve Design Studio:
-  - Feed tweaks into the prompt sent to AI (e.g. append "in ${style} style with ${colors} palette, ${layout} layout").
-  - Allow editing a version's prompt/tweaks and re-generate.
-  - Persist versions per "project" in store (or simple localStorage hook).
-- Make Sourcing & Labor use consistent components (extract shared cards, buttons, lists into src/shared/).
-- Add basic theming / dark mode support (currently light only; RN has useColorScheme).
-- Worker role placeholder screens (list of jobs, claim task, schedule view).
+- [x] Decide on styling strategy (critical): Option A (RN StyleSheet + shared constants/theme in src/shared/). No className on RN. Constrained centralized. Refactored screens.
+- [x] Add react-navigation for proper tabs + screens instead of crude buttons in App.tsx (real bottom tabs for Sourcing/Scoping/Scheduling active; labels/emojis/Scoping default; web via RNW).
+- [x] Ensure consistent styling, extract shared components to src/shared/ (theme, ConstrainedView, buttons, Card, Pill, EmptyState, etc.; used in Sourcing/Scoping/Labor/Design/App).
+- [x] Feed tweaks into prompts, allow re-edit of versions, basic persistence start? (enhancedPrompt in reimagine; Re-edit button on versions; versions in multi-project store with full sync).
+- Make Camera work on web (already decent) + prepare for native (vision-camera; media.ts for URIs; docs in README/PLAN; gallery fallbacks).
+- Improve Design Studio (tweaks in prompt; re-edit; per-project versions persistence) [covered above].
+- Make Sourcing & Labor use consistent components (extract to src/shared/) [covered above].
+- Add basic theming / dark mode support (theme.ts light/dark + useTheme; applied across screens) [covered above].
+- Worker role placeholder screens (advanced functional dashboard with filters, carousels, claiming, schedules; consistency applied) [covered above].
 
 **Exit**: One consistent UI that looks good on web + renders without prop warnings on native. Navigation feels native.
 

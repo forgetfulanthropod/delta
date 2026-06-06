@@ -624,32 +624,8 @@ function AppContent() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  tabBar: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    paddingVertical: 8,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  tabActive: {
-    borderBottomWidth: 3,
-    borderBottomColor: '#FF385C',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  tabTextActive: {
-    fontWeight: '700',
-  },
-  constrained: {
-    maxWidth: 720,
-    width: '100%',
-    alignSelf: 'center',
-  },
+  // tabBar styles removed - owner now uses real react-navigation (Phase 1 subagent).
+  // Consistent styling is in src/shared/ (theme, ConstrainedView, etc.).
 });
 
 export default App;

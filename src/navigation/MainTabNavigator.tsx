@@ -1,21 +1,68 @@
 import React from 'react';
-// @ts-nocheck - prepared for future; @react-navigation/* removed temporarily for web bundle stability (see plan)
-// import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { NavigationContainer } from '@react-navigation/native';
 import { View, Text, StyleSheet } from 'react-native';
-import DesignStudioScreen from '../features/design/DesignStudioScreen';
 import SourcingScreen from '../features/sourcing/SourcingScreen';
+import ScopingScreen from '../features/scoping/ScopingScreen';
 import LaborSchedulerScreen from '../features/labor/LaborSchedulerScreen';
 
-// Stub for future wiring of react-navigation (see DEVELOPMENT_PLAN.md Phase 1/4)
-// When re-adding deps, uncomment and use real Tab.Navigator
+// Real Tab.Navigator for owner phases (Sourcing / Scoping / Scheduling).
+// Replaces the previous custom TouchableOpacity + state tabBar in App.tsx.
+// See DEVELOPMENT_PLAN.md Phase 1. Uses bottom tabs (standard RN pattern; works via RNW on web).
+// Initial route set to Scoping to match previous default state.
+// Labels preserve the recent custom tab labels (with emojis) per request.
+// Header disabled for clean look matching the prior top-bar tabs implementation.
+// NavigationContainer is local here (owner-only usage); safe for role switching since component mounts/unmounts.
+const Tab = createBottomTabNavigator();
+
 export default function MainTabNavigator() {
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Navigation placeholder (react-nav prepared but not active - using custom tabs in App.tsx)</Text>
-    </View>
+    <NavigationContainer>
+      <Tab.Navigator
+        initialRouteName="Scoping"
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: '#FF385C',
+          tabBarInactiveTintColor: '#666',
+          tabBarStyle: {
+            backgroundColor: '#fff',
+            borderTopWidth: 1,
+            borderTopColor: '#eee',
+            paddingVertical: 4,
+          },
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontWeight: '600',
+          },
+        }}
+      >
+        <Tab.Screen
+          name="Sourcing"
+          component={SourcingScreen}
+          options={{
+            tabBarLabel: '🛒 Sourcing',
+          }}
+        />
+        <Tab.Screen
+          name="Scoping"
+          component={ScopingScreen}
+          options={{
+            tabBarLabel: '📐 Scoping',
+          }}
+        />
+        <Tab.Screen
+          name="Scheduling"
+          component={LaborSchedulerScreen}
+          options={{
+            tabBarLabel: '📅 Scheduling',
+          }}
+        />
+      </Tab.Navigator>
+    </NavigationContainer>
   );
 }
 
+// Legacy icon styles retained from stub (for potential future icon-based tabs or reference).
 const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',

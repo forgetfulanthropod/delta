@@ -22,15 +22,15 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       'react-native-web',
+      '@react-navigation/native',
+      '@react-navigation/bottom-tabs',
+      '@react-navigation/elements',
     ],
     exclude: [
       'react-native-svg',
       'react-native-vision-camera',
       'react-native-safe-area-context',
       'react-native-screens',
-      '@react-navigation/native',
-      '@react-navigation/bottom-tabs',
-      '@react-navigation/elements',
     ],
   },
   build: {
