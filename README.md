@@ -90,27 +90,40 @@ backend/server.js    # Express, /api/reimagine (xAI)
 public/              # demo images
 ```
 
-## Current Status & Phase 0
+## Current Status
 
-This is an early prototype. Phase 0 focused on:
-- Making the web demo clean and usable (no TS errors, consistent styling, working provider UI, implemented TODOs, proper alerts, postcss for Tailwind, web shims, vision-camera declared).
+This is a functional prototype focused on the web experience (easiest to demo and iterate).
+
+**Owner flow**: Onboarding (role selection + full-screen before/after hero) → Design Studio (photo + prompt + AI variations with tweaks + photo carousels in some views) → Sourcing (approve items, totals, retailer links) → Labor (realistic schedules with breaks and $25/hr costing).
+
+**Worker flow**: Dedicated dashboard showing interesting jobs with trade filter (Carpentry, Electrical, Painting, Flooring, etc.), project photos that can be flicked through (using Flickity on web), bullet-point task lists, and **estimated total cost** displayed directly on each job card ("ready to go") instead of a "send to sourcing" handoff. "Claim job" surfaces the locked-in estimate.
+
 - `tsc --noEmit --skipLibCheck` is clean.
-- See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the full roadmap, known gaps, and next phases (real AI wiring, persistence, navigation, native polish, etc.).
+- Basic persistence via Zustand (survives refresh on web).
+- Content is constrained for desktop readability (max-width containers).
+- See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the historical roadmap, completed work, and current remaining gaps. The plan is being actively reconciled with the actual state.
 
-## Known Limitations (as of Phase 0)
+## Known Limitations
 
-- AI generation is text-prompt only (no full image understanding/img2img yet); multi-provider UI is present but backend only fully supports xAI.
-- No real persistence (refresh loses state).
-- Sourcing items are sample/hardcoded when sending a design.
-- Native mobile camera not fully wired (web file upload works).
-- Some hardcoded data and alerts for demo.
-- No auth, backend storage, or real retailer APIs.
+- AI generation is still primarily text-prompt driven (image is referenced in prompts but full vision/img2img understanding is limited).
+- Persistence is basic (Zustand + localStorage on web); no backend storage or multi-project history yet.
+- Native mobile (especially camera with vision-camera) requires additional setup and is not fully turnkey.
+- Some demo data, alerts, and flows remain (especially for rapid iteration).
+- No real auth, multi-user, or production retailer APIs.
+- Worker experience is web-focused (Flickity carousels for photos); native fallbacks are simpler.
+
+See DEVELOPMENT_PLAN.md for a more detailed gap analysis and historical context.
 
 ## Contributing / Next
 
-See DEVELOPMENT_PLAN.md for prioritized tasks (start with remaining Phase 0 doc polish if needed, then Phase 1 cross-platform etc.).
+The project has moved beyond the original early phases. Recent work includes:
+- Worker dashboard with trade filters, flickable project photos (Flickity), and per-job estimated costs shown directly ("ready to go").
+- Desktop UI width constraints across key screens.
+- Continued owner flow polish.
 
-PRs welcome. Update the plan as things evolve.
+See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the full historical roadmap, what has been completed, and the current remaining priorities (reconciled against this README).
+
+PRs welcome. When making changes, please help keep both README.md and DEVELOPMENT_PLAN.md in sync.
 
 ## License
 

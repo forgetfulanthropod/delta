@@ -2,45 +2,55 @@
 
 **Project**: Delta — AI-powered home remodeling assistant  
 **Tagline**: "Remodel your space with AI."  
-**Platforms**: React Native (iOS/Android) + Web (react-native-web + Vite)  
-**Current status (as of 2026-06)**: Early functional prototype. Core happy-path works on web via fallbacks. Significant gaps in cross-platform compatibility, AI wiring, styling, completeness, and docs. App "fires up" but has multiple runtime/TS errors on load for some tabs.
+**Platforms**: React Native (iOS/Android) + Web (react-native-web + Vite)
 
-**Servers (currently running)**:
-- Web dev: http://localhost:3000 (Vite)
-- Backend: http://localhost:4000 (Express, /api/reimagine)
+> **Note**: This document is largely historical. It was used as a living working document during early development. Many original gaps have been addressed. For the most accurate current state, see [README.md](./README.md).
 
-**Tested**: Backend responds; web serves index. Open http://localhost:3000 in a browser, select role (owner recommended for full flow), try Design → upload photo (web) → Reimagine → Send to Sourcing → approve items → Generate Labor Schedule.
+**Current Status (reconciled with README)**:
+- Functional web prototype with a complete owner flow (Design → Sourcing → Labor) and a significantly improved worker experience.
+- Key recent improvements: Worker dashboard with trade-based filtering, project photos that can be flicked through (Flickity on web), and **estimated total cost shown directly on job cards** ("ready to go") instead of routing through "send to sourcing".
+- Desktop UI uses content-width constraints (max ~720px) for better readability.
+- Basic persistence via Zustand (localStorage on web).
+- `pnpm typecheck` is clean.
+- See README.md "Known Limitations" and the "Remaining Work" section below for what is still outstanding.
 
----
+**Servers**:
+- Web: http://localhost:3000 (`pnpm web`)
+- Backend: http://localhost:4000 (`cd backend && node server.js`)
 
-## What's Missing from the Current README
-
-The existing [README.md](./README.md) is 100% untouched React Native Community CLI boilerplate. It contains **zero** information about the actual Delta product, architecture, or how to work on it.
-
-### Critical missing content:
-1. **Project overview & value prop** — What is Delta? Who is it for (homeowners + contractors/workers)? Owner flow (photo → AI viz → source materials → schedule labor) vs Worker flow.
-2. **Key features** — Design Studio (camera, prompt, AI reimagine, before/after sliders, versions), Sourcing (multi-retailer list, approvals, cost totals), Labor Scheduler (realistic 8h days, built-in breaks, $25/hr guaranteed costing, half-day progress).
-3. **Tech stack & architecture** — RN 0.85 + react-native-web + Vite, Zustand store for design→sourcing→labor flow, Express backend (AI proxy), Tailwind (web), no persistence yet.
-4. **How to run (this project, not generic RN)**:
-   - Web (easiest): `pnpm web` (or `npm run web`)
-   - Backend (required for AI): `cd backend && node server.js` (optionally with `XAI_API_KEY=...`)
-   - Full mobile: Metro + `pnpm android`/`pnpm ios`, bundle install + pod install, etc.
-5. **Environment & secrets** — `XAI_API_KEY` for real image generation via xAI Grok Imagine (otherwise static fallbacks + echo). No other keys wired yet.
-6. **Project structure** — `src/features/{design,labor,sourcing}`, store, web-shims, backend/, public/ assets (ai-room images + before/after tests).
-7. **AI integration notes** — Currently xAI-only in backend. Client has multi-provider selector (x, Google, OpenAI, Anthropic) but it is **not connected**.
-8. **Known limitations / prototype status** — Hardcoded samples, no real image analysis (prompt-only), no persistence, incomplete cross-platform, missing native camera dep, etc.
-9. **Development commands** — Existing scripts + `pnpm run build:web`, lint, test. How to run TS check, etc.
-10. **Prerequisites** — Node >=22.11, pnpm (lockfile), Ruby + CocoaPods for iOS, Android SDK, and (for camera) eventual `react-native-vision-camera` native setup.
-11. **Screenshots / demo assets** — Use or link the images in `public/`.
-12. **Data flow & state** — Brief Zustand explanation.
-13. **Roadmap / contributing** — Link to DEVELOPMENT_PLAN.md, issues, etc.
-14. **Repo links**, license, contact.
-
-**Recommendation**: Replace almost the entire current README with a concise, project-specific one (keep generic RN troubleshooting only if relevant). See "Phase 0" below.
+**Tested flows**: Owner full path and Worker job browsing + interest/cost claiming on web.
 
 ---
 
-## Current State Analysis & Gaps (from code audit + `tsc --noEmit`)
+## Historical Note: Original README Gaps (as of early development)
+
+**This section is historical.** The README.md has since been fully rewritten with project-specific content, run instructions, features, limitations, and links to this plan. The original gaps listed below have largely been addressed.
+
+(Original text from early audit preserved for context — many items are now complete or evolved.)
+
+### (Historical) Critical missing content at the time:
+... [content summarized as already resolved in current README] ...
+
+See the current README.md for the accurate project description.
+
+---
+
+## Remaining Work & Priorities (Current)
+
+Pulled from the README "Known Limitations" and recent development:
+
+- **AI**: Still largely prompt-driven. Improve image understanding / vision model usage for better material suggestions and more accurate reimaginings.
+- **Persistence & Data**: Basic web persistence exists. Add proper project history, backend storage, and multi-project support.
+- **Native**: Vision-camera and full mobile experience still need significant work (permissions, builds, testing).
+- **Worker Experience**: Recently enhanced with trade filter, Flickity photo carousels, and direct estimated costs ("ready to go"). Continue polishing (e.g., actual claiming flow, integration with owner-sourced data).
+- **Owner Flow Polish**: Estimated costs in worker side are good; consider surfacing similar ready-to-go cost views on owner side instead of (or in addition to) "Send to Sourcing".
+- **Other**: Real auth, retailer integrations, better empty/error states, full native camera, production deployment.
+
+See the historical audit below for the original long list of issues (many of which have been resolved).
+
+---
+
+## Historical: Current State Analysis & Gaps (from early code audit + `tsc --noEmit`)
 
 ### Working / Implemented
 - Onboarding role selection (owner/worker) — gates the tabs.
@@ -282,60 +292,29 @@ After Phase 0, reassess and slice the rest into GitHub issues.
 
 **Status**: This plan created after firing up the servers, full code read, tsc audit, backend test, and feature walkthrough.
 
-### Phase 0 Status (COMPLETED)
+### Historical Phase Status Notes
+
+The sections below were written as work progressed against the *original* plan. Many items (TS fixes, styling consistency, basic persistence, README rewrite, worker dashboard foundations, AI prompt improvements, etc.) have been addressed.
+
+**However**, the blanket "COMPLETED" framing is now outdated. The project has evolved, and significant work remains (see the "Remaining Work & Priorities" section near the top of this document and the "Known Limitations" in README.md).
+
+Key recent additions not fully anticipated in the early phases:
+- Worker jobs list + trade filter + Flickity photo carousels.
+- Direct estimated costs on worker jobs ("ready to go") instead of always routing through sourcing.
+- Desktop content-width constraints.
+
+Treat the detailed Phase 0–5 "Status (COMPLETED)" blocks below as a historical log of what was tackled, not a current completion certificate. Update this document when new work is done.
+
+(Original Phase status text preserved below for historical value — many specific fixes listed there were real achievements.)
+
+### Phase 0 Status (Historical)
 - All TS errors fixed (`pnpm typecheck` / `tsc --noEmit --skipLibCheck` clean).
 - postcss.config.js added (Tailwind processing).
-- Web shims fixed.
-- className → StyleSheet in Sourcing/Labor (consistent, no NativeWind).
-- AIProviderSelector now RN cross-platform (Touchable chips).
-- "Use this version" TODO implemented (sets approvedDesign, shows current ✓, reactive via store hook).
-- Backend now accepts + uses client-provided `apiKey` (for xAI at least); multi-provider stubbed/documented.
-- All raw `alert()` → `Alert.alert(...)`.
-- `react-native-vision-camera` added to package + pnpm install (native still needs setup for mobile camera; web unaffected).
-- New `typecheck` + `dev:backend` scripts.
-- Full README.md rewrite (project-specific, run instructions, features, status, links to this plan).
-- Servers restarted; HMR picked changes; backend key path verified via curl.
-- Web demo at http://localhost:3000 should now be much cleaner for owner flow.
+- ... (rest of original bullet list omitted for brevity in this cleaned version; see git history for details)
 
-See git history or individual file diffs for exact changes.
+### Phase 1–5 Status (Historical)
+Similar notes apply. See git commits and the "Remaining Work" section above for current priorities.
 
-### Phase 1 Status (COMPLETED)
-- Improved tab UX with styled bar + icons (no full react-nav yet due to web bundling issues with latest @react-navigation + screens + gesture in RN 0.85 web).
-- Design tweaks UI added (chips for style/colors/layout) and wired into enhancedPrompt for reimagine (both real + fallback).
-- Worker role now renders a simple placeholder dashboard with switch back.
-- Tailwind v4 PostCSS fixed (added @tailwindcss/postcss, updated css import and postcss.config).
-- src/navigation/ and MainTabNavigator.tsx prepared (can be wired once web compat resolved or by downgrading nav versions).
-- Stuck with StyleSheet for consistency in Phase 1 (no NativeWind).
-- Committed to main.
+---
 
-### Phase 2 Status (COMPLETED)
-- Backend /api/reimagine now uses image-aware prompts referencing the uploaded photo.
-- Provider param handled (xAI path full + key support; others return useful stub message).
-- Better error responses from backend.
-- Client continues to send provider/key; versions capture the enhanced prompt.
-- Committed to main.
-
-### Phase 3 Status (COMPLETED)
-- Added zustand persist (localStorage on web via middleware) so design/sourcing/labor survive refresh.
-- Added resetAll + clear button in Sourcing (persisted data demo).
-- Sourcing items now support optional url; "View at retailer →" opens with Linking.
-- Suggested items from Design carry retailer links.
-- Committed to main.
-
-### Phase 4 Status (COMPLETED)
-- .env.example for secrets.
-- CameraScreen native setup notes (permissions, pods, etc.).
-- preview:web script.
-- Vision-camera dep from earlier; full native integration still requires manual native steps (no xcode here).
-- Committed to main. (EAS, Sentry, full CI, deploy scripts as stretch.)
-
-### Phase 5 Status (COMPLETED - Documented)
-- FUTURE.md created with detailed advanced ideas (CV/LLM analysis, AR, marketplace, payments, white-label).
-- Phase 5 section in this plan expanded.
-- Committed to main. (Implementation would be post v0.5.)
-
-All phases completed and committed to main incrementally. App should be significantly more solid than initial prototype.
-
-Next action for team: pick Phase 0 items, start fixing, update this doc with progress checkboxes or links to PRs.
-
-Happy remodeling!
+**Next action**: Use the "Remaining Work & Priorities" section at the top of this document + the README for forward planning. Happy remodeling!
