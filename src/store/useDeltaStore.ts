@@ -55,20 +55,143 @@ interface DeltaStore {
 
 export const useDeltaStore = create<DeltaStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
+      // Multi-project state (Priority #2)
+      currentProjectId: null,
+      projects: {},
+
+      // Current view (synced from active project for compat)
       approvedDesign: null,
-      setApprovedDesign: (design) => set({ approvedDesign: design }),
+      setApprovedDesign: (design) =>
+        set((state) => {
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (!currentId) {
+            currentId = `proj_${Date.now()}_auto`;
+            const now = new Date().toISOString();
+            projects = {
+              ...projects,
+              [currentId]: {
+                id: currentId,
+                name: 'My Project',
+                createdAt: now,
+                updatedAt: now,
+                approvedDesign: design,
+                sourcingItems: state.sourcingItems || [],
+                laborTasks: state.laborTasks || [],
+              },
+            };
+          } else if (projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                approvedDesign: design,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { approvedDesign: design, currentProjectId: currentId, projects };
+        }),
 
       sourcingItems: [],
       addSourcingItems: (items) =>
-        set((state) => ({ sourcingItems: [...state.sourcingItems, ...items] })),
+        set((state) => {
+          const newSourcing = [...(state.sourcingItems || []), ...items];
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (!currentId) {
+            currentId = `proj_${Date.now()}_auto`;
+            const now = new Date().toISOString();
+            projects = {
+              ...projects,
+              [currentId]: {
+                id: currentId,
+                name: 'My Project',
+                createdAt: now,
+                updatedAt: now,
+                approvedDesign: state.approvedDesign || null,
+                sourcingItems: newSourcing,
+                laborTasks: state.laborTasks || [],
+              },
+            };
+          } else if (projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                sourcingItems: newSourcing,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { sourcingItems: newSourcing, currentProjectId: currentId, projects };
+        }),
       toggleApproveItem: (id) =>
-        set((state) => ({
-          sourcingItems: state.sourcingItems.map((item) =>
+        set((state) => {
+          const newSourcing = (state.sourcingItems || []).map((item) =>
             item.id === id ? { ...item, approved: !item.approved } : item
-          ),
-        })),
-      clearSourcing: () => set({ sourcingItems: [] }),
+          );
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (!currentId) {
+            currentId = `proj_${Date.now()}_auto`;
+            const now = new Date().toISOString();
+            projects = {
+              ...projects,
+              [currentId]: {
+                id: currentId,
+                name: 'My Project',
+                createdAt: now,
+                updatedAt: now,
+                approvedDesign: state.approvedDesign || null,
+                sourcingItems: newSourcing,
+                laborTasks: state.laborTasks || [],
+              },
+            };
+          } else if (projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                sourcingItems: newSourcing,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { sourcingItems: newSourcing, currentProjectId: currentId, projects };
+        }),
+      clearSourcing: () =>
+        set((state) => {
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (!currentId) {
+            currentId = `proj_${Date.now()}_auto`;
+            const now = new Date().toISOString();
+            projects = {
+              ...projects,
+              [currentId]: {
+                id: currentId,
+                name: 'My Project',
+                createdAt: now,
+                updatedAt: now,
+                approvedDesign: state.approvedDesign || null,
+                sourcingItems: [],
+                laborTasks: state.laborTasks || [],
+              },
+            };
+          } else if (projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                sourcingItems: [],
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { sourcingItems: [], currentProjectId: currentId, projects };
+        }),
 
       laborTasks: [],
       setLaborTasks: (tasks) => set({ laborTasks: tasks }),
@@ -100,8 +223,6 @@ export const useDeltaStore = create<DeltaStore>()(
       // Multi-project + backend stubs (Priority #2 persistence; minimal to satisfy TS after recent interface expansion.
       // Full logic lives in other work; these prevent type errors during AI Quality iterations & typecheck runs.
       // AI work (DesignStudio estimates/suggestions) depends on clean typecheck.
-      currentProjectId: null,
-      projects: {},
       createProject: (name = 'Untitled Project') => {
         const id = 'proj_' + Date.now().toString(36);
         // stub: in real would set + switch
