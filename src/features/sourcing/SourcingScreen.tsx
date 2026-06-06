@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Alert, Linking } from 'react-native';
 import { useDeltaStore } from '../../store/useDeltaStore';
+import { useTheme } from '../../shared/theme';
 
 export default function SourcingScreen() {
   const { sourcingItems, toggleApproveItem, setLaborTasks } = useDeltaStore();
+  const t = useTheme();
 
   const approvedItems = sourcingItems.filter(i => i.approved);
   const total = approvedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
@@ -26,9 +28,9 @@ export default function SourcingScreen() {
   };
 
   return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>Sourcing</Text>
-      <Text style={styles.subtitle}>One list. One approval. From the best retailers.</Text>
+    <View style={[styles.screen, { backgroundColor: t.colors.background }]}>
+      <Text style={[styles.title, { color: t.colors.text }]}>Sourcing</Text>
+      <Text style={[styles.subtitle, { color: t.colors.textSecondary }]}>One list. One approval. From the best retailers.</Text>
 
       <FlatList
         data={sourcingItems}
@@ -36,11 +38,11 @@ export default function SourcingScreen() {
         renderItem={({ item }) => (
           <View style={styles.itemRow}>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontWeight: '600' }}>{item.name}</Text>
-              <Text>{item.retailer} • ${item.price} × {item.quantity}</Text>
+              <Text style={{ fontWeight: '600', color: t.colors.text }}>{item.name}</Text>
+              <Text style={{ color: t.colors.textSecondary }}>{item.retailer} • ${item.price} × {item.quantity}</Text>
               {item.url && (
                 <TouchableOpacity onPress={() => Linking.openURL(item.url!)} style={{ marginTop: 4 }}>
-                  <Text style={{ color: '#0066cc', fontSize: 12 }}>View at retailer →</Text>
+                  <Text style={{ color: t.colors.accent, fontSize: 12 }}>View at retailer →</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -63,8 +65,8 @@ export default function SourcingScreen() {
       />
 
       <View style={styles.footer}>
-        <Text style={styles.total}>Approved Total: ${total.toFixed(2)}</Text>
-        <Button title="Submit Approved Purchases" onPress={() => Alert.alert('Sourcing', 'Purchases submitted!')} disabled={approvedItems.length === 0} />
+        <Text style={[styles.total, { color: t.colors.text }]}>Approved Total: ${total.toFixed(2)}</Text>
+        <Button title="Submit Approved Purchases" onPress={() => Alert.alert('Sourcing', 'Purchases submitted!')} disabled={approvedItems.length === 0} color={t.colors.accent} />
         <View style={{ height: 12 }} />
         <Button title="Generate Labor Schedule" onPress={generateLaborSchedule} disabled={approvedItems.length === 0} color="#c62828" />
         <View style={{ height: 8 }} />
@@ -77,7 +79,6 @@ export default function SourcingScreen() {
 const styles = StyleSheet.create({
   screen: { 
     flex: 1, 
-    backgroundColor: '#fff', 
     maxWidth: 720,
     width: '100%',
     alignSelf: 'center',
@@ -85,8 +86,8 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     paddingBottom: 40,
   },
-  title: { fontSize: 36, fontWeight: '700', color: '#222', letterSpacing: -1 },
-  subtitle: { fontSize: 20, color: '#666', marginTop: 8, marginBottom: 16 },
+  title: { fontSize: 36, fontWeight: '700', letterSpacing: -1 },
+  subtitle: { fontSize: 20, marginTop: 8, marginBottom: 16 },
   itemRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderColor: '#eee' },
   approveBtn: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 16 },
   approveBtnInactive: { backgroundColor: '#FF385C' },

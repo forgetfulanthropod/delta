@@ -7,12 +7,18 @@ import React, { useState } from 'react';
 import { StatusBar, StyleSheet, View, TouchableOpacity, Text, useColorScheme, Alert, ScrollView, Image } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import OnboardingScreen from './src/onboarding/OnboardingScreen';
-import SourcingScreen from './src/features/sourcing/SourcingScreen';
-import LaborSchedulerScreen from './src/features/labor/LaborSchedulerScreen';
-import ScopingScreen from './src/features/scoping/ScopingScreen';
+import MainTabNavigator from './src/navigation/MainTabNavigator';
 import { useDeltaStore } from './src/store/useDeltaStore';
 import { generateSchedule } from './src/features/labor/scheduler';
 import type { Task } from './src/features/labor/types';
+import { useTheme } from './src/shared/theme';
+import { getImageSource } from './src/shared/media';
+import {
+  ConstrainedView,
+  Card,
+  Pill,
+  EmptyState,
+} from './src/shared';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -27,7 +33,7 @@ function App() {
 
 function AppContent() {
   const [role, setRole] = useState<'owner' | 'worker' | null>(null);
-  const [tab, setTab] = useState<'sourcing' | 'scoping' | 'scheduling'>('scoping');
+  // [tab, setTab] removed - owner tabs now handled by react-navigation in MainTabNavigator (Phase 1)
   const [workerTradeFilter, setWorkerTradeFilter] = useState<'All' | string>('All');
 
   // Pull shared store for owner-sourced data integration + worker claim state (new for Priority #4)
@@ -40,6 +46,8 @@ function AppContent() {
     unclaimJob,
     setLaborTasks,
   } = useDeltaStore();
+
+  const t = useTheme();
 
   // Cross-platform photo carousels use RN ScrollView+Image (no Flickity, no web-only div/img).
   // This fixes web vs native differences in the worker dashboard: identical horizontal scroll/flick experience on iOS/Android/Web.
@@ -234,14 +242,14 @@ function AppContent() {
     return (
       <View style={{ flex: 1, backgroundColor: '#f8f8f8' }}>
         {/* Header - constrained */}
-        <View style={[styles.constrained, { paddingHorizontal: 20, paddingTop: 40, paddingBottom: 12 }]}>
+        <ConstrainedView style={{ paddingHorizontal: 20, paddingTop: 40, paddingBottom: 12 }}>
           <Text style={{ fontSize: 32, fontWeight: '700', color: '#222', letterSpacing: -1 }}>Worker Dashboard</Text>
           <Text style={{ color: '#666', marginTop: 4, fontSize: 16 }}>$25/hr guaranteed • Pick jobs that match your trade</Text>
-        </View>
+        </ConstrainedView>
 
         {/* Owner-sourced data integration banner (new for Priority #4) */}
         {(sourcingItems || []).length > 0 || (laborTasks || []).length > 0 ? (
-          <View style={[styles.constrained, { paddingHorizontal: 20, marginBottom: 12 }]}>
+          <ConstrainedView style={{ paddingHorizontal: 20, marginBottom: 12 }}>
             <View style={{ backgroundColor: '#e6f4ea', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#c8e6c9' }}>
               <Text style={{ fontSize: 13, fontWeight: '700', color: '#1b5e20' }}>🔗 Integrated with owner-sourced data</Text>
               <Text style={{ fontSize: 13, color: '#2e7d32', marginTop: 2 }}>
@@ -252,11 +260,11 @@ function AppContent() {
                 Claiming below will surface relevant tasks/costs from the owner's project.
               </Text>
             </View>
-          </View>
+          </ConstrainedView>
         ) : null}
 
         {/* Trade filter - constrained (preserved) */}
-        <View style={[styles.constrained, { paddingHorizontal: 20, marginBottom: 12 }]}>
+        <ConstrainedView style={{ paddingHorizontal: 20, marginBottom: 12 }}>
           <Text style={{ fontSize: 13, fontWeight: '600', color: '#555', marginBottom: 6 }}>Filter by trade</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {trades.map((trade) => (
@@ -285,10 +293,10 @@ function AppContent() {
               </TouchableOpacity>
             ))}
           </ScrollView>
-        </View>
+        </ConstrainedView>
 
         <ScrollView style={{ flex: 1 }}>
-          <View style={[styles.constrained, { paddingHorizontal: 20, paddingBottom: 120 }]}>
+          <ConstrainedView style={{ paddingHorizontal: 20, paddingBottom: 120 }}>
             {/* My Assigned Jobs section (new) */}
             <Text style={{ fontSize: 20, fontWeight: '700', color: '#222', marginBottom: 8, marginTop: 4 }}>My Assigned Jobs</Text>
             {(workerAssignedJobs || []).length === 0 ? (
@@ -592,59 +600,33 @@ function AppContent() {
                 </View>
               ))
             )}
-          </View>
+          </ConstrainedView>
         </ScrollView>
 
-        <View style={[styles.constrained, { paddingHorizontal: 20 }]}>
+        <ConstrainedView style={{ paddingHorizontal: 20 }}>
           <TouchableOpacity
             onPress={() => setRole(null)}
             style={{ marginTop: 8, padding: 14, backgroundColor: '#000', borderRadius: 12, alignItems: 'center' }}
           >
             <Text style={{ color: '#fff', fontWeight: '600' }}>Switch Role / Restart</Text>
           </TouchableOpacity>
-        </View>
+        </ConstrainedView>
       </View>
     );
   }
 
-  // Top bar nav updated per request: Sourcing / Scoping / Scheduling (Scoping owns the selected-design scope tree + burndown).
-  return (
-    <View style={styles.container}>
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'sourcing' && styles.tabActive]}
-          onPress={() => setTab('sourcing')}
-        >
-          <Text style={[styles.tabText, tab === 'sourcing' && styles.tabTextActive]}>🛒 Sourcing</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'scoping' && styles.tabActive]}
-          onPress={() => setTab('scoping')}
-        >
-          <Text style={[styles.tabText, tab === 'scoping' && styles.tabTextActive]}>📐 Scoping</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'scheduling' && styles.tabActive]}
-          onPress={() => setTab('scheduling')}
-        >
-          <Text style={[styles.tabText, tab === 'scheduling' && styles.tabTextActive]}>📅 Scheduling</Text>
-        </TouchableOpacity>
-      </View>
-
-      {tab === 'sourcing' && <SourcingScreen />}
-      {tab === 'scoping' && <ScopingScreen />}
-      {tab === 'scheduling' && <LaborSchedulerScreen />}
-    </View>
-  );
+  // Owner role: real react-navigation bottom tabs (Phase 1).
+  // Replaces custom tabBar (themed Touchable + tab state + conditional renders).
+  // Labels (🛒 Sourcing / 📐 Scoping / 📅 Scheduling), Scoping default, all existing flows, store, Scoping burndown preserved.
+  // Design accessible via flow (not tab). Worker dashboard + role switch 100% untouched.
+  return <MainTabNavigator />;
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
     paddingVertical: 8,
   },
   tab: {
@@ -658,11 +640,9 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 14,
-    color: '#666',
     fontWeight: '500',
   },
   tabTextActive: {
-    color: '#FF385C',
     fontWeight: '700',
   },
   constrained: {

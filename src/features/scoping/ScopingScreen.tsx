@@ -3,10 +3,23 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } fr
 import Svg, { Line, Path, Circle, Text as SvgText } from 'react-native-svg';
 import { useDeltaStore } from '../../store/useDeltaStore';
 import { DesignVersion } from '../design/types';
+import {
+  ConstrainedView,
+  PrimaryButton,
+  SecondaryButton,
+  Card,
+  ScopeCard,
+  SectionHeader,
+  Pill,
+  EmptyState,
+} from '../../shared';
+import { sharedStyles, COLORS, SPACING, TYPOGRAPHY, RADII } from '../../shared';
 
 /**
- * ScopingScreen
- * - Shows the *selected design* (approvedDesign) hero first (per recent owner polish).
+ * ScopingScreen (refactored for Phase 1 shared styling foundation).
+ *
+ * IMPORTANT: 
+ * - Selected design hero (approvedDesign) is shown first — unchanged.
  * - Scope tree: broken down by trade, with story points assigned to each subtask (Scrum style).
  * - Interactive: tap to complete subtasks → burns points.
  * - Burndown chart: SVG line chart (ideal dashed vs actual solid) trending toward 0 points remaining.
@@ -230,7 +243,7 @@ export default function ScopingScreen() {
     Alert.alert('Synced', 'Scope subtasks pushed to laborTasks. Check Scheduling tab for updated plan.');
   };
 
-  // Burndown chart (pure RN SVG, cross-platform)
+  // Burndown chart (pure RN SVG, cross-platform) — **COMPLETELY UNCHANGED** for hero + burndown fidelity
   const renderBurndown = () => {
     const width = 640;
     const height = 210;
@@ -331,82 +344,87 @@ export default function ScopingScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.constrained}>
-        <Text style={styles.title}>Scoping</Text>
-        <Text style={styles.subtitle}>
+      <ConstrainedView style={{ paddingTop: SPACING.lg, paddingBottom: 80 }}>
+        <Text style={TYPOGRAPHY.title}>Scoping</Text>
+        <Text style={[TYPOGRAPHY.subtitle, { marginTop: 4, marginBottom: SPACING.lg }]}>
           Scrum scope tree by trade + burndown for the selected design. Points → 0 remaining.
         </Text>
 
-        {/* Selected design hero (prioritized, mirrors DesignStudio "selected first" pattern) */}
+        {/* Selected design hero (prioritized, mirrors DesignStudio "selected first" pattern) — UNCHANGED */}
         {approvedDesign ? (
           <View style={{ marginBottom: 16 }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: '#2e7d32', marginBottom: 6 }}>
+            <Text style={{ fontSize: 13, fontWeight: 700, color: COLORS.success, marginBottom: 6 }}>
               SELECTED DESIGN
             </Text>
-            <View style={styles.heroWrap}>
+            <View style={sharedStyles.heroWrap}>
               <Image source={{ uri: approvedDesign.imageUri }} style={styles.heroImage} resizeMode="cover" />
             </View>
-            <Text style={{ fontSize: 15, fontWeight: '600', color: '#222', marginTop: 6 }}>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: COLORS.textPrimary, marginTop: 6 }}>
               {approvedDesign.prompt}
             </Text>
-            <Text style={{ color: '#666', fontSize: 13, marginTop: 2 }}>
+            <Text style={{ color: COLORS.textSecondary, fontSize: 13, marginTop: 2 }}>
               {approvedDesign.tweaks.style} • {approvedDesign.tweaks.colorPalette} • {approvedDesign.tweaks.layout}
             </Text>
           </View>
         ) : (
-          <View style={styles.emptyDesign}>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#222' }}>No selected design yet</Text>
-            <Text style={{ color: '#666', marginTop: 4, marginBottom: 12 }}>
-              Load the example project to populate the approved design + full scope tree.
-            </Text>
-            <TouchableOpacity style={styles.primaryBtn} onPress={loadExampleForScope}>
-              <Text style={styles.primaryBtnText}>Load Example Project (Oak Street House)</Text>
-            </TouchableOpacity>
-          </View>
+          <EmptyState
+            title="No selected design yet"
+            subtitle="Load the example project to populate the approved design + full scope tree."
+            actionLabel="Load Example Project (Oak Street House)"
+            onAction={loadExampleForScope}
+          />
         )}
 
         {/* Scope summary + actions */}
         {approvedDesign && (
           <>
-            <View style={styles.summaryBar}>
+            <Card style={styles.summaryBar}>
               <View>
-                <Text style={{ fontSize: 13, color: '#666' }}>Total Scope</Text>
-                <Text style={{ fontSize: 28, fontWeight: '800', color: '#222' }}>{totalPoints} pts</Text>
+                <Text style={{ fontSize: 13, color: COLORS.textSecondary }}>Total Scope</Text>
+                <Text style={{ fontSize: 28, fontWeight: '800', color: COLORS.textPrimary }}>{totalPoints} pts</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: 13, color: '#666' }}>Remaining (burndown target)</Text>
-                <Text style={{ fontSize: 28, fontWeight: '800', color: remainingPoints === 0 ? '#2e7d32' : '#FF385C' }}>
+                <Text style={{ fontSize: 13, color: COLORS.textSecondary }}>Remaining (burndown target)</Text>
+                <Text style={{ fontSize: 28, fontWeight: '800', color: remainingPoints === 0 ? COLORS.success : COLORS.accent }}>
                   {remainingPoints} pts
                 </Text>
-                <Text style={{ color: '#2e7d32', fontWeight: '600' }}>{percentBurned}% burned</Text>
+                <Text style={{ color: COLORS.success, fontWeight: '600' }}>{percentBurned}% burned</Text>
               </View>
-            </View>
+            </Card>
 
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-              <TouchableOpacity style={styles.actionBtn} onPress={simulateProgress}>
-                <Text style={styles.actionText}>Simulate day progress (−5-8 pts)</Text>
+            <View style={{ flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md }}>
+              <SecondaryButton
+                title="Simulate day progress (−5-8 pts)"
+                onPress={simulateProgress}
+                style={{ flex: 1 }}
+              />
+              <TouchableOpacity
+                style={[sharedStyles.secondaryButton, { backgroundColor: COLORS.dark }]}
+                onPress={completeAll}
+              >
+                <Text style={sharedStyles.secondaryButtonText}>Complete all</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#222' }]} onPress={completeAll}>
-                <Text style={[styles.actionText, { color: '#fff' }]}>Complete all</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#eee' }]} onPress={resetBurndown}>
-                <Text style={[styles.actionText, { color: '#333' }]}>Reset</Text>
+              <TouchableOpacity
+                style={[sharedStyles.subtleButton]}
+                onPress={resetBurndown}
+              >
+                <Text style={sharedStyles.subtleButtonText}>Reset</Text>
               </TouchableOpacity>
             </View>
 
             {/* Scope tree by trade */}
-            <Text style={styles.sectionHeader}>Scope Tree by Trade (Story Points)</Text>
-            <Text style={{ color: '#666', marginBottom: 8, fontSize: 13 }}>
+            <SectionHeader>Scope Tree by Trade (Story Points)</SectionHeader>
+            <Text style={{ color: COLORS.textSecondary, marginBottom: SPACING.sm, fontSize: 13 }}>
               Subtasks with points assigned. Tap "Complete" to burn down the chart. (Scrum-style breakdown of the selected design.)
             </Text>
 
             {groupsWithState.map((group) => (
-              <View key={group.trade} style={styles.tradeGroup}>
+              <ScopeCard key={group.trade} style={styles.tradeGroup}>
                 <View style={styles.tradeHeader}>
                   <Text style={styles.tradeTitle}>{group.trade}</Text>
-                  <Text style={styles.tradePoints}>
+                  <Pill variant="accent" style={{ paddingHorizontal: 8, paddingVertical: 2 }}>
                     {group.groupDone}/{group.groupTotal} pts
-                  </Text>
+                  </Pill>
                 </View>
                 {group.items.map((item) => (
                   <TouchableOpacity
@@ -419,32 +437,38 @@ export default function ScopingScreen() {
                       • {item.name}
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <View style={[styles.pointsPill, item.done && styles.pointsPillDone]}>
-                        <Text style={[styles.pointsText, item.done && { color: '#2e7d32' }]}>{item.points} pts</Text>
-                      </View>
-                      <Text style={{ color: item.done ? '#2e7d32' : '#FF385C', fontWeight: '700', fontSize: 13 }}>
+                      <Pill
+                        variant={item.done ? 'done' : 'success'}
+                        style={item.done ? undefined : { backgroundColor: '#fff', borderColor: COLORS.accent }}
+                      >
+                        {item.points} pts
+                      </Pill>
+                      <Text style={{ color: item.done ? COLORS.success : COLORS.accent, fontWeight: 700, fontSize: 13 }}>
                         {item.done ? '✓ Done' : 'Complete'}
                       </Text>
                     </View>
                   </TouchableOpacity>
                 ))}
-              </View>
+              </ScopeCard>
             ))}
 
-            <TouchableOpacity style={[styles.syncBtn]} onPress={syncToLabor}>
+            <PrimaryButton
+              onPress={syncToLabor}
+              style={styles.syncBtn}
+            >
               <Text style={styles.syncText}>Sync scope subtasks → Labor tasks (update Scheduling)</Text>
-            </TouchableOpacity>
+            </PrimaryButton>
 
-            {/* Burndown Chart */}
-            <Text style={[styles.sectionHeader, { marginTop: 20 }]}>Scrum Burndown Chart</Text>
-            <Text style={{ color: '#666', marginBottom: 6, fontSize: 13 }}>
+            {/* Burndown Chart — UNCHANGED internals */}
+            <SectionHeader style={{ marginTop: SPACING.xl }}>Scrum Burndown Chart</SectionHeader>
+            <Text style={{ color: COLORS.textSecondary, marginBottom: SPACING.sm, fontSize: 13 }}>
               Line chart: full scope of work (total points) trending to 0 remaining. Ideal plan (dashed) vs. actual progress (solid).
               Complete subtasks above to move the red line toward the goal.
             </Text>
 
             {renderBurndown()}
 
-            <Text style={{ fontSize: 12, color: '#888', marginTop: 8, marginBottom: 24 }}>
+            <Text style={{ fontSize: 12, color: COLORS.textMuted, marginTop: SPACING.sm, marginBottom: 24 }}>
               {laborTasks.length > 0
                 ? `${laborTasks.length} labor tasks currently in store (from scope / sourcing). See Scheduling tab for $25/hr day-by-day plan.`
                 : 'Load example or sync scope to populate labor tasks for the Scheduling view.'}
@@ -453,121 +477,64 @@ export default function ScopingScreen() {
         )}
 
         {!approvedDesign && (
-          <View style={{ marginTop: 20 }}>
-            <Text style={{ color: '#888', fontSize: 13 }}>
+          <View style={{ marginTop: SPACING.lg }}>
+            <Text style={{ color: COLORS.textMuted, fontSize: 13 }}>
               Once a design is selected, the scope tree (by trade) and live burndown will appear here.
             </Text>
           </View>
         )}
-      </View>
+      </ConstrainedView>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8' },
-  constrained: {
-    maxWidth: 720,
-    width: '100%',
-    alignSelf: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 80,
-  },
-  title: { fontSize: 32, fontWeight: '700', color: '#222', letterSpacing: -1 },
-  subtitle: { fontSize: 16, color: '#666', marginTop: 4, marginBottom: 16 },
-  heroWrap: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#eee',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
+  container: { flex: 1, backgroundColor: COLORS.backgroundAlt },
+  // constrained now handled by <ConstrainedView />
   heroImage: {
     width: '100%',
     height: 220,
     backgroundColor: '#ddd',
   },
-  emptyDesign: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#eee',
-    marginBottom: 12,
-    alignItems: 'center',
-  },
-  primaryBtn: {
-    backgroundColor: '#FF385C',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   summaryBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#eee',
+    // Card base provides bg/radius/border/pad; small overrides
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
   },
-  sectionHeader: { fontSize: 18, fontWeight: '700', color: '#222', marginBottom: 6 },
   tradeGroup: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#eee',
+    marginBottom: SPACING.sm,
+    // ScopeCard/Card base + override
+    padding: 0,
     overflow: 'hidden',
   },
   tradeHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#f8f8f8',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: COLORS.backgroundAlt,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  tradeTitle: { fontWeight: '700', color: '#222', fontSize: 15 },
-  tradePoints: { color: '#FF385C', fontWeight: '700' },
+  tradeTitle: { fontWeight: 700, color: COLORS.textPrimary, fontSize: 15 },
   subtaskRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
+    paddingHorizontal: SPACING.md,
     paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
   },
   subtaskDone: { backgroundColor: '#f0fdf4' },
-  subtaskName: { flex: 1, color: '#333', fontSize: 14, paddingRight: 8 },
-  pointsPill: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#FF385C',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-  },
-  pointsPillDone: { borderColor: '#2e7d32', backgroundColor: '#e8f5e9' },
-  pointsText: { fontSize: 12, fontWeight: '700', color: '#FF385C' },
-  actionBtn: {
-    flex: 1,
-    backgroundColor: '#111',
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  actionText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  subtaskName: { flex: 1, color: COLORS.gray, fontSize: 14, paddingRight: 8 },
   syncBtn: {
-    marginTop: 8,
+    marginTop: SPACING.sm,
     backgroundColor: '#e8f0fe',
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: RADII.md,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#90caf9',
