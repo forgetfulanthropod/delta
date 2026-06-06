@@ -228,7 +228,8 @@ function AppContent() {
         sourcingSummary: `${approvedSourcing.length} items approved ($${matTotal})`,
       };
     }
-    const showOwnerJob = !!ownerIntegratedJob && !assignedIds.has(ownerIntegratedJob.id);
+    const showOwnerJob = !!ownerIntegratedJob && !assignedIds.has(ownerIntegratedJob.id) &&
+      (workerTradeFilter === 'All' || ownerIntegratedJob.trade === workerTradeFilter);
 
     return (
       <View style={{ flex: 1, backgroundColor: '#f8f8f8' }}>
