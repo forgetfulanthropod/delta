@@ -10,7 +10,7 @@ Delta is a cross-platform (React Native + Web) prototype for an AI-powered home 
 
 ## Features (current prototype)
 
-- **Design Studio**: Camera (web file upload + native vision-camera), prompt + AI reimagine (xAI Grok Imagine via backend, or static fallbacks), before/after comparison sliders, multiple versions with *prominent* direct project cost estimates (materials + labor "ready to go" in highlighted pills on every card), make-current now surfaces detailed cost summary in alert + dedicated owner Cost Summary panel (breakdown + total) appears when version approved, "Send to Sourcing" evolved to cost confirmation dialog showing/locking total upfront before handoff, improved pipeline status now always includes full est. project cost + breakdowns for transparency. Owner costs feel "ready to go" across the journey.
+- **Design Studio**: Camera (solid web upload w/ preview+demo fallback via .web.tsx; native vision-camera live + capture + fallbacks + permissions via .tsx), prompt + AI reimagine (xAI Grok Imagine via backend, or static fallbacks), before/after comparison sliders, multiple versions with *prominent* direct project cost estimates (materials + labor "ready to go" in highlighted pills on every card), make-current now surfaces detailed cost summary in alert + dedicated owner Cost Summary panel (breakdown + total) appears when version approved, "Send to Sourcing" evolved to cost confirmation dialog showing/locking total upfront before handoff, improved pipeline status now always includes full est. project cost + breakdowns for transparency. Owner costs feel "ready to go" across the journey. (Native/cross-platform camera consistency advanced.)
 - **Sourcing**: Dynamic list from designs, approve items from Lowe's/Amazon/Home Depot, running total, generate labor tasks.
 - **Labor Scheduler**: 8-hour days, built-in breaks (lunch + short), largest-first packing, per-day breakdown with start/end times, half-day progress, $25/hr guaranteed costing.
 - **Worker Experience**: Trade filters, cross-platform scrollable per-project photo carousels (iOS/Android/Web), direct est. costs shown as "ready to go". Full claim/assign flows that update Zustand state (jobs move to "My Assigned Jobs"), owner-sourced data integration (live cards pulling sourcingItems + laborTasks for relevant tasks/costs), scheduling visibility for claimed jobs (day schedules with breaks/costs).
@@ -23,7 +23,7 @@ Delta is a cross-platform (React Native + Web) prototype for an AI-powered home 
 - React Native 0.85 + react-native-web + Vite (web on :3000)
 - TypeScript, Zustand, Tailwind (web via PostCSS), StyleSheet (native)
 - Express backend (simple AI proxy)
-- Intended native camera: react-native-vision-camera (added; requires extra native setup for full mobile)
+- Native camera: react-native-vision-camera (v4; permissions + integration + fallbacks implemented for iOS/Android; .web.tsx for solid upload/preview; cross-platform consistency fixes in Design Studio + worker dashboard)
 - Enhanced persistence (Zustand multi-project with history/save/load + names/metadata; still uses localStorage on web for designs/sourcing/labor state; optional backend routes for cross-session/demo cloud save)
 
 ## Getting Started
@@ -83,7 +83,7 @@ pnpm build:web
 ```
 src/
   features/
-    design/          # Camera, AIProviderSelector, DesignStudioScreen, BeforeAfterSlider, realImageGen (stub)
+    design/          # CameraScreen.tsx + CameraScreen.web.tsx (vision-camera native + solid web upload w/ preview+fallbacks), AIProviderSelector, DesignStudioScreen, BeforeAfterSlider, realImageGen (stub)
     labor/           # LaborSchedulerScreen + scheduler.ts (core logic)
     sourcing/        # SourcingScreen + types
   onboarding/
@@ -99,7 +99,7 @@ This is a functional prototype focused on the web experience (easiest to demo an
 
 **Owner flow**: Onboarding (role selection + full-screen before/after hero) → Design Studio (photo + prompt + AI variations with tweaks + *prominent* cost estimates + breakdowns surfaced directly on cards, make-current summary, confirm-before-send total, dedicated Cost Summary panel, and pipeline with full est. project cost — "ready to go" transparency in addition to/instead of just "Send to Sourcing") → Sourcing (approve items, totals, retailer links) → Labor (realistic schedules with breaks and $25/hr costing).
 
-**Worker flow**: Dedicated dashboard showing interesting jobs with trade filter (Carpentry, Electrical, Painting, Flooring, etc.), project photos that can be flicked through (using Flickity on web), bullet-point task lists, and **estimated total cost** displayed directly on each job card ("ready to go"). Claim/assign buttons move jobs to a "My Assigned Jobs" section (persisted via store), integrate with owner-sourced items + generated laborTasks (shows live "Owner Project" card pulling from current store data when owner has approved sourcing/labor), and provide actual scheduling visibility (per-claimed-job auto-generated day-by-day schedule with breaks/costs using the shared scheduler logic). Unclaim supported; claiming also syncs tasks into labor state.
+**Worker flow**: Dedicated dashboard showing interesting jobs with trade filter (Carpentry, Electrical, Painting, Flooring, etc.), project photos that can be flicked through (cross-platform horizontal scroll on iOS/Android/Web), bullet-point task lists, and **estimated total cost** displayed directly on each job card ("ready to go"). Claim/assign buttons move jobs to a "My Assigned Jobs" section (persisted via store), integrate with owner-sourced items + generated laborTasks (shows live "Owner Project" card pulling from current store data when owner has approved sourcing/labor), and provide actual scheduling visibility (per-claimed-job auto-generated day-by-day schedule with breaks/costs using the shared scheduler logic). Unclaim supported; claiming also syncs tasks into labor state.
 
 - `tsc --noEmit --skipLibCheck` is clean.
 - Enhanced persistence: multi-project support (createProject/switchProject/getProjects/rename/delete/saveCurrent + auto current sync), project names/metadata, legacy migration; full state (approvedDesign + sourcingItems + laborTasks) saved per project. Optional backend save/load via store methods + /api/projects (see backend/server.js). Survives refresh on web via localStorage; improved AsyncStorage guidance.
@@ -120,7 +120,7 @@ See DEVELOPMENT_PLAN.md for a more detailed gap analysis and historical context.
 ## Contributing / Next
 
 The project has moved beyond the original early phases. Recent work includes:
-- Worker experience (Priority #4): claiming/assignment flows (claim buttons update store, move jobs into persisted "My Assigned Jobs" section), "My Assigned Jobs" with unclaim, better integration with owner-sourced data (banner + live "Owner Project" card showing approved sourcingItems count/cost + laborTasks as worker tasks/costs), actual scheduling visibility (inline per-claimed-job schedules computed via scheduler: days/breaks/costs/"starts ~08:00"). Preserves + builds on trade filter, Flickity carousels, direct "ready to go" est costs. Claiming integrates claimed tasks into shared laborTasks.
+- Worker experience (Priority #4): claiming/assignment flows (claim buttons update store, move jobs into persisted "My Assigned Jobs" section), "My Assigned Jobs" with unclaim, better integration with owner-sourced data (banner + live "Owner Project" card showing approved sourcingItems count/cost + laborTasks as worker tasks/costs), actual scheduling visibility (inline per-claimed-job schedules computed via scheduler: days/breaks/costs/"starts ~08:00"). Preserves + builds on trade filter + cross-platform photo carousels (RN ScrollView), direct "ready to go" est costs. Claiming integrates claimed tasks into shared laborTasks. (Native/cross-platform photo consistency advanced in Priority #3).
 - Owner-side: Estimated project costs (materials + labor) now shown directly on every AI variation in Design Studio (enhanced with prominent "ready to go" cost pills + breakdown + significantly more realistic estimates using scope, luxury keywords, and tweak premiums directly from AI prompt output), make-current surfaces costs in alert, new dedicated Cost Summary panel appears for approved version (full transparency), "Send to Sourcing" now requires confirming the total est. cost first, pipeline status improved to always surface the locked-in full project estimate + materials/labor split (advances Owner Flow & Cost Transparency priority). Significantly richer dynamic sourcing suggestions (tweak/style-specific items, more categories/accurate qtys). Backend AI now uses image refs + advanced visual prompts for image understanding (advances Priority #1 AI Quality for better transformations and material suggestions).
 - Desktop UI width constraints across key screens.
 - Continued owner flow polish.
