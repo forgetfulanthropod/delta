@@ -194,9 +194,39 @@ export const useDeltaStore = create<DeltaStore>()(
         }),
 
       laborTasks: [],
-      setLaborTasks: (tasks) => set({ laborTasks: tasks }),
+      setLaborTasks: (tasks) =>
+        set((state) => {
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (!currentId) {
+            currentId = `proj_${Date.now()}_auto`;
+            const now = new Date().toISOString();
+            projects = {
+              ...projects,
+              [currentId]: {
+                id: currentId,
+                name: 'My Project',
+                createdAt: now,
+                updatedAt: now,
+                approvedDesign: state.approvedDesign || null,
+                sourcingItems: state.sourcingItems || [],
+                laborTasks: tasks,
+              },
+            };
+          } else if (projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                laborTasks: tasks,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { laborTasks: tasks, currentProjectId: currentId, projects };
+        }),
 
-      // Worker state (top-level for demo role separation; integrates with laborTasks on claim)
+      // Worker state (top-level for demo role separation; integrates with laborTasks on claim; kept out of per-owner-project)
       workerAssignedJobs: [],
       claimJob: (job) =>
         set((state) => ({
@@ -211,53 +241,251 @@ export const useDeltaStore = create<DeltaStore>()(
         })),
 
       resetAll: () =>
-        set({
+        set((state) => {
+          const cleared = {
+            approvedDesign: null as DesignVersion | null,
+            sourcingItems: [] as SourcingItem[],
+            laborTasks: [] as Task[],
+          };
+          let projects = state.projects || {};
+          if (state.currentProjectId && projects[state.currentProjectId]) {
+            projects = {
+              ...projects,
+              [state.currentProjectId]: {
+                ...projects[state.currentProjectId],
+                ...cleared,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return {
+            ...cleared,
+            workerAssignedJobs: [],
+            projects,
+          };
+        }),
+
+      // Full multi-project + metadata + history + backend (Priority #2)
+      createProject: (name = 'Untitled Project') => {
+        const id = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+        const now = new Date().toISOString();
+        const newProj: ProjectData = {
+          id,
+          name,
+          createdAt: now,
+          updatedAt: now,
           approvedDesign: null,
           sourcingItems: [],
           laborTasks: [],
-          workerAssignedJobs: [],
-          currentProjectId: null,
-          projects: {},
-        }),
-
-      // Multi-project + backend stubs (Priority #2 persistence; minimal to satisfy TS after recent interface expansion.
-      // Full logic lives in other work; these prevent type errors during AI Quality iterations & typecheck runs.
-      // AI work (DesignStudio estimates/suggestions) depends on clean typecheck.
-      createProject: (name = 'Untitled Project') => {
-        const id = 'proj_' + Date.now().toString(36);
-        // stub: in real would set + switch
+        };
+        set((state) => ({
+          projects: { ...(state.projects || {}), [id]: newProj },
+          currentProjectId: id,
+          approvedDesign: null,
+          sourcingItems: [],
+          laborTasks: [],
+        }));
         return id;
       },
-      switchProject: (id: string) => {
-        /* stub for persistence */
+      switchProject: (id: string) =>
+        set((state) => {
+          const proj = (state.projects || {})[id];
+          if (!proj) return {};
+          return {
+            currentProjectId: id,
+            approvedDesign: proj.approvedDesign,
+            sourcingItems: proj.sourcingItems || [],
+            laborTasks: proj.laborTasks || [],
+          };
+        }),
+      saveCurrentProject: () =>
+        set((state) => {
+          const id = state.currentProjectId;
+          const projs = state.projects || {};
+          if (!id || !projs[id]) return {};
+          return {
+            projects: {
+              ...projs,
+              [id]: {
+                ...projs[id],
+                approvedDesign: state.approvedDesign,
+                sourcingItems: state.sourcingItems,
+                laborTasks: state.laborTasks,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          };
+        }),
+      deleteProject: (id: string) =>
+        set((state) => {
+          const projs = { ...(state.projects || {}) };
+          delete projs[id];
+          const wasCurrent = state.currentProjectId === id;
+          if (!wasCurrent) {
+            return { projects: projs };
+          }
+          const remaining = Object.keys(projs);
+          if (remaining.length === 0) {
+            return {
+              projects: projs,
+              currentProjectId: null,
+              approvedDesign: null,
+              sourcingItems: [],
+              laborTasks: [],
+            };
+          }
+          const nextId = remaining[0];
+          const nextProj = projs[nextId];
+          return {
+            projects: projs,
+            currentProjectId: nextId,
+            approvedDesign: nextProj.approvedDesign,
+            sourcingItems: nextProj.sourcingItems || [],
+            laborTasks: nextProj.laborTasks || [],
+          };
+        }),
+      renameProject: (id: string, newName: string) =>
+        set((state) => {
+          const projs = state.projects || {};
+          if (!projs[id]) return {};
+          return {
+            projects: {
+              ...projs,
+              [id]: {
+                ...projs[id],
+                name: (newName || 'Untitled').trim(),
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          };
+        }),
+      getProjects: () => {
+        const state = get();
+        return Object.values(state.projects || {}).sort((a, b) =>
+          b.updatedAt.localeCompare(a.updatedAt)
+        ) as ProjectData[];
       },
-      saveCurrentProject: () => {
-        /* stub */
+
+      saveProjectToBackend: async (id?: string) => {
+        const state = get();
+        const targetId = id || state.currentProjectId;
+        if (!targetId) {
+          console.warn('[persist] No current project id to save to backend');
+          return;
+        }
+        const projs = state.projects || {};
+        const proj = projs[targetId] || {
+          id: targetId,
+          name: 'Current Project',
+          approvedDesign: state.approvedDesign,
+          sourcingItems: state.sourcingItems,
+          laborTasks: state.laborTasks,
+        };
+        try {
+          const res = await fetch('http://localhost:4000/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: proj.id,
+              name: proj.name,
+              approvedDesign: proj.approvedDesign,
+              sourcingItems: proj.sourcingItems,
+              laborTasks: proj.laborTasks,
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (data?.success) {
+            console.log('[persist] Saved project to backend:', data.project?.id || targetId);
+          }
+        } catch (e) {
+          console.warn('[persist] Backend saveProjectToBackend failed:', e);
+        }
       },
-      deleteProject: (id: string) => {
-        /* stub */
+      loadProjectFromBackend: async (id: string) => {
+        try {
+          const res = await fetch(`http://localhost:4000/api/projects/${encodeURIComponent(id)}`);
+          const data = await res.json().catch(() => ({}));
+          if (data?.success && data.project) {
+            const p = data.project;
+            const localId = p.id || `proj_backend_${Date.now()}`;
+            const now = new Date().toISOString();
+            const loaded: ProjectData = {
+              id: localId,
+              name: p.name || 'Loaded from Backend',
+              createdAt: p.createdAt || now,
+              updatedAt: now,
+              approvedDesign: p.approvedDesign || null,
+              sourcingItems: p.sourcingItems || [],
+              laborTasks: p.laborTasks || [],
+            };
+            set((s: any) => ({
+              projects: { ...(s.projects || {}), [localId]: loaded },
+              currentProjectId: localId,
+              approvedDesign: loaded.approvedDesign,
+              sourcingItems: loaded.sourcingItems,
+              laborTasks: loaded.laborTasks,
+            }));
+            console.log('[persist] Loaded project from backend:', localId);
+          }
+        } catch (e) {
+          console.warn('[persist] loadProjectFromBackend failed:', e);
+        }
       },
-      renameProject: (id: string, newName: string) => {
-        /* stub */
+      listBackendProjects: async () => {
+        try {
+          const res = await fetch('http://localhost:4000/api/projects');
+          const data = await res.json().catch(() => ({}));
+          return data?.success ? (data.projects || []) : [];
+        } catch (e) {
+          console.warn('[persist] listBackendProjects failed:', e);
+          return [];
+        }
       },
-      getProjects: () => [] as any,
-      saveProjectToBackend: async (id?: string) => { /* stub */ },
-      loadProjectFromBackend: async (id: string) => { /* stub */ },
-      listBackendProjects: async () => [] as any,
     }),
     {
       name: 'delta-store', // persists to localStorage on web (and AsyncStorage adapter possible)
-      // @ts-ignore - localStorage for web; on pure RN provide custom storage via @react-native-async-storage
+      // @ts-ignore - localStorage for web; on pure RN provide custom storage via @react-native-async-storage/async-storage
+      // Web uses built-in localStorage automatically via createJSONStorage.
+      // For full native RN: `pnpm add @react-native-async-storage/async-storage` then use conditional AsyncStorage.
+      // import AsyncStorage from '@react-native-async-storage/async-storage';
+      // import { Platform } from 'react-native';
+      // storage: createJSONStorage(() => (Platform.OS === 'web' ? localStorage : AsyncStorage)),
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
+        currentProjectId: state.currentProjectId,
+        projects: state.projects,
         approvedDesign: state.approvedDesign,
         sourcingItems: state.sourcingItems,
         laborTasks: state.laborTasks,
         workerAssignedJobs: state.workerAssignedJobs,
-        // persistence stubs (partial to keep AI typechecks clean)
-        currentProjectId: state.currentProjectId,
-        projects: state.projects,
       }),
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 2 || !persistedState || !persistedState.projects) {
+          const ps = persistedState || {};
+          const hasOldData = ps.approvedDesign || (ps.sourcingItems && ps.sourcingItems.length > 0) || (ps.laborTasks && ps.laborTasks.length > 0);
+          if (hasOldData) {
+            const id = `proj_${Date.now()}_legacy`;
+            const now = new Date().toISOString();
+            const legacyProject: ProjectData = {
+              id,
+              name: 'Legacy Project (migrated from prior session)',
+              createdAt: now,
+              updatedAt: now,
+              approvedDesign: ps.approvedDesign || null,
+              sourcingItems: ps.sourcingItems || [],
+              laborTasks: ps.laborTasks || [],
+            };
+            return {
+              ...ps,
+              currentProjectId: id,
+              projects: { [id]: legacyProject },
+            };
+          }
+          return { ...ps, currentProjectId: null, projects: {} };
+        }
+        return persistedState;
+      },
     }
   )
 );

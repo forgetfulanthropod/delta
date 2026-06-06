@@ -104,6 +104,45 @@ app.post('/api/reimagine', async (req, res) => {
   });
 });
 
+// --- Persistence routes (Priority #2: Data & Persistence) ---
+// In-memory demo store for multi-project save/load (designs, sourcing, labor + metadata).
+// Used by the enhanced useDeltaStore (saveProjectToBackend etc). No file I/O for simplicity (in-mem only while running).
+// Does not affect AI route.
+const projectsStore = {};
+
+app.get('/api/projects', (req, res) => {
+  res.json({ success: true, projects: Object.values(projectsStore) });
+});
+
+app.post('/api/projects', (req, res) => {
+  const { id, name = 'Untitled', approvedDesign = null, sourcingItems = [], laborTasks = [] } = req.body || {};
+  const projId = id || `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  const now = new Date().toISOString();
+  const existing = projectsStore[projId] || {};
+  projectsStore[projId] = {
+    id: projId,
+    name,
+    createdAt: existing.createdAt || now,
+    updatedAt: now,
+    approvedDesign,
+    sourcingItems,
+    laborTasks,
+  };
+  res.json({ success: true, project: projectsStore[projId] });
+});
+
+app.get('/api/projects/:id', (req, res) => {
+  const p = projectsStore[req.params.id];
+  if (!p) return res.status(404).json({ success: false, error: 'Project not found' });
+  res.json({ success: true, project: p });
+});
+
+app.delete('/api/projects/:id', (req, res) => {
+  const existed = !!projectsStore[req.params.id];
+  delete projectsStore[req.params.id];
+  res.json({ success: true, deleted: existed });
+});
+
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
 });

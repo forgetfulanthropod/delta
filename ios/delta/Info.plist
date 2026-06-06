@@ -36,6 +36,10 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSCameraUsageDescription</key>
+	<string>Delta uses the camera to take photos of your space for AI remodeling designs (Design Studio).</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Delta can access your photo library to let you select reference images for your remodeling project.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
