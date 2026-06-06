@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Platform } from 'react-native';
+import { DEMO_IMAGE_PATHS, getImageSource } from '../../shared/media';
 
 interface Props {
   onPhotoTaken: (uri: string) => void;
@@ -23,7 +24,7 @@ export default function CameraScreen({ onPhotoTaken, onCancel }: Props) {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         if (e.target?.result) {
-          setPreviewUri(e.target.result as string);
+          setPreviewUri(e.target.result as string); // data: URI for upload
         }
       };
       reader.readAsDataURL(file);
@@ -34,7 +35,7 @@ export default function CameraScreen({ onPhotoTaken, onCancel }: Props) {
 
   const useSelectedPhoto = () => {
     if (previewUri) {
-      onPhotoTaken(previewUri);
+      onPhotoTaken(previewUri); // data: passes through normalize
     }
   };
 
@@ -46,7 +47,8 @@ export default function CameraScreen({ onPhotoTaken, onCancel }: Props) {
 
   const useDemoPhoto = () => {
     // Solid fallback for web (and works cross-platform in DesignStudio examples)
-    const demoUri = '/ai-room-1.jpg';
+    // Uses shared DEMO paths (gallery fallback documented in src/shared/media.ts)
+    const demoUri = DEMO_IMAGE_PATHS[0];
     onPhotoTaken(demoUri);
   };
 
@@ -75,7 +77,7 @@ export default function CameraScreen({ onPhotoTaken, onCancel }: Props) {
       ) : (
         <>
           <View style={styles.previewContainer}>
-            <Image source={{ uri: previewUri }} style={styles.previewImage} />
+            <Image source={getImageSource(previewUri)} style={styles.previewImage} />
             <Text style={styles.previewHint}>Preview — ready to use as base photo</Text>
           </View>
 

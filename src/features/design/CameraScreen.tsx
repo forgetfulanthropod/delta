@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
+import { DEMO_IMAGE_PATHS } from '../../shared/media';
 // Native vision-camera integration (Priority #3): permissions added to Info.plist + AndroidManifest.xml.
 // Fallbacks: demo photo always available if device/permission unavailable.
 // Web uses solid CameraScreen.web.tsx (preview + hidden input + demo).
 // For full prod: run pod install (iOS), ensure reanimated if using frame processors (not required for basic photo).
+// Phase 1: URI from capture is `file://` (native Image supports); demo paths are public/ relative (documented in shared/media).
 
 interface Props {
   onPhotoTaken: (uri: string) => void;
@@ -40,7 +42,8 @@ export default function CameraScreen({ onPhotoTaken, onCancel }: Props) {
   const useDemoPhoto = () => {
     // Better fallback: demo photo works on iOS/Android + web (used by DesignStudio examples and worker)
     // Ensures camera experience is usable even if hardware/perms not available (e.g. simulator, no cam device)
-    onPhotoTaken('/ai-room-1.jpg');
+    // Gallery fallback paths documented/enhanced in src/shared/media.ts (DEMO_IMAGE_PATHS)
+    onPhotoTaken(DEMO_IMAGE_PATHS[0]);
   };
 
   if (!hasPermission) {

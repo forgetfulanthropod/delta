@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Platform } from 'react-native';
 import BeforeAfterSlider from '../features/design/BeforeAfterSlider';
+import { getImageSource } from '../shared/media';
+import { useTheme } from '../shared/theme';
 
 const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: any }) => {
   const containerRef = useRef<any>(null);
@@ -48,135 +50,31 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
     defs.appendChild(grad);
     svg.appendChild(defs);
 
-    // Clean, sharp upward Delta (Δ) triangle - straight sides, flat base, pointed top.
-    // Rounded corners come from thick rounded stroke (no weird bottom line).
-    const path = doc.createElementNS(svgNS, 'path');
-    path.setAttribute('d', 'M50,8 L86,80 L14,80 Z');
-    path.setAttribute('fill', 'url(#deltaFluid)');
-    path.setAttribute('stroke', '#ffffff');
-    path.setAttribute('stroke-width', '8.5');
-    path.setAttribute('stroke-linejoin', 'round');
-    path.setAttribute('stroke-linecap', 'round');
-    svg.appendChild(path);
-
-    // subtle inner triangle stroke for liquid depth / highlight ring
-    const inner = doc.createElementNS(svgNS, 'path');
-    inner.setAttribute('d', 'M50,17 L78,73 L22,73 Z');
-    inner.setAttribute('fill', 'none');
-    inner.setAttribute('stroke', 'rgba(255,255,255,0.32)');
-    inner.setAttribute('stroke-width', '2.5');
-    inner.setAttribute('stroke-linejoin', 'round');
-    svg.appendChild(inner);
+    const poly = doc.createElementNS(svgNS, 'polygon');
+    poly.setAttribute('points', '50,8 95,90 5,90');
+    poly.setAttribute('fill', 'url(#deltaFluid)');
+    poly.setAttribute('stroke', '#111');
+    poly.setAttribute('stroke-width', '3');
+    svg.appendChild(poly);
 
     container.appendChild(svg);
 
-    // state for interaction + fluid idle
-    let targetCx = 50;
-    let targetCy = 52;
-    let isInteracting = false;
-    let currCx = 50;
-    let currCy = 52;
-    let currR = 72;
-    let rafId = 0;
-    let stopPhase = 0;
-
-    const onPointer = (e: any) => {
-      const r = svg.getBoundingClientRect();
-      if (r.width === 0 || r.height === 0) return;
-      const px = ((e.clientX - r.left) / r.width) * 100;
-      const py = ((e.clientY - r.top) / r.height) * 100;
-      targetCx = Math.max(20, Math.min(80, px));
-      targetCy = Math.max(28, Math.min(70, py));
-      isInteracting = true;
+    // simple click pulse
+    const pulse = () => {
+      poly.setAttribute('stroke', '#fff');
+      setTimeout(() => poly.setAttribute('stroke', '#111'), 220);
     };
-    const endInteract = () => { isInteracting = false; };
-
-    svg.addEventListener('pointerdown', onPointer);
-    svg.addEventListener('pointermove', onPointer);
-    svg.addEventListener('pointerup', endInteract);
-    svg.addEventListener('pointerleave', endInteract);
-
-    const loop = () => {
-      const t = Date.now() / 1850;
-
-      // organic non-circular idle - summed sines so it never feels like a simple orbiting dot
-      const idleCx = 50 + Math.sin(t * 0.65) * 12 + Math.sin(t * 1.75) * 4.8 + Math.cos(t * 0.38) * 2.5;
-      const idleCy = 52 + Math.cos(t * 0.52) * 10 + Math.sin(t * 2.1) * 3.8 + Math.sin(t * 0.88) * 2.0;
-      const idleR = 68 + Math.sin(t * 0.92) * 12 + Math.cos(t * 0.7) * 4;
-
-      let goalCx = idleCx;
-      let goalCy = idleCy;
-      let goalR = idleR;
-
-      if (isInteracting) {
-        goalCx = targetCx;
-        goalCy = targetCy;
-        goalR = 82; // bloom the highlight toward the pointer for fluid "color follows you" feel
-      }
-
-      // inertia lerp - sloshy, fluid response instead of direct/snappy dot
-      currCx = currCx * 0.80 + goalCx * 0.20;
-      currCy = currCy * 0.80 + goalCy * 0.20;
-      currR = currR * 0.82 + goalR * 0.18;
-
-      grad.setAttribute('cx', `${currCx.toFixed(1)}%`);
-      grad.setAttribute('cy', `${currCy.toFixed(1)}%`);
-      grad.setAttribute('r', `${currR.toFixed(1)}%`);
-
-      // strong fluid color mixing: animate multiple stop offsets at different rates.
-      // This makes the colors inside the triangle keep shifting and blending even when the
-      // radial center is moving slowly - the whole fill feels alive/liquid, not a hard dot.
-      stopPhase += 0.012;
-      const s1 = grad.children[1] as any;
-      if (s1 && s1.setAttribute) {
-        const off1 = 16 + Math.sin(stopPhase * 1.4) * 8.5;
-        s1.setAttribute('offset', `${off1.toFixed(1)}%`);
-      }
-      const s3 = grad.children[3] as any;
-      if (s3 && s3.setAttribute) {
-        const off3 = 62 + Math.cos(stopPhase * 0.85) * 9;
-        s3.setAttribute('offset', `${off3.toFixed(1)}%`);
-      }
-      const s4 = grad.children[4] as any;
-      if (s4 && s4.setAttribute) {
-        const off4 = 88 + Math.sin(stopPhase * 1.1 + 1.2) * 5;
-        s4.setAttribute('offset', `${Math.max(80, Math.min(96, off4)).toFixed(1)}%`);
-      }
-
-      rafId = requestAnimationFrame(loop);
-    };
-    rafId = requestAnimationFrame(loop);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      svg.removeEventListener('pointerdown', onPointer);
-      svg.removeEventListener('pointermove', onPointer);
-      svg.removeEventListener('pointerup', endInteract);
-      svg.removeEventListener('pointerleave', endInteract);
-      if (container.contains && container.contains(svg)) container.removeChild(svg);
-    };
+    svg.addEventListener('click', pulse);
+    svg.addEventListener('touchstart', pulse);
   }, [size]);
 
-  if (Platform.OS === 'web') {
-    return (
-      <View
-        ref={containerRef as any}
-        style={[{ width: size, height: size, overflow: 'hidden' }, style]}
-      />
-    );
-  }
-
-  // Native fallback (web is the primary demo target for the living logo)
   return (
     <View
+      ref={containerRef}
       style={[
         {
           width: size,
-          height: size * 0.85,
-          backgroundColor: '#FF385C',
-          borderWidth: 5,
-          borderColor: '#fff',
-          borderRadius: 6,
+          height: size,
         },
         style,
       ]}
@@ -190,6 +88,7 @@ interface Props {
 
 export default function OnboardingScreen({ onSelectRole }: Props) {
   const screenHeight = Dimensions.get('window').height;
+  const t = useTheme();
 
   return (
     <View style={styles.screen}>
@@ -211,9 +110,9 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
         <View style={styles.topBar}>
           <View style={styles.constrained}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              {/* rivur logo image integrated next to Delta */}
+              {/* rivur logo image integrated next to Delta + URI normalize */}
               <Image
-                source={{ uri: '/rivur-logo.webp' }}
+                source={getImageSource('/rivur-logo.webp')}
                 style={{ width: 108, height: 41, marginRight: 12 }}
                 resizeMode="contain"
               />
@@ -297,10 +196,9 @@ const styles = StyleSheet.create({
   bottomBar: {
     backgroundColor: 'rgba(0,0,0,0.55)',
     paddingTop: 12,
-    paddingBottom: 40,
+    paddingBottom: 24,
     pointerEvents: 'auto',
   },
-  // Constrain UI width for readability, centered
   constrained: {
     maxWidth: 720,
     width: '100%',
@@ -308,49 +206,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   logo: {
-    fontSize: 46,
+    fontSize: 42,
     fontWeight: '800',
     color: '#fff',
-    letterSpacing: -1,
+    letterSpacing: -2,
   },
   tagline: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 15,
     marginTop: 4,
+    letterSpacing: 0.3,
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 14,
+    gap: 12,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 22,
+    paddingVertical: 18,
     paddingHorizontal: 18,
-    minHeight: 82,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
-    justifyContent: 'center',
   },
   ownerAction: {
-    backgroundColor: 'rgba(255, 56, 92, 0.25)',
-    borderColor: 'rgba(255, 56, 92, 0.5)',
+    backgroundColor: ACCENT,
   },
   workerAction: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(255,255,255,0.95)',
   },
   actionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#fff',
-    marginBottom: 4,
+    color: '#111',
   },
   actionSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.75)',
-    textAlign: 'center',
+    fontSize: 13,
+    color: 'rgba(17,17,17,0.7)',
+    marginTop: 2,
   },
 });
