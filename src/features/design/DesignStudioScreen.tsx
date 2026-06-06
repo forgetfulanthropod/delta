@@ -130,7 +130,7 @@ export default function DesignStudioScreen() {
     store.setApprovedDesign(exVersions[0]);
 
     setPrompt('Bright modern kitchen with natural materials and better flow');
-    Alert.alert('Example Loaded', 'The Oak Street House is now active.\n\nSourcing has 8 items (some already approved).\nLabor tasks are ready.\nCheck the Sourcing and Labor tabs for the full breakout.');
+    Alert.alert('Example Loaded', 'The Oak Street House is now active.\n\nSourcing has 8 items (some already approved).\nLabor tasks are ready.\n\nCost transparency: approved design now shows prominent summary panel with full materials+labor estimate (ready to go). Variations cards have highlighted cost pills. Send to Sourcing now confirms the total upfront.\nCheck Design (for costs), Sourcing and Labor tabs.');
   };
 
   const startNewProject = () => {
@@ -205,10 +205,20 @@ export default function DesignStudioScreen() {
 
   const makeCurrent = (version: DesignVersion) => {
     setApprovedDesign(version);
-    Alert.alert('Current Design', 'This version is now your approved design for sourcing & labor.');
+    const c = estimateProjectCost(version);
+    Alert.alert(
+      'Current Design — Ready to Go',
+      `This version is now your approved design for sourcing & labor.\n\n` +
+      `Est. Project Cost (transparent & locked):\n` +
+      `• Materials: $${c.materials}\n` +
+      `• Labor: $${c.labor} (${c.hours}h @ $25/hr)\n` +
+      `• TOTAL: $${c.total}\n\n` +
+      `Costs are ready to go. Sourcing will use dynamic suggestions based on this design.`
+    );
   };
 
-  // Simple estimator to surface costs directly in Design Studio (owner-side "ready to go" costs)
+  // Simple estimator to surface costs directly in Design Studio (owner-side "ready to go" costs).
+  // Consistent with worker-side per-job "estimated total cost" display.
   function estimateProjectCost(v: DesignVersion) {
     const p = (v.prompt + ' ' + Object.values(v.tweaks).join(' ')).toLowerCase();
     let materials = 1200;
@@ -233,40 +243,123 @@ export default function DesignStudioScreen() {
   }
 
   const sendToSourcing = async (version: DesignVersion) => {
-    setApprovedDesign(version);
-
-    try {
-      await fetch('http://localhost:4000/api/reimagine', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUri: version.imageUri, prompt: version.prompt }),
-      });
-    } catch {}
-
-    // Dynamic items based on the version's prompt + tweaks (much less hardcoded)
-    const base = Date.now();
-    const p = (version.prompt + ' ' + Object.values(version.tweaks).join(' ')).toLowerCase();
-    const suggested: any[] = [];
-
-    if (p.includes('floor') || p.includes('kitchen') || p.includes('living')) {
-      suggested.push({ id: String(base), name: 'LVP Flooring - Oak', retailer: "Lowe's" as const, price: 3.49, quantity: 140, approved: false, url: 'https://www.lowes.com' });
-    }
-    if (p.includes('light') || p.includes('electrical') || p.includes('modern')) {
-      suggested.push({ id: String(base + 10), name: 'LED Recessed Lights (12-pack)', retailer: 'Home Depot' as const, price: 42, quantity: 2, approved: false, url: 'https://www.homedepot.com' });
-    }
-    if (p.includes('cabinet') || p.includes('kitchen') || p.includes('bath')) {
-      suggested.push({ id: String(base + 20), name: 'Matte Black Cabinet Hardware Set', retailer: 'Amazon' as const, price: 68, quantity: 1, approved: false, url: 'https://www.amazon.com' });
-    }
-    if (p.includes('paint') || p.includes('wall')) {
-      suggested.push({ id: String(base + 30), name: 'Interior Paint - Warm White (5 gal)', retailer: "Lowe's" as const, price: 48, quantity: 2, approved: false, url: 'https://www.lowes.com' });
-    }
-    if (suggested.length === 0) {
-      suggested.push({ id: String(base), name: 'LVP Flooring - Oak', retailer: "Lowe's" as const, price: 3.49, quantity: 100, approved: false, url: 'https://www.lowes.com' });
-    }
-
-    useDeltaStore.getState().addSourcingItems(suggested);
     const c = estimateProjectCost(version);
-    Alert.alert('Sent to Sourcing', `Materials added (est. total project cost $${c.total}).\n\nSwitch to the Sourcing tab to review, approve, and generate labor.`);
+
+    // Evolved "Send to Sourcing" to surface/confirm the total estimated cost first (owner cost transparency)
+    // This makes costs feel "ready to go" before the handoff, in addition to version cards.
+    Alert.alert(
+      'Confirm & Send to Sourcing',
+      `Estimated TOTAL project cost for this design: $${c.total}\n\n` +
+      `Breakdown (ready to go):\n` +
+      `• Materials: $${c.materials}\n` +
+      `• Labor estimate: $${c.labor} (${c.hours} hours @ $25/hr)\n\n` +
+      `This will:\n` +
+      `- Set this as your current approved design\n` +
+      `- Add context-aware material suggestions to Sourcing (you review/approve)\n` +
+      `- Keep the full cost estimate visible for Labor scheduling\n\n` +
+      `Proceed with this costed design?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: `Yes, Send ($${c.total} total)`,
+          style: 'default',
+          onPress: async () => {
+            setApprovedDesign(version);
+
+            try {
+              await fetch('http://localhost:4000/api/reimagine', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageUri: version.imageUri, prompt: version.prompt }),
+              });
+            } catch {}
+
+            // Significantly improved dynamic material suggestions based on actual prompt + tweaks.
+            // Much richer analysis (room inference, style/color/layout specific SKUs, realistic qtys/prices).
+            // Builds on the recent dynamic suggestions work + confirm cost UX. Produces targeted lists for better sourcing realism.
+            const base = Date.now();
+            const p = (version.prompt + ' ' + Object.values(version.tweaks).join(' ')).toLowerCase();
+            const suggested: any[] = [];
+
+            // Infer room type and scope for realistic quantities
+            const isKitchen = p.includes('kitchen') || p.includes('cabinet') || p.includes('island');
+            const isBath = p.includes('bath') || p.includes('shower') || p.includes('vanity');
+            const isFloor = p.includes('floor') || p.includes('lvp') || p.includes('hardwood') || p.includes('living') || p.includes('family');
+            const isLighting = p.includes('light') || p.includes('electrical') || p.includes('recessed') || p.includes('modern');
+            const isPaint = p.includes('paint') || p.includes('wall') || p.includes('color');
+            const isCounter = isKitchen || isBath || p.includes('counter') || p.includes('quartz') || p.includes('granite');
+            const isHardware = p.includes('hardware') || p.includes('pull') || p.includes('knob') || isKitchen || isBath;
+
+            // Flooring - core for most rooms, scale qty
+            if (isFloor || isKitchen || isBath) {
+              const floorQty = isKitchen ? 85 : isBath ? 45 : 160;
+              suggested.push({ id: String(base), name: isKitchen || p.includes('hardwood') ? 'White Oak Engineered Flooring' : 'LVP Flooring - Oak', retailer: "Lowe's" as const, price: isKitchen ? 7.89 : 3.49, quantity: floorQty, approved: false, url: 'https://www.lowes.com' });
+            }
+
+            // Lighting - dynamic packs + style tweak
+            if (isLighting || p.includes('modern') || version.tweaks.style === 'Modern' || version.tweaks.layout === 'Open plan') {
+              suggested.push({ id: String(base + 10), name: 'LED 6" Recessed Lights (12-pack)', retailer: 'Home Depot' as const, price: 89, quantity: 2, approved: false, url: 'https://www.homedepot.com' });
+              if (p.includes('statement') || version.tweaks.colorPalette === 'Bold colors') {
+                suggested.push({ id: String(base + 11), name: 'Modern Pendant Light - Brushed Nickel', retailer: 'Amazon' as const, price: 129, quantity: 2, approved: false, url: 'https://www.amazon.com' });
+              }
+            }
+
+            // Cabinets / hardware - tweak aware
+            if (isHardware || isKitchen || isBath) {
+              const hwName = version.tweaks.style === 'Industrial' || version.tweaks.colorPalette === 'Bold colors'
+                ? 'Matte Black Cabinet Hardware Set (30pc)'
+                : version.tweaks.style === 'Rustic' ? 'Brushed Brass Cabinet Pulls (24pc)' : 'Matte Black Cabinet Hardware Set (30pc)';
+              suggested.push({ id: String(base + 20), name: hwName, retailer: 'Amazon' as const, price: 68, quantity: 1, approved: false, url: 'https://www.amazon.com' });
+              if (isKitchen) {
+                suggested.push({ id: String(base + 21), name: 'Soft-Close Cabinet Hinges (pair, 10pk)', retailer: "Lowe's" as const, price: 38, quantity: 3, approved: false, url: 'https://www.lowes.com' });
+              }
+            }
+
+            // Paint / walls - palette driven
+            if (isPaint || version.tweaks.colorPalette !== 'Warm neutrals') {
+              const paintName = version.tweaks.colorPalette === 'Bold colors' ? 'Interior Paint - Charcoal Accent + Warm White (5 gal)' :
+                                version.tweaks.colorPalette === 'Earthy' ? 'Interior Paint - Warm Taupe + Trim (5 gal)' :
+                                'Interior Paint - Warm White (5 gal)';
+              suggested.push({ id: String(base + 30), name: paintName, retailer: "Lowe's" as const, price: version.tweaks.colorPalette === 'Bold colors' ? 72 : 48, quantity: version.tweaks.colorPalette === 'Bold colors' ? 4 : 3, approved: false, url: 'https://www.lowes.com' });
+            }
+
+            // Counters / surfaces for kitchens/baths
+            if (isCounter) {
+              const counterName = version.tweaks.style === 'Modern' || version.tweaks.colorPalette === 'Cool tones' ? 'Quartz Countertop - Calacatta Laza' : 'Granite Countertop - Giallo Ornamental';
+              suggested.push({ id: String(base + 40), name: counterName, retailer: "Lowe's" as const, price: 62, quantity: isKitchen ? 42 : 18, approved: false, url: 'https://www.lowes.com' });
+              if (isKitchen) {
+                suggested.push({ id: String(base + 41), name: 'Subway Tile Backsplash - White (10 sq ft box)', retailer: 'Home Depot' as const, price: 29, quantity: 3, approved: false, url: 'https://www.homedepot.com' });
+              }
+            }
+
+            // Plumbing fixtures if bath/kitchen
+            if (isBath || isKitchen || p.includes('sink') || p.includes('faucet')) {
+              suggested.push({ id: String(base + 50), name: isBath ? 'Matte Black Pull-Down Faucet' : 'Farmhouse Apron Sink', retailer: 'Amazon' as const, price: isBath ? 179 : 420, quantity: 1, approved: false, url: 'https://www.amazon.com' });
+              if (isBath) {
+                suggested.push({ id: String(base + 51), name: 'Shower Faucet Trim Kit + Valve', retailer: 'Home Depot' as const, price: 145, quantity: 1, approved: false, url: 'https://www.homedepot.com' });
+              }
+            }
+
+            // Layout/style extras
+            if (version.tweaks.layout === 'Open plan' || version.tweaks.style === 'Minimal') {
+              suggested.push({ id: String(base + 60), name: 'LED Strip Lighting Kit (for coves/island)', retailer: 'Amazon' as const, price: 35, quantity: 2, approved: false, url: 'https://www.amazon.com' });
+            }
+            if (version.tweaks.style === 'Rustic' || p.includes('fireplace') || p.includes('built-in')) {
+              suggested.push({ id: String(base + 61), name: 'Wood Mantle / Built-in Shelving Kit', retailer: "Lowe's" as const, price: 185, quantity: 1, approved: false, url: 'https://www.lowes.com' });
+            }
+
+            // Fallback always adds at least core flooring if nothing matched (should be rare now)
+            if (suggested.length === 0) {
+              suggested.push({ id: String(base), name: 'LVP Flooring - Oak', retailer: "Lowe's" as const, price: 3.49, quantity: 120, approved: false, url: 'https://www.lowes.com' });
+              suggested.push({ id: String(base + 30), name: 'Interior Paint - Warm White (5 gal)', retailer: "Lowe's" as const, price: 48, quantity: 2, approved: false, url: 'https://www.lowes.com' });
+            }
+
+            useDeltaStore.getState().addSourcingItems(suggested);
+            Alert.alert('Sent to Sourcing', `Materials added. Est. total project cost $${c.total} (locked from design).\n\nSwitch to the Sourcing tab to review, approve items, and generate labor. The Labor tab will reflect the $25/hr schedule.`);
+          },
+        },
+      ]
+    );
   };
 
   // Initial clean chooser (no clunky keys, no 4-house grid)
@@ -276,7 +369,7 @@ export default function DesignStudioScreen() {
         <View style={{ paddingHorizontal: 24, paddingTop: 40, paddingBottom: 20, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
           <Text style={{ fontSize: 36, fontWeight: '700', color: '#222', letterSpacing: -1 }}>Design Studio</Text>
           <Text style={{ fontSize: 18, color: '#555', marginTop: 8, lineHeight: 24 }}>
-            One house. Real photos. AI variations. Then straight into sourcing and scheduling.
+            One house. Real photos. AI variations with direct cost estimates (materials + labor "ready to go"). Make current or confirm &amp; send to sourcing — costs are transparent and surfaced upfront.
           </Text>
         </View>
 
@@ -286,7 +379,7 @@ export default function DesignStudioScreen() {
             style={[styles.choiceCard, { backgroundColor: '#111' }]}
           >
             <Text style={styles.choiceTitle}>New Project</Text>
-            <Text style={styles.choiceSubtitle}>Upload or take photos of your space. Start clean. Generate variations. Send to sourcing when ready.</Text>
+            <Text style={styles.choiceSubtitle}>Upload or take photos of your space. Start clean. Generate variations with est. costs shown on every card. Make current for summary, or Send to Sourcing (with cost confirm).</Text>
             <Text style={styles.choiceCta}>Take or upload photo →</Text>
           </TouchableOpacity>
 
@@ -296,7 +389,7 @@ export default function DesignStudioScreen() {
           >
             <Text style={[styles.choiceTitle, { color: '#222' }]}>Example Project</Text>
             <Text style={[styles.choiceSubtitle, { color: '#444' }]}>
-              The Oak Street House — before + after + AI concepts for one home, 4 AI directions explored, sourcing list with approvals in progress, labor tasks ready.
+              The Oak Street House — before + after + AI concepts for one home, 4 AI directions with prominent cost breakdowns (ready to go), current design summary panel, sourcing + labor seeded.
             </Text>
             <Text style={[styles.choiceCta, { color: '#C45C26' }]}>Load full demo →</Text>
           </TouchableOpacity>
@@ -465,12 +558,19 @@ export default function DesignStudioScreen() {
                 {v.tweaks.style} • {v.tweaks.colorPalette} • {v.tweaks.layout}
               </Text>
 
+              {/* Prominent cost estimate box in each version card — direct owner visibility, "ready to go" */}
               {(() => {
                 const c = estimateProjectCost(v);
                 return (
-                  <Text style={{ color: '#2e7d32', fontWeight: '600', marginTop: 6, fontSize: 14 }}>
-                    Est. materials ${c.materials} • Labor ${c.labor} ({c.hours}h) • Total ${c.total} (ready to go)
-                  </Text>
+                  <View style={styles.costPill}>
+                    <Text style={styles.costPillTitle}>Ready to go — Est. Project Cost</Text>
+                    <Text style={styles.costPillMain}>
+                      Total ${c.total}
+                    </Text>
+                    <Text style={styles.costPillBreakdown}>
+                      Materials ${c.materials} + Labor ${c.labor} ({c.hours}h)
+                    </Text>
+                  </View>
                 );
               })()}
 
@@ -492,18 +592,59 @@ export default function DesignStudioScreen() {
         </View>
       )}
 
-      {/* Pipeline status — only really meaningful for the example, but always visible when data exists */}
-      {(sourcingItems.length > 0 || laborTasks.length > 0) && (
+      {/* Prominent Owner Cost Summary panel — surfaces estimated costs directly in owner journey
+          (in addition to version cards and instead of hiding behind "Send to Sourcing").
+          Shows breakdown when a version is made current / approved. Makes costs feel "ready to go". */}
+      {approvedDesign && (() => {
+        const c = estimateProjectCost(approvedDesign);
+        return (
+          <View style={styles.costSummaryPanel}>
+            <Text style={styles.costSummaryTitle}>Current Approved Design — Cost Summary</Text>
+            <Text style={{ color: '#2e7d32', fontSize: 13, marginBottom: 6 }}>
+              This design is locked in and ready to go for sourcing + labor.
+            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+              <Text style={{ fontWeight: '600' }}>Materials (est.)</Text>
+              <Text style={{ fontWeight: '700' }}>${c.materials}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+              <Text style={{ fontWeight: '600' }}>Labor (est. {c.hours}h × $25/hr)</Text>
+              <Text style={{ fontWeight: '700' }}>${c.labor}</Text>
+            </View>
+            <View style={{ height: 1, backgroundColor: '#ddd', marginVertical: 6 }} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={{ fontWeight: '700', fontSize: 16 }}>TOTAL EST. PROJECT COST</Text>
+              <Text style={{ fontWeight: '800', fontSize: 18, color: '#2e7d32' }}>${c.total}</Text>
+            </View>
+            <Text style={{ fontSize: 11, color: '#666', marginTop: 8 }}>
+              Full transparency: costs shown upfront on versions, confirmed before send, and visible in pipeline below.
+              Sourcing shows material subtotal; Labor uses the $25/hr schedule.
+            </Text>
+          </View>
+        );
+      })()}
+
+      {/* Improved pipeline status — now includes owner cost transparency + breakdowns for full picture.
+          Always surfaces the ready-to-go total when an approved design exists. */}
+      {(sourcingItems.length > 0 || laborTasks.length > 0 || approvedDesign) && (
         <View style={styles.pipelineCard}>
           <Text style={{ fontWeight: '700', fontSize: 16, marginBottom: 6 }}>Project Pipeline</Text>
+          {approvedDesign && (() => {
+            const c = estimateProjectCost(approvedDesign);
+            return (
+              <Text style={{ color: '#2e7d32', fontWeight: '600', marginBottom: 4 }}>
+                Est. full project (from current design): ${c.total} • Mats ${c.materials} + Labor ${c.labor}
+              </Text>
+            );
+          })()}
           <Text style={{ color: '#444' }}>
-            Sourcing: {sourcingItems.length} items • {approvedCount} approved • ${sourcingTotal.toFixed(0)} total
+            Sourcing: {sourcingItems.length} items • {approvedCount} approved • ${sourcingTotal.toFixed(0)} total (materials)
           </Text>
           <Text style={{ color: '#444', marginTop: 2 }}>
             Labor: {laborTasks.length} tasks ready for scheduling
           </Text>
           <Text style={{ fontSize: 12, color: '#888', marginTop: 8 }}>
-            Go to the Sourcing tab to approve items and generate the labor schedule. Labor tab shows the day-by-day $25/hr plan.
+            Go to the Sourcing tab to approve items and generate the labor schedule. Labor tab shows the day-by-day $25/hr plan. Design costs above are the owner-visible "ready to go" anchor.
           </Text>
         </View>
       )}
@@ -675,6 +816,56 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
+
+  // New prominent styles for owner cost transparency (Priority #5)
+  costPill: {
+    marginTop: 8,
+    backgroundColor: '#e8f5e9',
+    borderWidth: 1,
+    borderColor: '#a5d6a7',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: 'flex-start',
+  },
+  costPillTitle: {
+    fontSize: 11,
+    color: '#2e7d32',
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  costPillMain: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1b5e20',
+    marginTop: 2,
+  },
+  costPillBreakdown: {
+    fontSize: 12,
+    color: '#388e3c',
+    marginTop: 1,
+  },
+
+  costSummaryPanel: {
+    marginTop: 16,
+    marginHorizontal: 16,
+    maxWidth: 720,
+    alignSelf: 'center',
+    width: '100%',
+    backgroundColor: '#f1f8e9',
+    borderWidth: 2,
+    borderColor: '#4caf50',
+    borderRadius: 14,
+    padding: 16,
+    // Strong visual to make costs "ready to go" and directly surfaced in owner flow
+  },
+  costSummaryTitle: {
+    fontWeight: '700',
+    fontSize: 15,
+    marginBottom: 8,
+    color: '#1b5e20',
+  },
+
   pipelineCard: {
     marginTop: 24,
     marginHorizontal: 16,
