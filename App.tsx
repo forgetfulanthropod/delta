@@ -10,6 +10,7 @@ import OnboardingScreen from './src/onboarding/OnboardingScreen';
 import DesignStudioScreen from './src/features/design/DesignStudioScreen';
 import SourcingScreen from './src/features/sourcing/SourcingScreen';
 import LaborSchedulerScreen from './src/features/labor/LaborSchedulerScreen';
+import ScopingScreen from './src/features/scoping/ScopingScreen';
 import { useDeltaStore } from './src/store/useDeltaStore';
 import { generateSchedule } from './src/features/labor/scheduler';
 import type { Task } from './src/features/labor/types';
@@ -27,7 +28,7 @@ function App() {
 
 function AppContent() {
   const [role, setRole] = useState<'owner' | 'worker' | null>(null);
-  const [tab, setTab] = useState<'design' | 'sourcing' | 'labor'>('design');
+  const [tab, setTab] = useState<'sourcing' | 'scoping' | 'scheduling'>('scoping');
   const [workerTradeFilter, setWorkerTradeFilter] = useState<'All' | string>('All');
 
   // Pull shared store for owner-sourced data integration + worker claim state (new for Priority #4)
@@ -607,16 +608,10 @@ function AppContent() {
     );
   }
 
-  // Phase 1 improved custom tab bar (styled, icon-ish). Full react-nav prepared in src/navigation/ for later.
+  // Top bar nav updated per request: Sourcing / Scoping / Scheduling (Scoping owns the selected-design scope tree + burndown).
   return (
     <View style={styles.container}>
       <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'design' && styles.tabActive]}
-          onPress={() => setTab('design')}
-        >
-          <Text style={[styles.tabText, tab === 'design' && styles.tabTextActive]}>🎨 Design</Text>
-        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, tab === 'sourcing' && styles.tabActive]}
           onPress={() => setTab('sourcing')}
@@ -624,16 +619,22 @@ function AppContent() {
           <Text style={[styles.tabText, tab === 'sourcing' && styles.tabTextActive]}>🛒 Sourcing</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, tab === 'labor' && styles.tabActive]}
-          onPress={() => setTab('labor')}
+          style={[styles.tab, tab === 'scoping' && styles.tabActive]}
+          onPress={() => setTab('scoping')}
         >
-          <Text style={[styles.tabText, tab === 'labor' && styles.tabTextActive]}>👷 Labor</Text>
+          <Text style={[styles.tabText, tab === 'scoping' && styles.tabTextActive]}>📐 Scoping</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, tab === 'scheduling' && styles.tabActive]}
+          onPress={() => setTab('scheduling')}
+        >
+          <Text style={[styles.tabText, tab === 'scheduling' && styles.tabTextActive]}>📅 Scheduling</Text>
         </TouchableOpacity>
       </View>
 
-      {tab === 'design' && <DesignStudioScreen />}
       {tab === 'sourcing' && <SourcingScreen />}
-      {tab === 'labor' && <LaborSchedulerScreen />}
+      {tab === 'scoping' && <ScopingScreen />}
+      {tab === 'scheduling' && <LaborSchedulerScreen />}
     </View>
   );
 }

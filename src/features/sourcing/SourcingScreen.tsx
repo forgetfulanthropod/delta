@@ -22,7 +22,7 @@ export default function SourcingScreen() {
     }
 
     setLaborTasks(tasks);
-    Alert.alert('Labor', `Labor schedule generated for ${tasks.length} tasks! Check the Labor tab.`);
+    Alert.alert('Labor', `Labor schedule generated for ${tasks.length} tasks! Check the Scheduling tab.`);
   };
 
   return (
