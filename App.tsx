@@ -7,7 +7,6 @@ import React, { useState } from 'react';
 import { StatusBar, StyleSheet, View, TouchableOpacity, Text, useColorScheme, Alert, ScrollView, Image } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import OnboardingScreen from './src/onboarding/OnboardingScreen';
-import DesignStudioScreen from './src/features/design/DesignStudioScreen';
 import SourcingScreen from './src/features/sourcing/SourcingScreen';
 import LaborSchedulerScreen from './src/features/labor/LaborSchedulerScreen';
 import ScopingScreen from './src/features/scoping/ScopingScreen';
