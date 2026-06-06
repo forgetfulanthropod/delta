@@ -81,7 +81,7 @@ export default function LaborSchedulerScreen() {
                   <Text style={styles.section}>By end of day (5 PM):</Text>
                   {day.tasks.map((st: any, i: number) => (
                     <Text key={i}>
-                      • {st.task.name} ({st.durationHours}h) — {st.startTime} to {st.endTime}
+                      • {st.task.name} ({st.durationHours}h) — {st.startTime} to {st.endTime}{st.laborerName ? ` (${st.laborerName})` : ''}
                     </Text>
                   ))}
                 </View>

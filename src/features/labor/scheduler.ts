@@ -6,9 +6,16 @@ const SHORT_BREAKS = 0.25; // two 15-min breaks = 30 min total
 const TOTAL_BREAKS = LUNCH_BREAK + SHORT_BREAKS; // 1.0 hour
 const PRODUCTIVE_HOURS = WORKDAY_HOURS - TOTAL_BREAKS; // 7 hours
 
+// Demo crew with individual names so the schedule can attribute items to specific laborers
+const DEFAULT_LABORERS: Laborer[] = [
+  { id: 'l1', name: 'L. Johnson', ratePerJob: 200 },
+  { id: 'l2', name: 'M. Rivera', ratePerJob: 200 },
+  { id: 'l3', name: 'T. Kim', ratePerJob: 200 },
+];
+
 export function generateSchedule(
   tasks: Task[],
-  laborers: Laborer[] = [{ id: 'l1', name: 'Crew', ratePerJob: 200 }]
+  laborers: Laborer[] = DEFAULT_LABORERS
 ): ScheduleResult {
   // Sort tasks by size (largest first) for better packing
   const sortedTasks = [...tasks].sort((a, b) => b.estimatedHours - a.estimatedHours);
@@ -40,11 +47,15 @@ export function generateSchedule(
       const startHour = 8 + currentDayHours; // start at 8 AM
       const endHour = startHour + chunk;
 
+      // Assign a laborer (cycle through the crew for demo purposes)
+      const laborerName = laborers[currentDayTasks.length % laborers.length].name;
+
       currentDayTasks.push({
         task: { ...task, estimatedHours: chunk },
         startTime: formatTime(startHour),
         endTime: formatTime(endHour),
         durationHours: chunk,
+        laborerName,
       });
 
       currentDayHours += chunk;
@@ -83,7 +94,7 @@ function createDaySchedule(
     totalHours: Number(totalHours.toFixed(2)),
     productiveHours: Number(totalProductive.toFixed(2)),
     breakHours: totalBreak,
-    laborersAssigned: 1,
+    laborersAssigned: new Set(scheduledTasks.map((t) => t.laborerName).filter(Boolean)).size || 1,
     cost: costPerLaborer,
   };
 }
@@ -105,13 +116,14 @@ export function getHalfDayProgress(day: DaySchedule) {
   const doneByHalf: string[] = [];
 
   for (const st of day.tasks) {
+    const baseName = st.laborerName ? `${st.task.name} (${st.laborerName})` : st.task.name;
     if (cumulative + st.durationHours <= halfDayLimit) {
-      doneByHalf.push(st.task.name);
+      doneByHalf.push(baseName);
       cumulative += st.durationHours;
     } else {
       const partial = halfDayLimit - cumulative;
       if (partial > 0) {
-        doneByHalf.push(`${st.task.name} (partial ${partial.toFixed(1)}h)`);
+        doneByHalf.push(`${baseName} (partial ${partial.toFixed(1)}h)`);
       }
       break;
     }

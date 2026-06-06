@@ -27,6 +27,7 @@ export interface ScheduledTask {
   startTime: string; // e.g. "08:00"
   endTime: string;
   durationHours: number;
+  laborerName?: string; // e.g. "L. Johnson"
 }
 
 export interface ScheduleResult {
