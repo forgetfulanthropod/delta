@@ -13,7 +13,7 @@ Delta is a cross-platform (React Native + Web) prototype for an AI-powered home 
 - **Design Studio**: Camera (web file upload + native vision-camera), prompt + AI reimagine (xAI Grok Imagine via backend, or static fallbacks), before/after comparison sliders, multiple versions with *prominent* direct project cost estimates (materials + labor "ready to go" in highlighted pills on every card), make-current now surfaces detailed cost summary in alert + dedicated owner Cost Summary panel (breakdown + total) appears when version approved, "Send to Sourcing" evolved to cost confirmation dialog showing/locking total upfront before handoff, improved pipeline status now always includes full est. project cost + breakdowns for transparency. Owner costs feel "ready to go" across the journey.
 - **Sourcing**: Dynamic list from designs, approve items from Lowe's/Amazon/Home Depot, running total, generate labor tasks.
 - **Labor Scheduler**: 8-hour days, built-in breaks (lunch + short), largest-first packing, per-day breakdown with start/end times, half-day progress, $25/hr guaranteed costing.
-- **Worker Experience**: Trade filters, Flickity per-project photo carousels, direct est. costs shown as "ready to go". Full claim/assign flows that update Zustand state (jobs move to "My Assigned Jobs"), owner-sourced data integration (live cards pulling sourcingItems + laborTasks for relevant tasks/costs), scheduling visibility for claimed jobs (day schedules with breaks/costs).
+- **Worker Experience**: Trade filters, cross-platform scrollable per-project photo carousels (iOS/Android/Web), direct est. costs shown as "ready to go". Full claim/assign flows that update Zustand state (jobs move to "My Assigned Jobs"), owner-sourced data integration (live cards pulling sourcingItems + laborTasks for relevant tasks/costs), scheduling visibility for claimed jobs (day schedules with breaks/costs).
 - **State**: Zustand store flows approved design → sourcing items → labor tasks. Worker claims augment the shared store (assignedJobs + laborTasks sync on claim).
 - **AI**: Client provider/key UI (x/Gemini/OpenAI/Anthropic). Backend supports xAI (via env `XAI_API_KEY` or per-request key). Backend now leverages uploaded image via reference (data URI for web uploads or http) using xAI image edits endpoint (/images/edits) for real visual understanding + realistic transformations (not just text prompt); significantly richer image-aware prompts direct model to analyze/preserve exact room structure, perspective, lighting etc. Client-side: dynamic material suggestions and cost estimates now much more detailed/realistic based on the actual AI prompt output + tweaks (room inference, style-matched SKUs, luxury multipliers, scope scaling). Priority #1 AI Quality meaningfully advanced.
 - Cross-platform intent with web shims and .web.tsx files.
@@ -64,8 +64,10 @@ pnpm android        # or pnpm ios
 
 **Notes**:
 - iOS first time: `bundle install && bundle exec pod install` (in ios/)
-- Native camera (`react-native-vision-camera`) is declared but requires full native integration (permissions in Info.plist/AndroidManifest, pod/gradle updates, possibly reanimated). Web upload always works as fallback.
+- Native camera (`react-native-vision-camera`): permissions implemented (Info.plist + AndroidManifest.xml). CameraScreen.native provides live preview + capture with solid fallbacks ("Use Demo Photo"). Web CameraScreen.web has improved UX (styled picker, live preview before commit, demo fallback, hidden input for clean trigger).
+- Worker dashboard + Design Studio now use consistent cross-platform photo UIs (RN ScrollView horizontal + Image everywhere; removed web-only Flickity + Platform conditionals + div/img).
 - Backend calls from device/emulator need to target your dev machine's LAN IP (not localhost) or use a tunnel.
+- After native changes: re-run pod install if iOS, clean/rebuild for Android. Typecheck + web build verified.
 
 ### Other commands
 
@@ -108,10 +110,10 @@ This is a functional prototype focused on the web experience (easiest to demo an
 
 - AI generation now uses image references (when data URI or public URL provided from upload) + detailed visual analysis prompts for true image understanding and realistic remodel transformations (via xAI /images/edits path when ref available); pure text fallback for non-data cases. Cost est + material suggestions now much richer and directly derived from the reimagination's prompt/tweaks for better accuracy. (Still limited by model capabilities and demo data.)
 - Persistence now supports multi-project history: create/switch/rename/delete/save projects with full design/sourcing/labor state + metadata (names, timestamps); client-side via Zustand (localStorage web) + explicit backend /api/projects routes (in-memory demo on server). Legacy single-project data auto-migrates on load. (AsyncStorage note improved for future native.)
-- Native mobile (especially camera with vision-camera) requires additional setup and is not fully turnkey.
+- Native mobile camera (vision-camera) has permissions + basic integration complete; demo fallbacks ensure usable experience on device/simulator. Full turnkey still benefits from re-build after pod/gradle, and reanimated for advanced features (not needed for photo capture).
 - Some demo data, alerts, and flows remain (rapid iteration); owner-side cost estimates now much more prominent/direct with breakdowns, summary panels, and confirm flows (Priority #5 advanced); sourcing suggestions are dynamic based on design prompt + tweaks.
 - No real auth, multi-user, or production retailer APIs.
-- Worker experience is web-focused (Flickity carousels for photos); native fallbacks are simpler.
+- Worker + Design Studio photos now consistent cross-platform (RN ScrollView carousels; no platform-specific codepaths).
 
 See DEVELOPMENT_PLAN.md for a more detailed gap analysis and historical context.
 
@@ -119,11 +121,13 @@ See DEVELOPMENT_PLAN.md for a more detailed gap analysis and historical context.
 
 The project has moved beyond the original early phases. Recent work includes:
 - Worker experience (Priority #4): claiming/assignment flows (claim buttons update store, move jobs into persisted "My Assigned Jobs" section), "My Assigned Jobs" with unclaim, better integration with owner-sourced data (banner + live "Owner Project" card showing approved sourcingItems count/cost + laborTasks as worker tasks/costs), actual scheduling visibility (inline per-claimed-job schedules computed via scheduler: days/breaks/costs/"starts ~08:00"). Preserves + builds on trade filter, Flickity carousels, direct "ready to go" est costs. Claiming integrates claimed tasks into shared laborTasks.
-- Owner-side: Estimated project costs (materials + labor) now shown directly on every AI variation in Design Studio (enhanced with prominent "ready to go" cost pills + breakdown), make-current surfaces costs in alert, new dedicated Cost Summary panel appears for approved version (full transparency), "Send to Sourcing" now requires confirming the total est. cost first, pipeline status improved to always surface the locked-in full project estimate + materials/labor split (advances Owner Flow & Cost Transparency priority). Plus smarter context-aware sourcing suggestions based on prompt + tweaks. (Backend AI note as before.)
+- Owner-side: Estimated project costs (materials + labor) now shown directly on every AI variation in Design Studio (enhanced with prominent "ready to go" cost pills + breakdown + significantly more realistic estimates using scope, luxury keywords, and tweak premiums directly from AI prompt output), make-current surfaces costs in alert, new dedicated Cost Summary panel appears for approved version (full transparency), "Send to Sourcing" now requires confirming the total est. cost first, pipeline status improved to always surface the locked-in full project estimate + materials/labor split (advances Owner Flow & Cost Transparency priority). Significantly richer dynamic sourcing suggestions (tweak/style-specific items, more categories/accurate qtys). Backend AI now uses image refs + advanced visual prompts for image understanding (advances Priority #1 AI Quality for better transformations and material suggestions).
 - Desktop UI width constraints across key screens.
 - Continued owner flow polish.
 
 See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the full historical roadmap, what has been completed, and the current remaining priorities (reconciled against this README).
+
+**Priority #5 Owner Flow & Cost Transparency chunk complete** (this update): Cost estimates now surfaced more directly/prominently throughout owner journey in Design Studio (version pills, make-current costed alert, new summary panel on approve, confirm dialog before send, pipeline with full est + breakdown). "Ready to go" language and visuals consistent. README updated for Features + Owner flow + Recent work.
 
 PRs welcome. When making changes, please help keep both README.md and DEVELOPMENT_PLAN.md in sync.
 
