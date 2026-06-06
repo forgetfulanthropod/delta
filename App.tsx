@@ -3,8 +3,8 @@
  * Cross-platform (RN + Web) prototype
  */
 
-import React, { useState, useEffect } from 'react';
-import { StatusBar, StyleSheet, View, TouchableOpacity, Text, useColorScheme, Alert, ScrollView, Platform, Image } from 'react-native';
+import React, { useState } from 'react';
+import { StatusBar, StyleSheet, View, TouchableOpacity, Text, useColorScheme, Alert, ScrollView, Image } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import OnboardingScreen from './src/onboarding/OnboardingScreen';
 import DesignStudioScreen from './src/features/design/DesignStudioScreen';
@@ -27,32 +27,9 @@ function AppContent() {
   const [tab, setTab] = useState<'design' | 'sourcing' | 'labor'>('design');
   const [workerTradeFilter, setWorkerTradeFilter] = useState<'All' | string>('All');
 
-  // Initialize Flickity carousels for job photos (web only)
-  useEffect(() => {
-    const globalAny: any = globalThis;
-    if (role !== 'worker' || Platform.OS !== 'web' || !globalAny.Flickity || typeof globalAny.document === 'undefined') return;
-
-    const Flickity = globalAny.Flickity;
-    const doc = globalAny.document;
-
-    const timer = setTimeout(() => {
-      const carousels = doc.querySelectorAll('.job-carousel');
-      carousels.forEach((el: any) => {
-        if (el._flickity) return; // already initialized
-        new Flickity(el, {
-          cellAlign: 'left',
-          contain: true,
-          pageDots: true,
-          prevNextButtons: true,
-          wrapAround: true,
-          imagesLoaded: true,
-          adaptiveHeight: false,
-        });
-      });
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, [role, workerTradeFilter]);
+  // Cross-platform photo carousels use RN ScrollView+Image (no Flickity, no web-only div/img).
+  // This fixes web vs native differences in the worker dashboard: identical horizontal scroll/flick experience on iOS/Android/Web.
+  // (Previously required external script + Platform conditionals for new worker dashboard.)
 
   if (!role) {
     return <OnboardingScreen onSelectRole={setRole} />;
@@ -229,7 +206,7 @@ function AppContent() {
           </ScrollView>
         </View>
 
-        {/* Job list - constrained content width + flickable photos per project using Flickity (web) */}
+        {/* Job list - constrained content width + flickable photos per project (cross-platform ScrollView) */}
         <ScrollView style={{ flex: 1 }}>
           <View style={[styles.constrained, { paddingHorizontal: 20, paddingBottom: 120 }]}>
             {filteredJobs.length === 0 ? (
@@ -249,37 +226,22 @@ function AppContent() {
                     borderColor: '#eee',
                   }}
                 >
-                  {/* Flickable photo carousel for the project (Flickity on web) */}
-                  {Platform.OS === 'web' ? (
-                    <div
-                      className="job-carousel"
-                      style={{
-                        width: '100%',
-                        height: 180,
-                        marginBottom: 12,
-                        borderRadius: 8,
-                        overflow: 'hidden',
-                        backgroundColor: '#f0f0f0',
-                      }}
-                    >
-                      {(job as any).images.map((src: string, i: number) => (
-                        <img
-                          key={i}
-                          src={src}
-                          alt="project"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <View style={{ height: 180, marginBottom: 12, borderRadius: 8, overflow: 'hidden', backgroundColor: '#eee' }}>
+                  {/* Cross-platform flickable/scrollable project photos (consistent iOS / Android / Web via RN primitives).
+                       Horizontal scroll provides flick experience everywhere; no web-only DOM or external carousel lib. */}
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={{ height: 180, marginBottom: 12, borderRadius: 8, backgroundColor: '#f0f0f0' }}
+                  >
+                    {((job as any).images || []).map((src: string, i: number) => (
                       <Image
-                        source={{ uri: (job as any).images?.[0] }}
-                        style={{ width: '100%', height: '100%' }}
+                        key={i}
+                        source={{ uri: src }}
+                        style={{ width: 240, height: 180, marginRight: 4, borderRadius: 4 }}
                         resizeMode="cover"
                       />
-                    </View>
-                  )}
+                    ))}
+                  </ScrollView>
 
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <View style={{ flex: 1, paddingRight: 12 }}>

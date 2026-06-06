@@ -217,28 +217,59 @@ export default function DesignStudioScreen() {
     );
   };
 
-  // Simple estimator to surface costs directly in Design Studio (owner-side "ready to go" costs).
-  // Consistent with worker-side per-job "estimated total cost" display.
+  // Enhanced cost estimation realism tied directly to the AI-generated version's prompt + tweaks output.
+  // Builds realism: room scope inference, complexity/luxury multipliers from AI description words,
+  // tweak-specific premiums (e.g. bold/modern cost more for finishes), scaled labor for remodel effort.
+  // Now produces more believable "ready to go" numbers that vary meaningfully with the reimagination details.
   function estimateProjectCost(v: DesignVersion) {
     const p = (v.prompt + ' ' + Object.values(v.tweaks).join(' ')).toLowerCase();
-    let materials = 1200;
-    let laborHours = 18;
+    let materials = 1350;  // slightly higher realistic base for full room remodel
+    let laborHours = 16;
 
-    if (p.includes('kitchen') || p.includes('cabinet')) { materials += 1800; laborHours += 12; }
-    if (p.includes('floor') || p.includes('lvp') || p.includes('hardwood')) { materials += 900; laborHours += 8; }
-    if (p.includes('light') || p.includes('electrical')) { materials += 450; laborHours += 6; }
-    if (p.includes('paint') || p.includes('wall')) { materials += 350; laborHours += 5; }
-    if (v.tweaks.style === 'Modern' || v.tweaks.layout === 'Open plan') { laborHours += 4; materials += 300; }
-    if (v.tweaks.colorPalette === 'Bold colors') { materials += 250; }
+    // Core scope from AI prompt (kitchen/bath costliest)
+    if (p.includes('kitchen') || p.includes('cabinet') || p.includes('island')) { materials += 2100; laborHours += 14; }
+    else if (p.includes('bath') || p.includes('shower') || p.includes('vanity')) { materials += 1450; laborHours += 10; }
+    if (p.includes('floor') || p.includes('lvp') || p.includes('hardwood') || p.includes('living') || p.includes('family')) { materials += 1100; laborHours += 9; }
+    if (p.includes('light') || p.includes('electrical') || p.includes('recessed') || p.includes('pendant')) { materials += 520; laborHours += 7; }
+    if (p.includes('paint') || p.includes('wall') || p.includes('color')) { materials += 420; laborHours += 6; }
+
+    // Counter/surface premium from AI intent
+    if (p.includes('counter') || p.includes('quartz') || p.includes('granite') || p.includes('backsplash')) { materials += 950; laborHours += 5; }
+
+    // Plumbing fixtures
+    if (p.includes('sink') || p.includes('faucet') || p.includes('shower')) { materials += 380; laborHours += 4; }
+
+    // Tweak-driven realism (AI output variations affect cost)
+    if (v.tweaks.style === 'Modern' || v.tweaks.style === 'Minimal') { materials += 480; laborHours += 5; } // premium finishes
+    if (v.tweaks.style === 'Industrial') { materials += 320; laborHours += 3; }
+    if (v.tweaks.layout === 'Open plan') { laborHours += 6; materials += 380; } // more demo/structural
+    if (v.tweaks.layout === 'Multi-zone') { laborHours += 4; materials += 290; }
+    if (v.tweaks.colorPalette === 'Bold colors') { materials += 380; } // specialty paint/products
+    if (v.tweaks.colorPalette === 'Earthy' || v.tweaks.colorPalette === 'Warm neutrals') { materials += 180; } // natural materials premium
+
+    // AI prompt complexity / luxury signals for realistic uplift (tied to what reimagine actually said)
+    const luxuryWords = ['luxury', 'custom', 'high-end', 'statement', 'premium', 'designer', 'handcrafted', 'spa', 'gourmet'];
+    const complexity = luxuryWords.filter(w => p.includes(w)).length;
+    if (complexity > 0) {
+      materials += complexity * 420;
+      laborHours += complexity * 3;
+    }
+    if (p.includes('large') || p.includes('entire') || p.includes('whole') || p.includes('full')) {
+      materials += 650; laborHours += 8;
+    }
+    if (p.includes('reimagine') || p.includes('transform')) {
+      laborHours += 2; // extra for major change
+    }
 
     const labor = Math.round(laborHours * 25);
     const total = materials + labor;
 
+    // Round to nice increments for "ready to go" feel
     return {
       materials: Math.round(materials / 50) * 50,
       labor,
       total: Math.round(total / 50) * 50,
-      hours: laborHours,
+      hours: Math.round(laborHours),
     };
   }
 
