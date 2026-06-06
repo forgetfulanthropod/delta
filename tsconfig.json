@@ -1,7 +1,10 @@
 {
   "extends": "@react-native/typescript-config",
   "compilerOptions": {
-    "types": ["jest"]
+    "types": ["jest"],
+    // Include 'dom' for web-specific files (e.g. .web.tsx using DOM APIs like input.click for file pickers).
+    // This resolves web build type issues without affecting RN native. (Needed for clean pnpm typecheck post-persist work.)
+    "lib": ["esnext", "dom"]
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["**/node_modules", "**/Pods"]
