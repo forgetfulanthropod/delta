@@ -118,6 +118,7 @@ See DEVELOPMENT_PLAN.md for a more detailed gap analysis and historical context.
 
 The project has moved beyond the original early phases. Recent work includes:
 - Worker dashboard with trade filters, flickable project photos (Flickity), and per-job estimated costs shown directly ("ready to go").
+- Owner-side: Estimated project costs (materials + labor) now shown directly on every AI variation in Design Studio, plus smarter context-aware sourcing suggestions based on prompt + tweaks.
 - Desktop UI width constraints across key screens.
 - Continued owner flow polish.
 
