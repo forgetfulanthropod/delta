@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { StatusBar, StyleSheet, View, TouchableOpacity, Text, useColorScheme, Alert, ScrollView, Image } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import OnboardingScreen from './src/onboarding/OnboardingScreen';
-import MainTabNavigator from './src/navigation/MainTabNavigator';
+import AppNavigator from './src/navigation/AppNavigator';
 import { useDeltaStore } from './src/store/useDeltaStore';
 import { generateSchedule } from './src/features/labor/scheduler';
 import type { Task } from './src/features/labor/types';
@@ -33,7 +33,7 @@ function App() {
 
 function AppContent() {
   const [role, setRole] = useState<'owner' | 'worker' | null>(null);
-  // [tab, setTab] removed - owner tabs now handled by react-navigation in MainTabNavigator (Phase 1)
+  // Owner tabs fully replaced by react-navigation (AppNavigator + TabNavigator). See src/navigation/.
   const [workerTradeFilter, setWorkerTradeFilter] = useState<'All' | string>('All');
 
   // Pull shared store for owner-sourced data integration + worker claim state (new for Priority #4)
@@ -615,17 +615,18 @@ function AppContent() {
     );
   }
 
-  // Owner role: real react-navigation bottom tabs (Phase 1).
-  // Replaces custom tabBar (themed Touchable + tab state + conditional renders).
-  // Labels (🛒 Sourcing / 📐 Scoping / 📅 Scheduling), Scoping default, all existing flows, store, Scoping burndown preserved.
-  // Design accessible via flow (not tab). Worker dashboard + role switch 100% untouched.
-  return <MainTabNavigator />;
+  // Owner role: proper react-navigation (Phase 1 complete).
+  // Root: AppNavigator (Native Stack) + TabNavigator (Bottom Tabs for Sourcing/Scoping/Scheduling).
+  // Replaces all crude button-based navigation (no more selectedTab state or inline conditionals for owner tabs).
+  // Scoping is default (selected design hero + trade scope tree + burndown first). Worker dashboard untouched.
+  // Future stack screens (Design, details, etc.) can be added inside AppNavigator without touching App.tsx role logic.
+  return <AppNavigator />;
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  // tabBar styles removed - owner now uses real react-navigation (Phase 1 subagent).
-  // Consistent styling is in src/shared/ (theme, ConstrainedView, etc.).
+  // All owner tab navigation moved to src/navigation/AppNavigator + TabNavigator (Phase 1).
+  // No more custom tabBar styles or selectedTab conditionals in App.tsx.
 });
 
 export default App;

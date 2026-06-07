@@ -108,6 +108,7 @@ src/
     scoping/         # ScopingScreen (hero + scope tree + burndown)
   onboarding/
   shared/            # theme.ts, media.ts (URI), ReadyToGoCostPill, ProjectHero, AppButton, index.ts (Phase 1)
+  navigation/        # AppNavigator.tsx (root Stack + Container), TabNavigator.tsx (bottom tabs: Sourcing/Scoping/Scheduling), types.ts (Tab/Root param lists), MainTabNavigator (compat shim). Phase 1: replaced crude buttons with react-navigation (Stack + Tabs), web + mobile.
   store/             # useDeltaStore.ts (design -> sourcing -> labor)
   web-shims/
 backend/server.js    # Express, /api/reimagine (xAI)
@@ -146,6 +147,7 @@ Recent changes (Phase 1):
 - Camera + media: URI consistency (data:/file:/public paths) audited + enforced via shared/media + getImageSource across all Image usages (Design, Scoping, worker dashboard carousels, etc.). Gallery/demo fallbacks documented ("Use Demo" paths).
 - Native camera prep: Expanded notes in README + DEVELOPMENT_PLAN with exact pod install, manifest, simulator, rebuild steps.
 - Theming/Consistency: src/shared/ populated (theme.ts with useTheme + light/dark, media.ts, ReadyToGoCostPill, ProjectHero, AppButton). Dark mode propagated (App shell + worker, Design/Scoping/Sourcing/Scheduling headers/cards using theme colors/padding/typo). Extracted patterns reused in Design + Scoping. Consistent with existing carousels/heroes.
+- Navigation: Proper react-navigation v6+/v7 (native + bottom-tabs + native-stack + screens + safe-area). Clean structure per Phase 1 request: src/navigation/AppNavigator.tsx (root Native Stack + NavigationContainer), TabNavigator.tsx (typed Bottom Tabs: 🛒 Sourcing / 📐 Scoping default / 📅 Scheduling), types.ts (TabParamList + RootStackParamList). All crude button/tabBar + selectedTab state/conditionals removed from App.tsx (owner now <AppNavigator />). Worker dashboard + filters untouched. Web (Vite/RNW) + mobile seamless; vite.config tuned (optimize/externals); pnpm typecheck clean. Servers verified post-edit.
 - Docs updated; pnpm typecheck clean; commit per spec.
 
 See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the full historical roadmap, completed work, and current priorities (reconciled against this README).
