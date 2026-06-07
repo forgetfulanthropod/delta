@@ -15,10 +15,16 @@ interface CardProps extends ViewProps {
   children: React.ReactNode;
 }
 
+function withoutWhitespaceTextNodes(children: React.ReactNode) {
+  return React.Children.toArray(children).filter(
+    (child) => typeof child !== 'string' || child.trim() !== '',
+  );
+}
+
 export default function Card({ children, style, ...rest }: CardProps) {
   return (
     <View style={[sharedStyles.card, style]} {...rest}>
-      {children}
+      {withoutWhitespaceTextNodes(children)}
     </View>
   );
 }

@@ -1,10 +1,33 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Platform } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+  Image,
+  Platform,
+} from 'react-native';
 import BeforeAfterSlider from '../features/design/BeforeAfterSlider';
 import { getImageSource } from '../shared/media';
-import { useTheme } from '../shared/theme';
 
-const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: any }) => {
+const TRIANGLE_WIDTH = Math.round(1072 * 1.3 * 1.3);
+const TRIANGLE_HEIGHT = 252;
+const TRIANGLE_TOP = -96;
+
+const DeltaTriangle = ({
+  width = TRIANGLE_WIDTH,
+  height = TRIANGLE_HEIGHT,
+  style,
+  upsideDown = false,
+  opacity = 0.42,
+}: {
+  width?: number;
+  height?: number;
+  style?: any;
+  upsideDown?: boolean;
+  opacity?: number;
+}) => {
   const containerRef = useRef<any>(null);
 
   useEffect(() => {
@@ -22,59 +45,53 @@ const AnimatedDeltaTriangle = ({ size = 120, style }: { size?: number; style?: a
     svg.setAttribute('height', '100%');
     svg.setAttribute('viewBox', '0 0 100 100');
     svg.style.display = 'block';
-    svg.style.cursor = 'pointer';
-    svg.style.touchAction = 'none';
+    svg.style.pointerEvents = 'none';
 
     const defs = doc.createElementNS(svgNS, 'defs');
-    const grad = doc.createElementNS(svgNS, 'radialGradient');
+    const grad = doc.createElementNS(svgNS, 'linearGradient');
     grad.setAttribute('id', 'deltaFluid');
-    // larger r + slightly lower cy so the fluid gradient washes across most of the triangle
-    grad.setAttribute('cx', '50%');
-    grad.setAttribute('cy', '52%');
-    grad.setAttribute('r', '72%');
+    grad.setAttribute('x1', '0%');
+    grad.setAttribute('y1', '0%');
+    grad.setAttribute('x2', '100%');
+    grad.setAttribute('y2', '100%');
 
-    // vibrant multi-stop for rich fluid color
     const stopDefs = [
-      ['0%', '#67e8f9'],
-      ['20%', '#a78bfa'],
-      ['46%', '#f472b6'],
-      ['70%', '#fb923c'],
-      ['100%', '#f43f5e'],
+      ['0%', '#ffe8ee', '0.78'],
+      ['35%', '#fff0e0', '0.72'],
+      ['65%', '#f0e8ff', '0.68'],
+      ['100%', '#e4f9ff', '0.75'],
     ];
-    stopDefs.forEach(([offset, color]) => {
+    stopDefs.forEach(([offset, color, stopOpacity]) => {
       const s = doc.createElementNS(svgNS, 'stop');
       s.setAttribute('offset', offset);
       s.setAttribute('stop-color', color);
+      s.setAttribute('stop-opacity', stopOpacity);
       grad.appendChild(s);
     });
     defs.appendChild(grad);
     svg.appendChild(defs);
 
     const poly = doc.createElementNS(svgNS, 'polygon');
-    poly.setAttribute('points', '50,8 95,90 5,90');
+    poly.setAttribute(
+      'points',
+      upsideDown ? '50,92 92,14 8,14' : '50,8 95,90 5,90',
+    );
     poly.setAttribute('fill', 'url(#deltaFluid)');
-    poly.setAttribute('stroke', '#111');
-    poly.setAttribute('stroke-width', '3');
+    poly.setAttribute('stroke', 'rgba(255,255,255,0.42)');
+    poly.setAttribute('stroke-width', '1.5');
     svg.appendChild(poly);
 
     container.appendChild(svg);
-
-    // simple click pulse
-    const pulse = () => {
-      poly.setAttribute('stroke', '#fff');
-      setTimeout(() => poly.setAttribute('stroke', '#111'), 220);
-    };
-    svg.addEventListener('click', pulse);
-    svg.addEventListener('touchstart', pulse);
-  }, [size]);
+  }, [width, height, upsideDown, opacity]);
 
   return (
     <View
       ref={containerRef}
       style={[
         {
-          width: size,
-          height: size,
+          width,
+          height,
+          opacity,
         },
         style,
       ]}
@@ -88,72 +105,126 @@ interface Props {
 
 export default function OnboardingScreen({ onSelectRole }: Props) {
   const screenHeight = Dimensions.get('window').height;
-  const t = useTheme();
+  const screenWidth = Dimensions.get('window').width;
+  const isWeb = Platform.OS === 'web';
+  const [dividerX, setDividerX] = useState(screenWidth * 0.5);
+  const [isHoveringAction, setIsHoveringAction] = useState(false);
+  const sliderFollowsCursor = isWeb && !isHoveringAction;
+  const handleSliderPosition = useCallback((x: number) => {
+    setDividerX(x);
+  }, []);
+  const sliderStyle = useMemo(
+    () => ({ marginBottom: 0, flex: 1, width: '100%', height: '100%' }),
+    [],
+  );
+
+  const webActionHoverHandlers = isWeb
+    ? ({
+        onMouseEnter: () => setIsHoveringAction(true),
+        onMouseLeave: () => setIsHoveringAction(false),
+      } as any)
+    : {};
 
   return (
     <View style={styles.screen}>
-      {/* Full screen before/after slider as background */}
       <View style={styles.sliderBackground}>
-        <BeforeAfterSlider
-          before="/test-images/before-after/before-1.jpg"
-          after="/test-images/before-after/after-1.jpg"
-          height={screenHeight}
-          idleAnimate={true}
-          showHint={false}
-          style={{ marginBottom: 0, flex: 1, width: '100%', height: '100%' }}
-        />
+        {isWeb ? (
+          <BeforeAfterSlider
+            before="/test-images/before-after/before-1.jpg"
+            after="/test-images/before-after/after-1.jpg"
+            height={screenHeight}
+            idleAnimate={isHoveringAction}
+            showHint={false}
+            showHandle={false}
+            followCursor={sliderFollowsCursor}
+            interactive
+            onPositionChange={handleSliderPosition}
+            style={sliderStyle}
+          />
+        ) : (
+          <Image
+            source={getImageSource('/test-images/before-after/after-1.jpg')}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
+        )}
       </View>
 
-      {/* Semitransparent UI overlayed on top */}
-      <View style={styles.overlay}>
-        {/* Top branding bar - semitransparent */}
-        <View style={styles.topBar}>
-          <View style={styles.constrained}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              {/* rivur logo image integrated next to Delta + URI normalize */}
-              <Image
-                source={getImageSource('/rivur-logo.webp')}
-                style={{ width: 108, height: 41, marginRight: 12 }}
-                resizeMode="contain"
-              />
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={styles.logo}>Delta</Text>
-                {/* Animated Delta triangle - big, interactive, fluid gradient */}
-                <AnimatedDeltaTriangle size={120} style={{ marginLeft: 10 }} />
-              </View>
+      <View style={styles.overlay} pointerEvents="box-none">
+        {isWeb ? (
+          <View
+            pointerEvents="none"
+            style={[styles.topFadeLayer, styles.topFadeBlur, { height: screenHeight / 3 }]}
+          />
+        ) : null}
+        <View style={styles.topBar} pointerEvents="none">
+          {!isWeb ? (
+            <View
+              style={[
+                styles.triangleMarker,
+                {
+                  top: TRIANGLE_TOP,
+                  left: screenWidth * 0.5 - TRIANGLE_WIDTH / 2,
+                },
+              ]}
+            >
+              <DeltaTriangle width={TRIANGLE_WIDTH} height={TRIANGLE_HEIGHT} upsideDown opacity={1} />
             </View>
-            <Text style={styles.tagline}>Transforming the built environment</Text>
+          ) : null}
+          <View style={styles.brandRow}>
+            <Image
+              source={getImageSource('/rivur-logo.webp')}
+              style={styles.rivurLogo}
+              resizeMode="contain"
+            />
           </View>
+          <Text style={styles.tagline}>Transform the built environment</Text>
         </View>
 
-        {/* Spacer to push bottom UI down. pointerEvents none so middle screen area passes touches to the full-bleed slider underneath (for drag-to-compare) */}
-        <View style={{ flex: 1 }} pointerEvents="none" />
+        <View style={styles.spacer} pointerEvents="none" />
 
-        {/* Bottom action buttons - large, semitransparent, overlayed */}
-        <View style={styles.bottomBar}>
-          <View style={styles.constrained}>
-            <View style={styles.actionsRow}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.ownerAction]}
-                onPress={() => onSelectRole('owner')}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.actionTitle}>Remodel my space</Text>
-                <Text style={styles.actionSubtitle}>Reimagine with AI • Make it real</Text>
-              </TouchableOpacity>
+        <View style={styles.actionsWrap} pointerEvents="box-none">
+          <View style={styles.actionsRow} {...webActionHoverHandlers}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.ownerAction]}
+              onPress={() => onSelectRole('owner')}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.actionTitle, styles.ownerActionTitle]}>Remodel my space</Text>
+              <Text style={[styles.actionSubtitle, styles.ownerActionSubtitle]}>
+                Reimagine with AI • Make it real
+              </Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.actionButton, styles.workerAction]}
-                onPress={() => onSelectRole('worker')}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.actionTitle}>Work on spaces</Text>
-                <Text style={styles.actionSubtitle}>Get paid $25 an hour guaranteed</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.workerAction]}
+              onPress={() => onSelectRole('worker')}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.actionTitle, styles.workerActionTitle]}>Work on spaces</Text>
+              <Text style={[styles.actionSubtitle, styles.workerActionSubtitle]}>
+                Get paid $25 an hour guaranteed
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
+
+      {isWeb ? (
+        <View pointerEvents="none" style={styles.triangleClipLayer}>
+          <View
+            style={[
+              styles.triangleMarker,
+              {
+                top: 44 + TRIANGLE_TOP,
+                left: dividerX - TRIANGLE_WIDTH / 2,
+              },
+            ]}
+          >
+            <DeltaTriangle width={TRIANGLE_WIDTH} height={TRIANGLE_HEIGHT} upsideDown opacity={1} />
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -163,85 +234,131 @@ const ACCENT = '#FF385C';
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    position: 'relative', // ensure absolute children are contained (important for web stacking + events)
-    backgroundColor: '#000', // full bleed dark
+    position: 'relative',
+    backgroundColor: '#000',
+    ...(Platform.OS === 'web' ? { overflowX: 'hidden' as const } : null),
   },
-  // Full screen slider background
-  sliderBackground: {
-    position: 'absolute',
+  triangleClipLayer: {
+    position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
+    overflow: 'hidden',
+    zIndex: 1,
+  } as any,
+  sliderBackground: {
+    ...StyleSheet.absoluteFill,
     zIndex: 0,
   },
-  // Overlay container for all UI on top of the full screen slider
   overlay: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 2,
+    justifyContent: 'space-between',
+  },
+  topFadeLayer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    zIndex: 1,
-    justifyContent: 'space-between',
+    zIndex: 0,
   },
-  // Top semitransparent bar
+  topFadeBlur: {
+    backdropFilter: 'blur(18px)',
+    WebkitBackdropFilter: 'blur(18px)',
+    backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0.38) 0%, rgba(0,0,0,0.12) 55%, rgba(0,0,0,0) 100%)',
+    maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.65) 40%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0) 100%)',
+    WebkitMaskImage:
+      'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.65) 40%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0) 100%)',
+  } as any,
   topBar: {
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    paddingTop: 48,
-    paddingBottom: 16,
-    pointerEvents: 'auto',
-  },
-  // Bottom semitransparent bar
-  bottomBar: {
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    paddingTop: 12,
-    paddingBottom: 24,
-    pointerEvents: 'auto',
-  },
-  constrained: {
-    maxWidth: 720,
+    position: 'relative',
     width: '100%',
-    alignSelf: 'center',
-    paddingHorizontal: 20,
+    alignItems: 'center',
+    paddingTop: 44,
+    paddingBottom: 12,
+    zIndex: 1,
+    overflow: 'visible',
   },
-  logo: {
-    fontSize: 42,
-    fontWeight: '800',
-    color: '#fff',
-    letterSpacing: -2,
+  triangleMarker: {
+    position: 'absolute',
+    zIndex: 0,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    zIndex: 2,
+  },
+  rivurLogo: {
+    width: 216,
+    height: 82,
+    zIndex: 2,
   },
   tagline: {
-    color: 'rgba(255,255,255,0.75)',
+    color: 'rgba(255,255,255,0.78)',
     fontSize: 15,
-    marginTop: 4,
-    letterSpacing: 0.3,
+    marginTop: 6,
+    letterSpacing: 0.2,
+    textAlign: 'center',
+    position: 'relative',
+    zIndex: 2,
+  },
+  spacer: {
+    flex: 1,
+  },
+  actionsWrap: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 48,
+    paddingTop: 20,
   },
   actionsRow: {
     flexDirection: 'row',
     gap: 12,
+    maxWidth: 720,
+    width: '100%',
   },
   actionButton: {
     flex: 1,
     paddingVertical: 18,
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     borderRadius: 16,
     alignItems: 'center',
   },
   ownerAction: {
-    backgroundColor: ACCENT,
+    backgroundColor: 'rgba(255, 56, 92, 0.72)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
   },
   workerAction: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: 'rgba(255,255,255,0.72)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.45)',
   },
   actionTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
-    color: '#111',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  ownerActionTitle: {
+    color: '#fff',
   },
   actionSubtitle: {
-    fontSize: 13,
-    color: 'rgba(17,17,17,0.7)',
-    marginTop: 2,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.88)',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  ownerActionSubtitle: {
+    color: 'rgba(255,255,255,0.88)',
+  },
+  workerActionTitle: {
+    color: '#111',
+  },
+  workerActionSubtitle: {
+    color: 'rgba(17,17,17,0.78)',
   },
 });

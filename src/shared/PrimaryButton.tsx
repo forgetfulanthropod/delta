@@ -28,11 +28,9 @@ export default function PrimaryButton({
       activeOpacity={0.85}
       {...rest}
     >
-      {title ? (
-        <Text style={[sharedStyles.primaryButtonText, textStyle]}>{title}</Text>
-      ) : (
-        children
-      )}
+      <Text style={[sharedStyles.primaryButtonText, textStyle]}>
+        {title ?? children}
+      </Text>
     </TouchableOpacity>
   );
 }

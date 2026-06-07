@@ -422,9 +422,11 @@ export default function ScopingScreen() {
               <ScopeCard key={group.trade} style={styles.tradeGroup}>
                 <View style={styles.tradeHeader}>
                   <Text style={styles.tradeTitle}>{group.trade}</Text>
-                  <Pill variant="accent" style={{ paddingHorizontal: 8, paddingVertical: 2 }}>
-                    {group.groupDone}/{group.groupTotal} pts
-                  </Pill>
+                  <Pill
+                    variant="accent"
+                    style={{ paddingHorizontal: 8, paddingVertical: 2 }}
+                    label={`${group.groupDone}/${group.groupTotal} pts`}
+                  />
                 </View>
                 {group.items.map((item) => (
                   <TouchableOpacity
@@ -440,9 +442,8 @@ export default function ScopingScreen() {
                       <Pill
                         variant={item.done ? 'done' : 'success'}
                         style={item.done ? undefined : { backgroundColor: '#fff', borderColor: COLORS.accent }}
-                      >
-                        {item.points} pts
-                      </Pill>
+                        label={`${item.points} pts`}
+                      />
                       <Text style={{ color: item.done ? COLORS.success : COLORS.accent, fontWeight: 700, fontSize: 13 }}>
                         {item.done ? '✓ Done' : 'Complete'}
                       </Text>

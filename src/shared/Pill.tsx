@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ViewProps } from 'react-native';
 import { useTheme } from './theme';
 
@@ -58,18 +58,38 @@ export default function Pill({
     }
   };
 
-  const pillContent = label || children;
+  const textContent = useMemo(() => {
+    if (label != null && label !== '') {
+      return label;
+    }
+
+    const parts = React.Children.toArray(children).filter((child) => child != null);
+
+    if (parts.length === 0) {
+      return null;
+    }
+
+    if (parts.every((part) => typeof part === 'string' || typeof part === 'number')) {
+      return parts.map(String).join('');
+    }
+
+    return null;
+  }, [label, children]);
 
   return (
     <View
       style={[{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }, getPillStyle(), style]}
       {...rest}
     >
-      {typeof pillContent === 'string' ? (
-        <Text style={[{ fontSize: 12, fontWeight: '700' }, getTextStyle(), textStyle]}>{pillContent}</Text>
-      ) : (
-        pillContent
-      )}
+      {textContent != null ? (
+        <Text style={[{ fontSize: 12, fontWeight: '700' }, getTextStyle(), textStyle]}>
+          {textContent}
+        </Text>
+      ) : children != null ? (
+        <Text style={[{ fontSize: 12, fontWeight: '700' }, getTextStyle(), textStyle]}>
+          {children}
+        </Text>
+      ) : null}
     </View>
   );
 }

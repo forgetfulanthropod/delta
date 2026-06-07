@@ -42,7 +42,7 @@ app.post('/api/reimagine', async (req, res) => {
       const hasImageRef = imageUri && (imageUri.startsWith('data:') || imageUri.startsWith('http'));
 
       let endpoint = 'https://api.x.ai/v1/images/generations';
-      let body: any = {
+      let body = {
         model: 'grok-imagine-image-quality',
         prompt: imageAwarePrompt,
         n: 1,
