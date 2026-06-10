@@ -10,6 +10,7 @@
  */
 
 export type TabParamList = {
+  Design: undefined;
   Sourcing: undefined;
   Scoping: undefined;
   Scheduling: undefined;

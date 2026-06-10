@@ -17,3 +17,5 @@ export { JobCard, ScopeCard } from './Card';
 export { default as SectionHeader } from './SectionHeader';
 export { default as Pill } from './Pill';
 export { default as EmptyState } from './EmptyState';
+export { default as ProjectSwitcher } from './ProjectSwitcher';
+export { default as OwnerHeader } from './OwnerHeader';

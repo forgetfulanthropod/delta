@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { apiUrl } from '../shared/api';
 import { DesignVersion } from '../features/design/types';
 import { SourcingItem } from '../features/sourcing/types';
 import { Task } from '../features/labor/types';
@@ -502,7 +503,7 @@ export const useDeltaStore = create<DeltaStore>()(
           versions: state.versions || [],
         };
         try {
-          const res = await fetch('http://localhost:4000/api/projects', {
+          const res = await fetch(apiUrl('/api/projects'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -524,7 +525,7 @@ export const useDeltaStore = create<DeltaStore>()(
       },
       loadProjectFromBackend: async (id: string) => {
         try {
-          const res = await fetch(`http://localhost:4000/api/projects/${encodeURIComponent(id)}`);
+          const res = await fetch(apiUrl(`/api/projects/${encodeURIComponent(id)}`));
           const data = await res.json().catch(() => ({}));
           if (data?.success && data.project) {
             const p = data.project;
@@ -556,7 +557,7 @@ export const useDeltaStore = create<DeltaStore>()(
       },
       listBackendProjects: async () => {
         try {
-          const res = await fetch('http://localhost:4000/api/projects');
+          const res = await fetch(apiUrl('/api/projects'));
           const data = await res.json().catch(() => ({}));
           return data?.success ? (data.projects || []) : [];
         } catch (e) {

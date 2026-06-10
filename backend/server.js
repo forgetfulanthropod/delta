@@ -7,6 +7,18 @@ app.use(express.json());
 
 const PORT = 4000;
 const XAI_API_KEY = process.env.XAI_API_KEY || '';
+const STARTED_AT = new Date().toISOString();
+
+app.get('/api/health', (_req, res) => {
+  res.json({
+    success: true,
+    status: 'ok',
+    version: '0.2.0',
+    startedAt: STARTED_AT,
+    hasXaiKey: !!XAI_API_KEY,
+    routes: ['/api/health', '/api/reimagine', '/api/projects'],
+  });
+});
 
 app.post('/api/reimagine', async (req, res) => {
   const { imageUri, prompt, provider = 'x', apiKey } = req.body;

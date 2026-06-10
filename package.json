@@ -12,6 +12,7 @@
     "start": "react-native start",
     "test": "jest",
     "dev:backend": "node backend/server.js",
+    "dev": "node scripts/dev-all.js",
     "preview:web": "vite build && vite preview"
   },
   "dependencies": {

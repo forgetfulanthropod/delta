@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, Modal, TouchableOpacity, Button, Alert } from 'react-native';
 import { DesignVersion } from './types';
 import { useDeltaStore } from '../../store/useDeltaStore';
+import { apiUrl } from '../../shared/api';
 import CameraScreen from './CameraScreen';
 
 export default function DesignStudioScreen() {
@@ -99,6 +100,12 @@ export default function DesignStudioScreen() {
     ];
     // Use store for per-project versions persistence (Phase 1)
     const store = useDeltaStore.getState();
+    if (!store.currentProjectId) {
+      store.createProject('The Oak Street House');
+    } else {
+      store.renameProject(store.currentProjectId, 'The Oak Street House');
+      store.saveCurrentProject();
+    }
     store.clearSourcing();
 
     const baseTs = Date.now();
@@ -161,7 +168,7 @@ export default function DesignStudioScreen() {
     const enhancedPrompt = `${prompt} in ${currentTweaks.style} style with ${currentTweaks.colorPalette} color palette and ${currentTweaks.layout} layout.`;
 
     try {
-      const res = await fetch('http://localhost:4000/api/reimagine', {
+      const res = await fetch(apiUrl('/api/reimagine'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

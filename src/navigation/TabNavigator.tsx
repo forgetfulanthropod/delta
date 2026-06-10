@@ -1,8 +1,11 @@
 import React from 'react';
+import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import DesignStudioScreen from '../features/design/DesignStudioScreen';
 import SourcingScreen from '../features/sourcing/SourcingScreen';
 import ScopingScreen from '../features/scoping/ScopingScreen';
 import LaborSchedulerScreen from '../features/labor/LaborSchedulerScreen';
+import OwnerHeader from '../shared/OwnerHeader';
 import type { TabParamList } from './types';
 
 // Typed bottom tab navigator for the three core owner phases.
@@ -16,45 +19,55 @@ const Tab = createBottomTabNavigator<TabParamList>();
 
 export default function TabNavigator() {
   return (
-    <Tab.Navigator
-      initialRouteName="Scoping"
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#FF385C',
-        tabBarInactiveTintColor: '#666',
-        tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopWidth: 1,
-          borderTopColor: '#eee',
-          paddingVertical: 4,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
-      }}
-    >
-      <Tab.Screen
-        name="Sourcing"
-        component={SourcingScreen}
-        options={{
-          tabBarLabel: '🛒 Sourcing',
+    <View style={{ flex: 1 }}>
+      <OwnerHeader />
+      <Tab.Navigator
+        initialRouteName="Design"
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: '#FF385C',
+          tabBarInactiveTintColor: '#666',
+          tabBarStyle: {
+            backgroundColor: '#fff',
+            borderTopWidth: 1,
+            borderTopColor: '#eee',
+            paddingVertical: 4,
+          },
+          tabBarLabelStyle: {
+            fontSize: 11,
+            fontWeight: '600',
+          },
         }}
-      />
-      <Tab.Screen
-        name="Scoping"
-        component={ScopingScreen}
-        options={{
-          tabBarLabel: '📐 Scoping',
-        }}
-      />
-      <Tab.Screen
-        name="Scheduling"
-        component={LaborSchedulerScreen}
-        options={{
-          tabBarLabel: '📅 Scheduling',
-        }}
-      />
-    </Tab.Navigator>
+      >
+        <Tab.Screen
+          name="Design"
+          component={DesignStudioScreen}
+          options={{
+            tabBarLabel: '🎨 Design',
+          }}
+        />
+        <Tab.Screen
+          name="Sourcing"
+          component={SourcingScreen}
+          options={{
+            tabBarLabel: '🛒 Sourcing',
+          }}
+        />
+        <Tab.Screen
+          name="Scoping"
+          component={ScopingScreen}
+          options={{
+            tabBarLabel: '📐 Scoping',
+          }}
+        />
+        <Tab.Screen
+          name="Scheduling"
+          component={LaborSchedulerScreen}
+          options={{
+            tabBarLabel: '📅 Scheduling',
+          }}
+        />
+      </Tab.Navigator>
+    </View>
   );
 }
