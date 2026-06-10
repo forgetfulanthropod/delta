@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit --skipLibCheck",
     "start": "react-native start",
     "test": "jest",
+    "test:unit": "jest --selectProjects unit",
+    "verify": "pnpm typecheck && pnpm test:unit && pnpm build:web",
     "dev:backend": "node backend/server.js",
     "dev": "node scripts/dev-all.js",
     "preview:web": "vite build && vite preview"

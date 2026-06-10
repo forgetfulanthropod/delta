@@ -192,7 +192,7 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
             >
               <Text style={[styles.actionTitle, styles.ownerActionTitle]}>Remodel my space</Text>
               <Text style={[styles.actionSubtitle, styles.ownerActionSubtitle]}>
-                Reimagine with AI • Make it real
+                Design → Sourcing → Scoping → Schedule
               </Text>
             </TouchableOpacity>
 
