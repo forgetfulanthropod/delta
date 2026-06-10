@@ -16,7 +16,50 @@ app.get('/api/health', (_req, res) => {
     version: '0.2.0',
     startedAt: STARTED_AT,
     hasXaiKey: !!XAI_API_KEY,
-    routes: ['/api/health', '/api/reimagine', '/api/projects'],
+    routes: ['/api/health', '/api/analyze', '/api/reimagine', '/api/projects'],
+  });
+});
+
+// Vision + LLM stub: analyze room from prompt/tweaks for richer material suggestions.
+// Phase 2 path — returns structured room context without requiring a live vision API call.
+app.post('/api/analyze', async (req, res) => {
+  const { prompt = '', tweaks = {}, imageUri } = req.body || {};
+  const text = `${prompt} ${Object.values(tweaks).join(' ')}`.toLowerCase();
+
+  const roomType = text.includes('kitchen') || text.includes('cabinet') || text.includes('island')
+    ? 'kitchen'
+    : text.includes('bath') || text.includes('shower') || text.includes('vanity')
+      ? 'bathroom'
+      : text.includes('bedroom')
+        ? 'bedroom'
+        : text.includes('living') || text.includes('family')
+          ? 'living_room'
+          : 'general_interior';
+
+  const issues = [];
+  if (text.includes('dated') || text.includes('old')) issues.push('dated_finishes');
+  if (text.includes('dark') || text.includes('dim')) issues.push('poor_lighting');
+  if (text.includes('cramped') || text.includes('small')) issues.push('tight_layout');
+
+  const materials = [];
+  if (roomType === 'kitchen') {
+    materials.push('cabinet_hardware', 'countertop_quartz', 'backsplash_tile', 'pendant_lighting', 'sink_faucet');
+  } else if (roomType === 'bathroom') {
+    materials.push('vanity', 'tile', 'shower_fixture', 'mirror_lighting');
+  } else {
+    materials.push('flooring_lvp', 'interior_paint', 'trim_molding', 'recessed_lighting');
+  }
+  if ((tweaks.style || '').toLowerCase().includes('modern')) materials.push('matte_black_fixtures');
+  if ((tweaks.colorPalette || '').toLowerCase().includes('warm')) materials.push('oak_flooring');
+
+  return res.json({
+    success: true,
+    roomType,
+    issues,
+    suggestedMaterials: materials,
+    scopeHint: `Remodel ${roomType.replace('_', ' ')} with ${tweaks.style || 'updated'} aesthetic`,
+    usedImageRef: !!(imageUri && (imageUri.startsWith('data:') || imageUri.startsWith('http'))),
+    message: 'Demo room analysis from prompt/tweaks (vision API integration ready)',
   });
 });
 

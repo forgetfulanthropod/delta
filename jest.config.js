@@ -2,7 +2,11 @@ module.exports = {
   projects: [
     {
       displayName: 'unit',
-      testMatch: ['**/__tests__/scheduler.test.ts', '**/__tests__/scopeFromLabor.test.ts'],
+      testMatch: [
+        '**/__tests__/scheduler.test.ts',
+        '**/__tests__/scopeFromLabor.test.ts',
+        '**/__tests__/analyzeRoom.test.ts',
+      ],
       testEnvironment: 'node',
       transform: {
         '^.+\\.(ts|tsx|js|jsx)$': 'babel-jest',

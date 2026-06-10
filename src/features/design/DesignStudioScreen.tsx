@@ -6,6 +6,7 @@ import { apiUrl } from '../../shared/api';
 import { useTheme, useBackendHealth } from '../../shared';
 import { getImageSource } from '../../shared/media';
 import CameraScreen from './CameraScreen';
+import { analyzeRoom } from './analyzeRoom';
 
 export default function DesignStudioScreen() {
   const theme = useTheme();
@@ -324,15 +325,17 @@ export default function DesignStudioScreen() {
           onPress: async () => {
             setApprovedDesign(version);
 
+            const analysis = await analyzeRoom(version.prompt, version.tweaks, version.imageUri);
+
             try {
-              await fetch('http://localhost:4000/api/reimagine', {
+              await fetch(apiUrl('/api/reimagine'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ imageUri: version.imageUri, prompt: version.prompt }),
               });
             } catch {}
 
-            // Significantly improved dynamic material suggestions based on actual prompt + tweaks.
+            // Significantly improved dynamic material suggestions based on actual prompt + tweaks + room analysis.
             // Much richer analysis (room inference, style/color/layout specific SKUs, realistic qtys/prices).
             // Builds on the recent dynamic suggestions work + confirm cost UX. Produces targeted lists for better sourcing realism.
             const base = Date.now();
@@ -404,6 +407,24 @@ export default function DesignStudioScreen() {
             }
             if (version.tweaks.style === 'Rustic' || p.includes('fireplace') || p.includes('built-in')) {
               suggested.push({ id: String(base + 61), name: 'Wood Mantle / Built-in Shelving Kit', retailer: "Lowe's" as const, price: 185, quantity: 1, approved: false, url: 'https://www.lowes.com' });
+            }
+
+            // Room analysis enrichment (Phase 2: vision + LLM stub from /api/analyze)
+            if (analysis?.suggestedMaterials?.length) {
+              analysis.suggestedMaterials.forEach((mat, idx) => {
+                const label = mat.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+                if (!suggested.some((s) => s.name.toLowerCase().includes(label.split(' ')[0].toLowerCase()))) {
+                  suggested.push({
+                    id: String(base + 70 + idx),
+                    name: `${label} (AI-suggested)`,
+                    retailer: 'Amazon' as const,
+                    price: 45 + idx * 12,
+                    quantity: 1,
+                    approved: false,
+                    url: 'https://www.amazon.com',
+                  });
+                }
+              });
             }
 
             // Fallback always adds at least core flooring if nothing matched (should be rare now)
