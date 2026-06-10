@@ -6,7 +6,7 @@ Delta is a cross-platform (React Native + Web) prototype for an AI-powered home 
 
 - **Web (easiest demo)**: http://localhost:3000 after `pnpm web`
 - **Backend** (for real AI image gen): `cd backend && node server.js` (port 4000)
-- Full owner flow: Onboarding → Design Studio (camera/upload + prompt + AI + prominent ready-to-go cost estimates...) → Sourcing → Scoping (selected design hero + trade-broken scope tree with story points per subtask + live Scrum burndown SVG line chart trending to 0 remaining points) → Scheduling (auto day-by-day with breaks & $25/hr costing)
+- Full owner flow: Onboarding → **Design** tab (Design Studio: camera/upload + prompt + AI + prominent ready-to-go cost estimates...) → Sourcing → Scoping (selected design hero + trade-broken scope tree with story points per subtask + live Scrum burndown SVG line chart trending to 0 remaining points; scope syncs from labor tasks when available) → Scheduling (auto day-by-day with breaks & $25/hr costing). Owner header includes **project switcher** (multi-project create/switch/rename/delete + backend cloud sync) and pipeline progress bar.
 
 ## Features (current prototype)
 
@@ -83,9 +83,10 @@ pnpm android        # or pnpm ios
 ### Other commands
 
 ```sh
+pnpm dev           # web (:3000) + backend (:4000) together
 pnpm lint
 pnpm typecheck     # tsc --noEmit --skipLibCheck (should be clean)
-pnpm test
+pnpm test          # unit tests (scheduler, scopeFromLabor); RN App.test separate
 pnpm build:web
 ```
 
@@ -108,7 +109,9 @@ src/
     scoping/         # ScopingScreen (hero + scope tree + burndown)
   onboarding/
   shared/            # theme.ts, media.ts (URI), ReadyToGoCostPill, ProjectHero, AppButton, index.ts (Phase 1)
-  navigation/        # AppNavigator.tsx (root Stack + Container), TabNavigator.tsx (bottom tabs: Sourcing/Scoping/Scheduling), types.ts (Tab/Root param lists), MainTabNavigator (compat shim). Phase 1: replaced crude buttons with react-navigation (Stack + Tabs), web + mobile.
+  navigation/        # AppNavigator.tsx (root Stack + Container), TabNavigator.tsx (bottom tabs: Design/Sourcing/Scoping/Scheduling + OwnerHeader + ProjectPipelineBar), types.ts (Tab/Root param lists), MainTabNavigator (compat shim). Phase 1+: react-navigation (Stack + Tabs), web + mobile.
+  context/           # AppRoleContext (owner/worker role switch shared across header + App)
+  features/worker/   # WorkerDashboardScreen (extracted from App.tsx; themed + getImageSource)
   store/             # useDeltaStore.ts (design -> sourcing -> labor)
   web-shims/
 backend/server.js    # Express, /api/reimagine (xAI)
@@ -142,6 +145,13 @@ See DEVELOPMENT_PLAN.md for a more detailed gap analysis and historical context.
 ## Contributing / Next
 
 The project has moved beyond the original early phases.
+
+Recent changes (Phase 2 polish):
+- **Owner navigation complete**: Design Studio is now the first tab (🎨 Design). Owner header with project switcher (multi-project UI + backend cloud save/load), pipeline progress bar (Design→Sourcing→Scoping→Scheduling), and role switch.
+- **Worker dashboard extracted**: `WorkerDashboardScreen` with theme + `getImageSource` (App.tsx slimmed).
+- **Backend**: `/api/health` endpoint; shared `apiUrl()` config; `pnpm dev` runs web+backend.
+- **Scoping**: Live scope tree derived from `laborTasks` when present (falls back to demo tree).
+- **Tests**: Scheduler + scopeFromLabor unit tests (jest unit project).
 
 Recent changes (Phase 1):
 - Camera + media: URI consistency (data:/file:/public paths) audited + enforced via shared/media + getImageSource across all Image usages (Design, Scoping, worker dashboard carousels, etc.). Gallery/demo fallbacks documented ("Use Demo" paths).

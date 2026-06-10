@@ -6,6 +6,7 @@ import SourcingScreen from '../features/sourcing/SourcingScreen';
 import ScopingScreen from '../features/scoping/ScopingScreen';
 import LaborSchedulerScreen from '../features/labor/LaborSchedulerScreen';
 import OwnerHeader from '../shared/OwnerHeader';
+import ProjectPipelineBar from '../shared/ProjectPipelineBar';
 import type { TabParamList } from './types';
 
 // Typed bottom tab navigator for the three core owner phases.
@@ -21,6 +22,7 @@ export default function TabNavigator() {
   return (
     <View style={{ flex: 1 }}>
       <OwnerHeader />
+      <ProjectPipelineBar />
       <Tab.Navigator
         initialRouteName="Design"
         screenOptions={{

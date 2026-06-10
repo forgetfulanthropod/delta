@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, Modal, TouchableOpacity, Button, Alert } from 'react-native';
 import { DesignVersion } from './types';
 import { useDeltaStore } from '../../store/useDeltaStore';
 import { apiUrl } from '../../shared/api';
+import { useTheme, useBackendHealth } from '../../shared';
+import { getImageSource } from '../../shared/media';
 import CameraScreen from './CameraScreen';
 
 export default function DesignStudioScreen() {
+  const theme = useTheme();
+  const backend = useBackendHealth();
+  const { currentProjectId, projects, renameProject } = useDeltaStore();
+
   // Project workspace state (focused on ONE house)
   const [baseImage, setBaseImage] = useState<string | null>(null);
   const [projectPhotos, setProjectPhotos] = useState<string[]>([]);
@@ -21,6 +27,18 @@ export default function DesignStudioScreen() {
   const [connectedProvider, setConnectedProvider] = useState<string | null>(null);
 
   const { approvedDesign, setApprovedDesign, sourcingItems, laborTasks, clearSourcing, addSourcingItems, setLaborTasks, versions, addVersion, setProjectVersions, clearVersions } = useDeltaStore();
+
+  useEffect(() => {
+    if (currentProjectId && projects[currentProjectId]?.name && !projectName) {
+      setProjectName(projects[currentProjectId].name);
+    }
+  }, [currentProjectId, projects, projectName]);
+
+  useEffect(() => {
+    if (projectName && currentProjectId && projects[currentProjectId]?.name !== projectName) {
+      renameProject(currentProjectId, projectName);
+    }
+  }, [projectName]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const providerLabel = (id: string) => {
     if (id === 'x') return 'X (Grok)';
@@ -405,12 +423,19 @@ export default function DesignStudioScreen() {
   // Initial clean chooser (no clunky keys, no 4-house grid)
   if (!baseImage) {
     return (
-      <ScrollView style={styles.container}>
-        <View style={{ paddingHorizontal: 24, paddingTop: 40, paddingBottom: 20, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
-          <Text style={{ fontSize: 36, fontWeight: '700', color: '#222', letterSpacing: -1 }}>Design Studio</Text>
-          <Text style={{ fontSize: 18, color: '#555', marginTop: 8, lineHeight: 24 }}>
+      <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 12, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
+          <Text style={{ fontSize: 36, fontWeight: '700', color: theme.colors.text, letterSpacing: -1 }}>Design Studio</Text>
+          <Text style={{ fontSize: 18, color: theme.colors.textSecondary, marginTop: 8, lineHeight: 24 }}>
             One house. Real photos. AI variations with direct cost estimates (materials + labor "ready to go"). Make current or confirm &amp; send to sourcing — costs are transparent and surfaced upfront.
           </Text>
+          <View style={[styles.backendPill, { backgroundColor: backend.ok ? theme.colors.successLight : theme.colors.surfaceAlt, borderColor: backend.ok ? theme.colors.success : theme.colors.border }]}>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: backend.ok ? theme.colors.success : theme.colors.textMuted }}>
+              {backend.loading ? 'Checking backend…' : backend.ok
+                ? `Backend online${backend.hasXaiKey ? ' • xAI key set' : ' • add XAI_API_KEY for real images'}`
+                : 'Backend offline — using demo images (run: pnpm dev)'}
+            </Text>
+          </View>
         </View>
 
         <View style={{ paddingHorizontal: 20, gap: 16, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
@@ -477,7 +502,7 @@ export default function DesignStudioScreen() {
             {isExample ? 'Selected Design (example)' : 'Current Photo'}
           </Text>
           <Image
-            source={{ uri: isExample && approvedDesign ? approvedDesign.imageUri : baseImage }}
+            source={getImageSource(isExample && approvedDesign ? approvedDesign.imageUri : baseImage!)}
             style={styles.heroImage}
           />
         </View>
@@ -492,7 +517,7 @@ export default function DesignStudioScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
             {projectPhotos.map((photo, idx) => (
               <TouchableOpacity key={idx} onPress={() => setBaseImage(photo)} style={{ marginRight: 10 }}>
-                <Image source={{ uri: photo }} style={styles.thumb} />
+                <Image source={getImageSource(photo)} style={styles.thumb} />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -727,6 +752,14 @@ export default function DesignStudioScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
+  backendPill: {
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+  },
   constrained: {
     maxWidth: 720,
     width: '100%',

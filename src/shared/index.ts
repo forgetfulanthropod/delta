@@ -19,3 +19,6 @@ export { default as Pill } from './Pill';
 export { default as EmptyState } from './EmptyState';
 export { default as ProjectSwitcher } from './ProjectSwitcher';
 export { default as OwnerHeader } from './OwnerHeader';
+export { default as ProjectPipelineBar } from './ProjectPipelineBar';
+export { useBackendHealth } from './useBackendHealth';
+export { apiUrl, getApiBaseUrl } from './api';

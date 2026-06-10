@@ -39,12 +39,12 @@ See the current README.md for the accurate project description.
 
 Pulled from the README "Known Limitations" and recent development:
 
-- **AI**: Still largely prompt-driven. Improve image understanding / vision model usage for better material suggestions and more accurate reimaginings.
-- **Persistence & Data**: Basic web persistence exists. Add proper project history, backend storage, and multi-project support.
-- **Native**: Vision-camera and full mobile experience still need significant work (permissions, builds, testing).
-- **Worker Experience**: Recently enhanced with trade filter, Flickity photo carousels, and direct estimated costs ("ready to go"). Continue polishing (e.g., actual claiming flow, integration with owner-sourced data).
-- **Owner Flow Polish**: Estimated costs in worker side are good; consider surfacing similar ready-to-go cost views on owner side instead of (or in addition to) "Send to Sourcing".
-- **Other**: Real auth, retailer integrations, better empty/error states, full native camera, production deployment.
+- **AI**: Image-reference edits path active when xAI key present. Next: room-type vision analysis endpoint, richer material SKU matching.
+- **Persistence & Data**: Multi-project UI + backend `/api/projects` sync now wired. Next: AsyncStorage on native, auth.
+- **Native**: Vision-camera integrated with fallbacks; needs device QA and LAN API URL for backend.
+- **Worker Experience**: Extracted themed dashboard with claim/unclaim, scheduling visibility, owner data integration.
+- **Owner Flow**: Design tab + project switcher + pipeline bar complete. Scoping syncs from labor tasks. Scheduling shows ready-to-go cost pill.
+- **Other**: Real auth, retailer APIs, production deployment, CI, e2e tests.
 
 See the historical audit below for the original long list of issues (many of which have been resolved).
 
