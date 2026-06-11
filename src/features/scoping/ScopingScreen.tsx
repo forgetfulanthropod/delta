@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import Svg, { Line, Path, Circle, Text as SvgText } from 'react-native-svg';
 import { useDeltaStore } from '../../store/useDeltaStore';
@@ -35,11 +35,21 @@ import {
 const MAX_PERIODS = 10;
 
 export default function ScopingScreen() {
-  const { approvedDesign, setApprovedDesign, laborTasks, setLaborTasks } = useDeltaStore();
+  const {
+    approvedDesign,
+    setApprovedDesign,
+    laborTasks,
+    setLaborTasks,
+    scopeCompleted,
+    scopeBurnSeries,
+    toggleScopeItem,
+    setScopeCompleted,
+    setScopeBurnSeries,
+    resetScopeProgress,
+  } = useDeltaStore();
 
-  // Local interactive state for Scrum burndown (demo; not persisted to keep store shape respected)
-  const [completed, setCompleted] = useState<Record<string, boolean>>({});
-  const [burnSeries, setBurnSeries] = useState<number[]>([]); // remaining points over "iterations"
+  const completed = scopeCompleted;
+  const burnSeries = scopeBurnSeries;
 
   // Prefer live scope from laborTasks (Sourcing → Scheduling path); fall back to rich demo tree.
   const scopeTree: ScopeTradeGroup[] = useMemo(() => {
@@ -71,37 +81,34 @@ export default function ScopingScreen() {
   // Seed a little initial trend when we first have a total
   React.useEffect(() => {
     if (totalPoints > 0 && burnSeries.length === 0) {
-      // Seed: started full, small early burn (demo "some progress already logged")
       const seed = [totalPoints, Math.round(totalPoints * 0.92), Math.round(totalPoints * 0.85)];
-      setBurnSeries(seed);
+      setScopeBurnSeries(seed);
     }
-  }, [totalPoints, burnSeries.length]);
+  }, [totalPoints, burnSeries.length, setScopeBurnSeries]);
 
   // When remaining changes via user action, append to series (for the chart trend)
   React.useEffect(() => {
     if (burnSeries.length > 0) {
       const last = burnSeries[burnSeries.length - 1];
       if (last !== remainingPoints) {
-        setBurnSeries((prev) => {
-          const next = [...prev, remainingPoints];
-          // Keep it from growing unbounded; trim old if > 2x periods for viz clarity
-          return next.length > MAX_PERIODS * 2 ? next.slice(next.length - MAX_PERIODS) : next;
-        });
+        const next = [...burnSeries, remainingPoints];
+        setScopeBurnSeries(
+          next.length > MAX_PERIODS * 2 ? next.slice(next.length - MAX_PERIODS) : next,
+        );
       }
     }
-  }, [remainingPoints]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [remainingPoints, burnSeries, setScopeBurnSeries]);
 
   const percentBurned = totalPoints > 0 ? Math.round((completedPoints / totalPoints) * 100) : 0;
 
   const toggleComplete = (id: string) => {
-    setCompleted((prev) => ({ ...prev, [id]: !prev[id] }));
+    toggleScopeItem(id);
   };
 
   const resetBurndown = () => {
-    setCompleted({});
-    // Re-seed a fresh small trend
+    resetScopeProgress();
     const seed = [totalPoints, Math.round(totalPoints * 0.9)];
-    setBurnSeries(seed);
+    setScopeBurnSeries(seed);
   };
 
   const simulateProgress = () => {
@@ -116,7 +123,7 @@ export default function ScopingScreen() {
       updates[s.id] = true;
       toBurn -= s.points;
     }
-    setCompleted((prev) => ({ ...prev, ...updates }));
+    setScopeCompleted({ ...completed, ...updates });
     // series append happens via the remaining effect
   };
 
@@ -125,7 +132,7 @@ export default function ScopingScreen() {
     allSubtasks.forEach((s) => {
       allDone[s.id] = true;
     });
-    setCompleted(allDone);
+    setScopeCompleted(allDone);
   };
 
   // Derive groups with current completion + subtotals
@@ -161,10 +168,9 @@ export default function ScopingScreen() {
     }));
     setLaborTasks(seededTasks);
 
-    // Reset local burndown for the fresh scope
-    setCompleted({});
+    resetScopeProgress();
     const seed = [totalPoints, Math.round(totalPoints * 0.88)];
-    setBurnSeries(seed);
+    setScopeBurnSeries(seed);
 
     Alert.alert(
       'Selected design loaded',

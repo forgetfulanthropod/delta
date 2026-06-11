@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, Modal, TouchableOpacity, Button, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { TabParamList } from '../../navigation/types';
 import { DesignVersion } from './types';
 import { useDeltaStore } from '../../store/useDeltaStore';
 import { apiUrl } from '../../shared/api';
@@ -9,6 +12,7 @@ import CameraScreen from './CameraScreen';
 import { analyzeRoom } from './analyzeRoom';
 
 export default function DesignStudioScreen() {
+  const navigation = useNavigation<BottomTabNavigationProp<TabParamList>>();
   const theme = useTheme();
   const backend = useBackendHealth();
   const { currentProjectId, projects, renameProject } = useDeltaStore();
@@ -434,7 +438,11 @@ export default function DesignStudioScreen() {
             }
 
             useDeltaStore.getState().addSourcingItems(suggested);
-            Alert.alert('Sent to Sourcing', `Materials added. Est. total project cost $${c.total} (locked from design).\n\nSwitch to the Sourcing tab to review, approve items, and generate labor. The Labor tab will reflect the $25/hr schedule.`);
+            Alert.alert(
+              'Sent to Sourcing',
+              `Materials added. Est. total project cost $${c.total} (locked from design).\n\nReview and approve items in Sourcing, then check Scoping and Scheduling.`,
+              [{ text: 'Go to Sourcing', onPress: () => navigation.navigate('Sourcing') }],
+            );
           },
         },
       ]
@@ -644,7 +652,7 @@ export default function DesignStudioScreen() {
           <Text style={styles.section}>AI Variations for {projectName}</Text>
           {versions.map((v) => (
             <View key={v.id} style={styles.versionCard}>
-              <Image source={{ uri: v.imageUri }} style={styles.image} />
+              <Image source={getImageSource(v.imageUri)} style={styles.image} />
               <Text style={{ fontWeight: '600', marginTop: 4 }}>{v.prompt}</Text>
               <Text style={{ color: '#666', fontSize: 12, marginTop: 2 }}>
                 {v.tweaks.style} • {v.tweaks.colorPalette} • {v.tweaks.layout}

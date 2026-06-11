@@ -170,7 +170,7 @@ app.get('/api/projects', (req, res) => {
 });
 
 app.post('/api/projects', (req, res) => {
-  const { id, name = 'Untitled', approvedDesign = null, sourcingItems = [], laborTasks = [], versions = [] } = req.body || {};
+  const { id, name = 'Untitled', approvedDesign = null, sourcingItems = [], laborTasks = [], versions = [], scopeCompleted = {}, scopeBurnSeries = [] } = req.body || {};
   const projId = id || `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
   const now = new Date().toISOString();
   const existing = projectsStore[projId] || {};
@@ -183,6 +183,8 @@ app.post('/api/projects', (req, res) => {
     sourcingItems,
     laborTasks,
     versions,
+    scopeCompleted,
+    scopeBurnSeries,
   };
   res.json({ success: true, project: projectsStore[projId] });
 });

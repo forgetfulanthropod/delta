@@ -3,13 +3,14 @@
  * Cross-platform (RN + Web) prototype
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import OnboardingScreen from './src/onboarding/OnboardingScreen';
 import AppNavigator from './src/navigation/AppNavigator';
 import WorkerDashboardScreen from './src/features/worker/WorkerDashboardScreen';
 import { AppRoleProvider, useAppRole } from './src/context/AppRoleContext';
+import { useDeltaStore } from './src/store/useDeltaStore';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -27,6 +28,7 @@ function App() {
 
 function AppContent() {
   const { role, setRole } = useAppRole();
+  const { currentProjectId, createProject } = useDeltaStore();
 
   if (!role) {
     return <OnboardingScreen onSelectRole={setRole} />;
@@ -35,6 +37,12 @@ function AppContent() {
   if (role === 'worker') {
     return <WorkerDashboardScreen />;
   }
+
+  useEffect(() => {
+    if (role === 'owner' && !currentProjectId) {
+      createProject('My Remodel');
+    }
+  }, [role, currentProjectId, createProject]);
 
   return <AppNavigator />;
 }

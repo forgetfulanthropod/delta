@@ -30,6 +30,7 @@ export default function LaborSchedulerScreen() {
         .map((t) => `${t.name}: ${t.estimatedHours}`)
         .join('\n');
       setTasksInput(formatted);
+      setResult(generateSchedule(laborTasks));
     }
   }, [laborTasks]);
 

@@ -14,6 +14,8 @@ interface ProjectData {
   sourcingItems: SourcingItem[];
   laborTasks: Task[];
   versions: DesignVersion[];
+  scopeCompleted?: Record<string, boolean>;
+  scopeBurnSeries?: number[];
 }
 
 interface DeltaStore {
@@ -30,6 +32,14 @@ interface DeltaStore {
   // Labor (current project view)
   laborTasks: Task[];
   setLaborTasks: (tasks: Task[]) => void;
+
+  // Scoping burndown (per-project persistence)
+  scopeCompleted: Record<string, boolean>;
+  scopeBurnSeries: number[];
+  toggleScopeItem: (id: string) => void;
+  setScopeCompleted: (completed: Record<string, boolean>) => void;
+  setScopeBurnSeries: (series: number[]) => void;
+  resetScopeProgress: () => void;
 
   // Design versions (Phase 1: per-project persistence for versions list)
   versions: DesignVersion[];
@@ -239,6 +249,75 @@ export const useDeltaStore = create<DeltaStore>()(
           return { laborTasks: tasks, currentProjectId: currentId, projects };
         }),
 
+      scopeCompleted: {},
+      scopeBurnSeries: [],
+      toggleScopeItem: (id) =>
+        set((state) => {
+          const next = { ...state.scopeCompleted, [id]: !state.scopeCompleted[id] };
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (currentId && projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                scopeCompleted: next,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { scopeCompleted: next, projects };
+        }),
+      setScopeCompleted: (completed) =>
+        set((state) => {
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (currentId && projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                scopeCompleted: completed,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { scopeCompleted: completed, projects };
+        }),
+      setScopeBurnSeries: (series) =>
+        set((state) => {
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (currentId && projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                scopeBurnSeries: series,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { scopeBurnSeries: series, projects };
+        }),
+      resetScopeProgress: () =>
+        set((state) => {
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (currentId && projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                scopeCompleted: {},
+                scopeBurnSeries: [],
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { scopeCompleted: {}, scopeBurnSeries: [], projects };
+        }),
+
       // Design versions per project (Phase 1 persistence - not just local component state)
       versions: [],
       addVersion: (version) =>
@@ -360,6 +439,8 @@ export const useDeltaStore = create<DeltaStore>()(
             sourcingItems: [] as SourcingItem[],
             laborTasks: [] as Task[],
             versions: [] as DesignVersion[],
+            scopeCompleted: {} as Record<string, boolean>,
+            scopeBurnSeries: [] as number[],
           };
           let projects = state.projects || {};
           if (state.currentProjectId && projects[state.currentProjectId]) {
@@ -392,6 +473,8 @@ export const useDeltaStore = create<DeltaStore>()(
           sourcingItems: [],
           laborTasks: [],
           versions: [],
+          scopeCompleted: {},
+          scopeBurnSeries: [],
         };
         set((state) => ({
           projects: { ...(state.projects || {}), [id]: newProj },
@@ -400,6 +483,8 @@ export const useDeltaStore = create<DeltaStore>()(
           sourcingItems: [],
           laborTasks: [],
           versions: [],
+          scopeCompleted: {},
+          scopeBurnSeries: [],
         }));
         return id;
       },
@@ -413,6 +498,8 @@ export const useDeltaStore = create<DeltaStore>()(
             sourcingItems: proj.sourcingItems || [],
             laborTasks: proj.laborTasks || [],
             versions: proj.versions || [],
+            scopeCompleted: proj.scopeCompleted || {},
+            scopeBurnSeries: proj.scopeBurnSeries || [],
           };
         }),
       saveCurrentProject: () =>
@@ -429,6 +516,8 @@ export const useDeltaStore = create<DeltaStore>()(
                 sourcingItems: state.sourcingItems,
                 laborTasks: state.laborTasks,
                 versions: state.versions,
+                scopeCompleted: state.scopeCompleted,
+                scopeBurnSeries: state.scopeBurnSeries,
                 updatedAt: new Date().toISOString(),
               },
             },
@@ -451,6 +540,8 @@ export const useDeltaStore = create<DeltaStore>()(
               sourcingItems: [],
               laborTasks: [],
               versions: [],
+              scopeCompleted: {},
+              scopeBurnSeries: [],
             };
           }
           const nextId = remaining[0];
@@ -462,6 +553,8 @@ export const useDeltaStore = create<DeltaStore>()(
             sourcingItems: nextProj.sourcingItems || [],
             laborTasks: nextProj.laborTasks || [],
             versions: nextProj.versions || [],
+            scopeCompleted: nextProj.scopeCompleted || {},
+            scopeBurnSeries: nextProj.scopeBurnSeries || [],
           };
         }),
       renameProject: (id: string, newName: string) =>
@@ -513,6 +606,8 @@ export const useDeltaStore = create<DeltaStore>()(
               sourcingItems: proj.sourcingItems,
               laborTasks: proj.laborTasks,
               versions: proj.versions || state.versions || [],
+              scopeCompleted: proj.scopeCompleted || state.scopeCompleted || {},
+              scopeBurnSeries: proj.scopeBurnSeries || state.scopeBurnSeries || [],
             }),
           });
           const data = await res.json().catch(() => ({}));
@@ -540,6 +635,8 @@ export const useDeltaStore = create<DeltaStore>()(
               sourcingItems: p.sourcingItems || [],
               laborTasks: p.laborTasks || [],
               versions: p.versions || [],
+              scopeCompleted: p.scopeCompleted || {},
+              scopeBurnSeries: p.scopeBurnSeries || [],
             };
             set((s: any) => ({
               projects: { ...(s.projects || {}), [localId]: loaded },
@@ -548,6 +645,8 @@ export const useDeltaStore = create<DeltaStore>()(
               sourcingItems: loaded.sourcingItems,
               laborTasks: loaded.laborTasks,
               versions: loaded.versions,
+              scopeCompleted: loaded.scopeCompleted || {},
+              scopeBurnSeries: loaded.scopeBurnSeries || [],
             }));
             console.log('[persist] Loaded project from backend:', localId);
           }
@@ -582,12 +681,24 @@ export const useDeltaStore = create<DeltaStore>()(
         sourcingItems: state.sourcingItems,
         laborTasks: state.laborTasks,
         versions: state.versions,
+        scopeCompleted: state.scopeCompleted,
+        scopeBurnSeries: state.scopeBurnSeries,
         workerAssignedJobs: state.workerAssignedJobs,
       }),
-      version: 2,
+      version: 3,
       migrate: (persistedState: any, version: number) => {
-        if (version < 2 || !persistedState || !persistedState.projects) {
-          const ps = persistedState || {};
+        const ps = persistedState || {};
+        if (version < 3) {
+          ps.scopeCompleted = ps.scopeCompleted || {};
+          ps.scopeBurnSeries = ps.scopeBurnSeries || [];
+          if (ps.projects) {
+            Object.keys(ps.projects).forEach((id) => {
+              ps.projects[id].scopeCompleted = ps.projects[id].scopeCompleted || {};
+              ps.projects[id].scopeBurnSeries = ps.projects[id].scopeBurnSeries || [];
+            });
+          }
+        }
+        if (version < 2 || !ps.projects) {
           const hasOldData = ps.approvedDesign || (ps.sourcingItems && ps.sourcingItems.length > 0) || (ps.laborTasks && ps.laborTasks.length > 0) || (ps.versions && ps.versions.length > 0);
           if (hasOldData) {
             const id = `proj_${Date.now()}_legacy`;
@@ -610,7 +721,7 @@ export const useDeltaStore = create<DeltaStore>()(
           }
           return { ...ps, currentProjectId: null, projects: {} };
         }
-        return persistedState;
+        return ps;
       },
     }
   )
