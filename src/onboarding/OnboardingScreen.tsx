@@ -150,6 +150,24 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
         )}
       </View>
 
+      {/* Triangle tracks the slider divider — must stay position:absolute (not fixed) on web
+          so it shares the same stacking context as the overlay; fixed was painting over all UI. */}
+      {isWeb ? (
+        <View pointerEvents="none" style={styles.triangleClipLayer}>
+          <View
+            style={[
+              styles.triangleMarker,
+              {
+                top: 44 + TRIANGLE_TOP,
+                left: dividerX - TRIANGLE_WIDTH / 2,
+              },
+            ]}
+          >
+            <DeltaTriangle width={TRIANGLE_WIDTH} height={TRIANGLE_HEIGHT} upsideDown opacity={1} />
+          </View>
+        </View>
+      ) : null}
+
       <View style={styles.overlay} pointerEvents="box-none">
         {isWeb ? (
           <View
@@ -209,22 +227,6 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
           </View>
         </View>
       </View>
-
-      {isWeb ? (
-        <View pointerEvents="none" style={styles.triangleClipLayer}>
-          <View
-            style={[
-              styles.triangleMarker,
-              {
-                top: 44 + TRIANGLE_TOP,
-                left: dividerX - TRIANGLE_WIDTH / 2,
-              },
-            ]}
-          >
-            <DeltaTriangle width={TRIANGLE_WIDTH} height={TRIANGLE_HEIGHT} upsideDown opacity={1} />
-          </View>
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -236,24 +238,22 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
     backgroundColor: '#000',
-    ...(Platform.OS === 'web' ? { overflowX: 'hidden' as const } : null),
+    ...(Platform.OS === 'web'
+      ? ({ overflow: 'hidden', minHeight: '100vh', height: '100vh' } as any)
+      : null),
   },
   triangleClipLayer: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFill,
     overflow: 'hidden',
     zIndex: 1,
-  } as any,
+  },
   sliderBackground: {
     ...StyleSheet.absoluteFill,
     zIndex: 0,
   },
   overlay: {
     ...StyleSheet.absoluteFill,
-    zIndex: 2,
+    zIndex: 10,
     justifyContent: 'space-between',
   },
   topFadeLayer: {

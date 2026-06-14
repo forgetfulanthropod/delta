@@ -30,6 +30,12 @@ function AppContent() {
   const { role, setRole } = useAppRole();
   const { currentProjectId, createProject } = useDeltaStore();
 
+  useEffect(() => {
+    if (role === 'owner' && !currentProjectId) {
+      createProject('My Remodel');
+    }
+  }, [role, currentProjectId, createProject]);
+
   if (!role) {
     return <OnboardingScreen onSelectRole={setRole} />;
   }
@@ -37,12 +43,6 @@ function AppContent() {
   if (role === 'worker') {
     return <WorkerDashboardScreen />;
   }
-
-  useEffect(() => {
-    if (role === 'owner' && !currentProjectId) {
-      createProject('My Remodel');
-    }
-  }, [role, currentProjectId, createProject]);
 
   return <AppNavigator />;
 }
