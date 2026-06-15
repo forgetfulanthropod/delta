@@ -6,6 +6,8 @@ export type RoomAnalysis = {
   suggestedMaterials: string[];
   scopeHint: string;
   usedImageRef?: boolean;
+  imageDescription?: string | null;
+  visionSource?: 'describeimages' | 'heuristic';
 };
 
 export async function analyzeRoom(
@@ -27,6 +29,8 @@ export async function analyzeRoom(
         suggestedMaterials: data.suggestedMaterials || [],
         scopeHint: data.scopeHint || '',
         usedImageRef: data.usedImageRef,
+        imageDescription: data.imageDescription ?? null,
+        visionSource: data.visionSource,
       };
     }
   } catch {

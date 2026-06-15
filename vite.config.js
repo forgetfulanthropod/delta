@@ -111,8 +111,8 @@ export default defineConfig({
     ],
   },
   build: {
-    rollupOptions: {
-      external: ['react-native-vision-camera', 'react-native-svg'],
+    commonjsOptions: {
+      transformMixedEsModules: true,
     },
   },
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import DesignStudioScreen from '../features/design/DesignStudioScreen';
 import SourcingScreen from '../features/sourcing/SourcingScreen';
@@ -20,6 +20,7 @@ function TabRoutes() {
       initialRouteName="Design"
       screenOptions={{
         headerShown: false,
+        sceneStyle: { flex: 1 },
         tabBarActiveTintColor: t.colors.accent,
         tabBarInactiveTintColor: t.colors.textSecondary,
         tabBarStyle: {
@@ -60,10 +61,17 @@ function TabRoutes() {
 
 export default function TabNavigator() {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.shell}>
       <OwnerHeader />
       <ProjectPipelineBar />
-      <TabRoutes />
+      <View style={styles.tabArea}>
+        <TabRoutes />
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  shell: { flex: 1, minHeight: 0 },
+  tabArea: { flex: 1, minHeight: 0 },
+});

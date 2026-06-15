@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, Modal, TouchableOpacity, Button, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -32,12 +32,45 @@ export default function DesignStudioScreen() {
   const [connectedProvider, setConnectedProvider] = useState<string | null>(null);
 
   const { approvedDesign, setApprovedDesign, sourcingItems, laborTasks, clearSourcing, addSourcingItems, setLaborTasks, versions, addVersion, setProjectVersions, clearVersions } = useDeltaStore();
+  const lastHydratedProjectId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (currentProjectId && projects[currentProjectId]?.name && !projectName) {
-      setProjectName(projects[currentProjectId].name);
+    const proj = currentProjectId ? projects[currentProjectId] : null;
+    const hasPersistedDesign = versions.length > 0 || !!approvedDesign;
+    const projectChanged = currentProjectId !== lastHydratedProjectId.current;
+    const needsHydration = !baseImage && hasPersistedDesign;
+
+    if (!needsHydration && !projectChanged) return;
+
+    if (!hasPersistedDesign) {
+      if (projectChanged) {
+        setBaseImage(null);
+        setProjectPhotos([]);
+        setIsExample(false);
+        lastHydratedProjectId.current = currentProjectId;
+      }
+      return;
     }
-  }, [currentProjectId, projects, projectName]);
+
+    const hero = approvedDesign?.imageUri || versions[0]?.imageUri;
+    if (!hero) return;
+
+    if (needsHydration || projectChanged) {
+      setBaseImage(hero);
+      setProjectPhotos([...new Set([hero, ...versions.map((v) => v.imageUri)])]);
+      if (proj?.name) setProjectName(proj.name);
+      setIsExample(versions.some((v) => v.id.startsWith('ex-')));
+      if (approvedDesign?.prompt) setPrompt(approvedDesign.prompt);
+      if (approvedDesign?.tweaks) {
+        setCurrentTweaks({
+          style: approvedDesign.tweaks.style,
+          colorPalette: approvedDesign.tweaks.colorPalette,
+          layout: approvedDesign.tweaks.layout,
+        });
+      }
+    }
+    lastHydratedProjectId.current = currentProjectId;
+  }, [currentProjectId, versions, approvedDesign, projects, baseImage]);
 
   useEffect(() => {
     if (projectName && currentProjectId && projects[currentProjectId]?.name !== projectName) {
@@ -172,10 +205,11 @@ export default function DesignStudioScreen() {
     setBaseImage(null);
     setProjectPhotos([]);
     clearVersions();
-    setProjectName('');
+    setApprovedDesign(null);
+    setProjectName(projects[currentProjectId || '']?.name || '');
     setIsExample(false);
     setConnectedProvider(null);
-    // Keep store as-is so user can still see previous sourcing/labor if they want, or they can clear from those screens
+    lastHydratedProjectId.current = currentProjectId;
   };
 
   const reimagine = async () => {
@@ -452,7 +486,8 @@ export default function DesignStudioScreen() {
   // Initial clean chooser (no clunky keys, no 4-house grid)
   if (!baseImage) {
     return (
-      <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.screenRoot}>
+      <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={styles.scrollContent}>
         <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 12, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
           <Text style={{ fontSize: 36, fontWeight: '700', color: theme.colors.text, letterSpacing: -1 }}>Design Studio</Text>
           <Text style={{ fontSize: 18, color: theme.colors.textSecondary, marginTop: 8, lineHeight: 24 }}>
@@ -478,6 +513,8 @@ export default function DesignStudioScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
+            testID="design-load-example"
+            accessibilityLabel="Load example project"
             onPress={loadExampleProject}
             style={[styles.choiceCard, { backgroundColor: '#F8F1E9', borderColor: '#E8D5C4', borderWidth: 1 }]}
           >
@@ -499,6 +536,7 @@ export default function DesignStudioScreen() {
           <CameraScreen onPhotoTaken={handlePhotoTaken} onCancel={() => setShowCamera(false)} />
         </Modal>
       </ScrollView>
+      </View>
     );
   }
 
@@ -507,7 +545,8 @@ export default function DesignStudioScreen() {
   const sourcingTotal = sourcingItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.screenRoot}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       {/* Project header */}
       <View style={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', maxWidth: 720, alignSelf: 'center', width: '100%' }}>
         <View>
@@ -776,11 +815,14 @@ export default function DesignStudioScreen() {
         <CameraScreen onPhotoTaken={handlePhotoTaken} onCancel={() => setShowCamera(false)} />
       </Modal>
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenRoot: { flex: 1, minHeight: 0, height: '100%' },
   container: { flex: 1, backgroundColor: '#fff' },
+  scrollContent: { flexGrow: 1, paddingBottom: 24 },
   backendPill: {
     marginTop: 12,
     paddingHorizontal: 12,

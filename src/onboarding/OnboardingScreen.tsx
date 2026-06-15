@@ -204,6 +204,8 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
         <View style={styles.actionsWrap} pointerEvents="box-none">
           <View style={styles.actionsRow} {...webActionHoverHandlers}>
             <TouchableOpacity
+              testID="onboarding-owner"
+              accessibilityLabel="Remodel my space"
               style={[styles.actionButton, styles.ownerAction]}
               onPress={() => onSelectRole('owner')}
               activeOpacity={0.85}
@@ -215,6 +217,8 @@ export default function OnboardingScreen({ onSelectRole }: Props) {
             </TouchableOpacity>
 
             <TouchableOpacity
+              testID="onboarding-worker"
+              accessibilityLabel="Work on spaces"
               style={[styles.actionButton, styles.workerAction]}
               onPress={() => onSelectRole('worker')}
               activeOpacity={0.85}

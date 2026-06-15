@@ -87,8 +87,25 @@ pnpm dev           # web (:3000) + backend (:4000) together
 pnpm lint
 pnpm typecheck     # tsc --noEmit --skipLibCheck (should be clean)
 pnpm test          # unit tests (scheduler, scopeFromLabor); RN App.test separate
+pnpm test:e2e      # browser e2e via [playwrong](https://github.com/qpwo/playwrong) (Linux + Chrome)
+pnpm setup:playwrong  # build mydotool + pip deps (first time)
 pnpm build:web
 ```
+
+### E2E testing (playwrong)
+
+[playwrong](https://github.com/qpwo/playwrong.git) is vendored as `tools/playwrong` (git submodule). It runs a real Chromium window in Xvfb and only passes clicks a user could actually make (visible, uncovered, enabled targets).
+
+```sh
+git submodule update --init tools/playwrong
+pnpm setup:playwrong   # builds native mydotool (gcc) or Python fallback; installs e2e venv deps
+pnpm test:e2e          # builds web, starts preview + backend :4000, runs e2e/
+pnpm describe:image public/test-images/before-after/before-1.jpg  # Gemini caption via ~/bin/describeimages
+```
+
+Tests live in `e2e/` (`test_onboarding.py`, `test_owner_example.py`). Key UI hooks use `testID` → `data-testid` on web. Clicks use playwrong's visible-target query; CI sets `PLAYWRONG_PHYSICAL_CLICK=1` for real pointer input when native `mydotool` is built.
+
+**Vision captions:** `/api/analyze` shells out to `~/bin/describeimages` (Gemini via `GEMINI_API_KEY` in `~/.halp.env`) when an `imageUri` is present. Override with `DESCRIBE_IMAGES_BIN`. `/api/health` reports `hasDescribeImages`.
 
 ## Theming / Dark Mode (Phase 1)
 
@@ -114,7 +131,7 @@ src/
   features/worker/   # WorkerDashboardScreen (extracted from App.tsx; themed + getImageSource)
   store/             # useDeltaStore.ts (design -> sourcing -> labor)
   web-shims/
-backend/server.js    # Express, /api/reimagine (xAI)
+backend/server.js    # Express, /api/analyze (describeimages), /api/reimagine (xAI)
 public/              # demo images (ai-room-*.jpg, test-images/before-after/*)
 ```
 

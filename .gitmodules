@@ -1,0 +1,3 @@
+[submodule "tools/playwrong"]
+	path = tools/playwrong
+	url = https://github.com/qpwo/playwrong.git

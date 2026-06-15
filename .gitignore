@@ -65,6 +65,16 @@ yarn-error.log
 
 # testing
 /coverage
+.venv-e2e/
+e2e/__pycache__/
+**/__pycache__/
+pw-user/
+e2e/videos/
+tools/playwrong/pw-user/
+tools/playwrong/downloads/
+tools/playwrong/videos/
+tools/playwrong/smoke.html
+tools/playwrong/mydotool
 
 # Yarn
 .yarn/*

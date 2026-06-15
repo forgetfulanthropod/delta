@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const { describeImageUri, describeImagesBin } = require('./describeImage');
+const { buildRoomAnalysis } = require('./roomAnalysis');
 
 const app = express();
 app.use(cors());
@@ -16,50 +18,42 @@ app.get('/api/health', (_req, res) => {
     version: '0.2.0',
     startedAt: STARTED_AT,
     hasXaiKey: !!XAI_API_KEY,
+    hasDescribeImages: !!describeImagesBin(),
     routes: ['/api/health', '/api/analyze', '/api/reimagine', '/api/projects'],
   });
 });
 
-// Vision + LLM stub: analyze room from prompt/tweaks for richer material suggestions.
-// Phase 2 path — returns structured room context without requiring a live vision API call.
+// Vision analysis: uses ~/bin/describeimages (Gemini) when available, else prompt/tweak heuristics.
 app.post('/api/analyze', async (req, res) => {
   const { prompt = '', tweaks = {}, imageUri } = req.body || {};
-  const text = `${prompt} ${Object.values(tweaks).join(' ')}`.toLowerCase();
+  const hasResolvableImage = !!(imageUri && (
+    imageUri.startsWith('data:')
+    || imageUri.startsWith('http')
+    || imageUri.startsWith('/')
+    || imageUri.startsWith('file:')
+  ));
 
-  const roomType = text.includes('kitchen') || text.includes('cabinet') || text.includes('island')
-    ? 'kitchen'
-    : text.includes('bath') || text.includes('shower') || text.includes('vanity')
-      ? 'bathroom'
-      : text.includes('bedroom')
-        ? 'bedroom'
-        : text.includes('living') || text.includes('family')
-          ? 'living_room'
-          : 'general_interior';
+  let imageDescription = null;
+  let visionSource = 'heuristic';
 
-  const issues = [];
-  if (text.includes('dated') || text.includes('old')) issues.push('dated_finishes');
-  if (text.includes('dark') || text.includes('dim')) issues.push('poor_lighting');
-  if (text.includes('cramped') || text.includes('small')) issues.push('tight_layout');
-
-  const materials = [];
-  if (roomType === 'kitchen') {
-    materials.push('cabinet_hardware', 'countertop_quartz', 'backsplash_tile', 'pendant_lighting', 'sink_faucet');
-  } else if (roomType === 'bathroom') {
-    materials.push('vanity', 'tile', 'shower_fixture', 'mirror_lighting');
-  } else {
-    materials.push('flooring_lvp', 'interior_paint', 'trim_molding', 'recessed_lighting');
+  if (hasResolvableImage && describeImagesBin()) {
+    imageDescription = await describeImageUri(imageUri, { fast: true });
+    if (imageDescription) visionSource = 'describeimages';
   }
-  if ((tweaks.style || '').toLowerCase().includes('modern')) materials.push('matte_black_fixtures');
-  if ((tweaks.colorPalette || '').toLowerCase().includes('warm')) materials.push('oak_flooring');
+
+  const analysis = buildRoomAnalysis({ prompt, tweaks, imageDescription: imageDescription || '' });
 
   return res.json({
     success: true,
-    roomType,
-    issues,
-    suggestedMaterials: materials,
-    scopeHint: `Remodel ${roomType.replace('_', ' ')} with ${tweaks.style || 'updated'} aesthetic`,
-    usedImageRef: !!(imageUri && (imageUri.startsWith('data:') || imageUri.startsWith('http'))),
-    message: 'Demo room analysis from prompt/tweaks (vision API integration ready)',
+    ...analysis,
+    usedImageRef: hasResolvableImage,
+    imageDescription: imageDescription ? imageDescription.slice(0, 4000) : null,
+    visionSource,
+    message: imageDescription
+      ? 'Room analysis enriched with describeimages (Gemini) vision caption'
+      : hasResolvableImage && describeImagesBin()
+        ? 'describeimages unavailable — using prompt/tweak heuristics'
+        : 'Room analysis from prompt/tweaks (set GEMINI_API_KEY in ~/.halp.env for vision)',
   });
 });
 

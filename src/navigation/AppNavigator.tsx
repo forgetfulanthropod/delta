@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
@@ -20,13 +21,15 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-          animation: 'default',
-        }}
-      >
+    <View style={styles.root}>
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            animation: 'default',
+            contentStyle: { flex: 1 },
+          }}
+        >
         <Stack.Screen
           name="MainTabs"
           component={TabNavigator}
@@ -36,7 +39,12 @@ export default function AppNavigator() {
           <Stack.Screen name="DesignStudio" component={DesignStudioScreen} />
           <Stack.Screen name="JobDetail" component={JobDetailScreen} />
         */}
-      </Stack.Navigator>
-    </NavigationContainer>
+        </Stack.Navigator>
+      </NavigationContainer>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, minHeight: 0 },
+});

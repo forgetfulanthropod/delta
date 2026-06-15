@@ -21,7 +21,7 @@ interface ProjectData {
 interface DeltaStore {
   // Design (current project view - for backward compat with existing screens)
   approvedDesign: DesignVersion | null;
-  setApprovedDesign: (design: DesignVersion) => void;
+  setApprovedDesign: (design: DesignVersion | null) => void;
 
   // Sourcing (current project view)
   sourcingItems: SourcingItem[];

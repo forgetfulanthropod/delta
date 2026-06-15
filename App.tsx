@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { StatusBar, useColorScheme } from 'react-native';
+import { StatusBar, useColorScheme, View, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import OnboardingScreen from './src/onboarding/OnboardingScreen';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -17,7 +17,7 @@ function App() {
   const [role, setRole] = useState<'owner' | 'worker' | null>(null);
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={styles.safeRoot}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <AppRoleProvider role={role} setRole={setRole}>
         <AppContent />
@@ -44,7 +44,16 @@ function AppContent() {
     return <WorkerDashboardScreen />;
   }
 
-  return <AppNavigator />;
+  return (
+    <View style={styles.ownerShell}>
+      <AppNavigator />
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  safeRoot: { flex: 1, minHeight: 0, height: '100%' },
+  ownerShell: { flex: 1, minHeight: 0, height: '100%' },
+});
 
 export default App;
