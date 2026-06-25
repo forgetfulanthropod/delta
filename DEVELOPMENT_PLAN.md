@@ -46,92 +46,86 @@ These are the bets that define Delta. Every initiative below should trace back t
 
 ## Current State
 
-*Reconciled against [README.md](./README.md) as of the latest refresh.*
+*Verbatim sections below are copied from [README.md](./README.md) and reconciled on each plan refresh. Narrative sections above (Mission through Strategic Pillars) interpret this state for planning — they do not replace it.*
 
-Delta is a **cross-platform (React Native + Web) prototype** for an AI-powered home remodeling assistant. Homeowners ("owners") take photos of spaces, reimagine them with AI, source materials from retailers, and generate realistic labor schedules. Workers can join jobs.
+Delta is a cross-platform (React Native + Web) prototype for an AI-powered home remodeling assistant. Homeowners ("owners") take photos of spaces, reimagine them with AI, source materials from retailers, and generate realistic labor schedules. Workers can join jobs.
 
-Today it is a **functional web-first demo**: the owner journey and worker dashboard are both demo-ready on `http://localhost:3000` (with optional backend on port 4000 for real AI).
+- **Web (easiest demo)**: http://localhost:3000 after `pnpm web`
+- **Backend** (for real AI image gen): `cd backend && node server.js` (port 4000)
+- Full owner flow: Onboarding → **Design** tab (Design Studio: camera/upload + prompt + AI + prominent ready-to-go cost estimates...) → Sourcing → Scoping (selected design hero + trade-broken scope tree with story points per subtask + live Scrum burndown SVG line chart trending to 0 remaining points; scope syncs from labor tasks when available) → Scheduling (auto day-by-day with breaks & $25/hr costing). Owner header includes **project switcher** (multi-project create/switch/rename/delete + backend cloud sync) and pipeline progress bar.
 
-### What's working today
+### Features (current prototype)
 
-| Area | Current behavior |
-|------|------------------|
-| **Onboarding** | Role selection (owner/worker) with full-screen before/after hero. |
-| **Design Studio** | Camera/upload (native vision-camera + solid web picker with preview/demo fallback), prompt + AI reimagine (xAI Grok Imagine via backend, or static fallbacks), before/after sliders, multiple versions with **prominent ready-to-go cost pills** on every card, make-current summary, cost confirmation before handoff to Sourcing, dedicated Cost Summary panel when a version is approved. |
-| **Owner chrome** | **Project switcher** (multi-project create/switch/rename/delete + optional backend cloud sync), **pipeline progress bar** (Design → Sourcing → Scoping → Scheduling), role switch in header. |
-| **Sourcing** | Dynamic list from designs; approve items from Lowe's/Amazon/Home Depot; running total; generate labor tasks. |
-| **Scoping** | Selected/approved design as hero; scope tree grouped by trade (Carpentry, Electrical, Painting, Flooring, Demolition, Plumbing, etc.) with story points on every subtask; interactive **SVG burndown chart** (ideal vs actual, trending to 0); **burndown progress persists per project**; complete subtasks live; sync scope from labor tasks when available. |
-| **Scheduling** | 8-hour days, built-in breaks (lunch + short), largest-first packing, per-day breakdown with start/end times, half-day progress, **$25/hr guaranteed costing**; auto-generated when labor tasks exist. |
-| **Worker dashboard** | Trade filters; cross-platform horizontal photo carousels; bullet task lists; **estimated total cost ("ready to go")** on each card; claim/assign → "My Assigned Jobs" (persisted); owner-sourced live cards; scheduling visibility for claimed jobs (shared scheduler logic); unclaim supported; claiming syncs tasks into labor state. |
-| **State & persistence** | Zustand multi-project store (design → sourcing → labor per project); localStorage on web; optional `/api/projects` backend save/load; legacy single-project auto-migration. |
-| **AI** | Client provider/key UI; backend image-reference edits when upload provides data URI or public URL; richer prompts for room structure/perspective; dynamic material suggestions and cost estimates from prompt + tweaks. |
-| **Theming** | `src/shared/theme.ts` light/dark via `useTheme()`; applied across App shell, Design, Sourcing, Scoping, Scheduling, worker dashboard; shared `ReadyToGoCostPill`, `ProjectHero`, buttons. |
-| **Navigation** | `src/navigation/AppNavigator.tsx` (root Native Stack + `NavigationContainer`), `TabNavigator.tsx` (bottom tabs: **Design** / Sourcing / Scoping / Scheduling + `OwnerHeader` + `ProjectPipelineBar`), `types.ts` (typed param lists), `MainTabNavigator` compat shim. react-navigation v6+/v7; web + mobile. |
-| **Role context** | `src/context/AppRoleContext` — owner/worker role switch shared across header and `App`. |
-| **Media** | `src/shared/media.ts` (`normalizeImageUri`, `getImageSource`) used consistently across Design, Scoping, worker carousels, onboarding, sliders. |
-| **Backend** | Express (`backend/server.js`): `/api/analyze` (describeimages shell-out), `/api/reimagine` (xAI), `/api/health`, `/api/projects`, purchases routes. |
-| **Quality** | `pnpm typecheck` clean; scheduler + scopeFromLabor unit tests (jest); playwrong e2e via `pnpm test:e2e` (see table below). |
+- **Design Studio**: Camera (solid web upload w/ preview+demo fallback via .web.tsx; native vision-camera live + capture + fallbacks + permissions via .tsx), prompt + AI reimagine (xAI Grok Imagine via backend, or static fallbacks), before/after comparison sliders, multiple versions with *prominent* direct project cost estimates (materials + labor "ready to go" in highlighted pills on every card), make-current now surfaces detailed cost summary in alert + dedicated owner Cost Summary panel (breakdown + total) appears when version approved, "Send to Sourcing" evolved to cost confirmation dialog showing/locking total upfront before handoff, improved pipeline status now always includes full est. project cost + breakdowns for transparency. Owner costs feel "ready to go" across the journey. (Native/cross-platform camera consistency advanced.)
+- **Sourcing**: Dynamic list from designs, approve items from Lowe's/Amazon/Home Depot, running total, generate labor tasks.
+- **Scoping**: For the selected/approved design (hero image shown first): full scope tree broken up by trade (Carpentry, Electrical, Painting, Flooring, Demolition, Plumbing etc.) with story points assigned to every subtask. Interactive Scrum burndown chart (SVG line chart) showing progress vs. ideal plan, trending to 0 points remaining. Complete subtasks to burn down live; sync scope items to labor tasks. Ties design → execution with Scrum project management visuals.
+- **Scheduling** (formerly Labor): 8-hour days, built-in breaks (lunch + short), largest-first packing, per-day breakdown with start/end times, half-day progress, $25/hr guaranteed costing. Driven from scoped work.
+- **Worker Experience**: Trade filters, cross-platform scrollable per-project photo carousels (iOS/Android/Web), direct est. costs shown as "ready to go". Full claim/assign flows that update Zustand state (jobs move to "My Assigned Jobs"), owner-sourced data integration (live cards pulling sourcingItems + laborTasks for relevant tasks/costs), scheduling visibility for claimed jobs (day schedules with breaks/costs using the shared scheduler logic). Unclaim supported; claiming also syncs tasks into labor state.
+- **State**: Zustand store flows approved design → sourcing items → labor tasks. Worker claims augment the shared store (assignedJobs + laborTasks sync on claim).
+- **AI**: Client provider/key UI (x/Gemini/OpenAI/Anthropic). Backend supports xAI (via env `XAI_API_KEY` or per-request key). Backend now leverages uploaded image via reference (data URI for web uploads or http) using xAI image edits endpoint (/images/edits) for real visual understanding + realistic transformations (not just text prompt); significantly richer image-aware prompts direct model to analyze/preserve exact room structure, perspective, lighting etc. Client-side: dynamic material suggestions and cost estimates now much more detailed/realistic based on the actual AI prompt output + tweaks (room inference, style-matched SKUs, luxury multipliers, scope scaling).
+- Cross-platform intent with web shims and .web.tsx files.
 
-### Owner flow (end-to-end)
+### Tech Stack
 
-Onboarding → **Design** tab (photo + prompt + AI + cost transparency) → Sourcing (approve, totals) → Scoping (hero + trade tree + burndown) → Scheduling (breaks + costing). Header shows project switcher and pipeline bar throughout.
+- React Native 0.85 + react-native-web + Vite (web on :3000)
+- TypeScript, Zustand, Tailwind (web via PostCSS), StyleSheet (native)
+- Express backend (simple AI proxy)
+- Native camera: react-native-vision-camera (v4; permissions + integration + fallbacks implemented for iOS/Android; .web.tsx for solid upload/preview; cross-platform consistency fixes in Design Studio + worker dashboard)
+- Enhanced persistence (Zustand multi-project with history/save/load + names/metadata; still uses localStorage on web for designs/sourcing/labor state; optional backend routes for cross-session/demo cloud save)
 
-### Worker flow (end-to-end)
-
-Onboarding → dashboard with trade filter → browse jobs with photos and ready-to-go costs → claim → "My Assigned Jobs" with owner data and day-by-day schedule → unclaim if needed.
-
-### Known limitations
-
-These are honest gaps — not hidden behind historical checklists.
-
-- **AI**: Image-reference path active when xAI key + upload ref available; text-only fallback otherwise. Estimates are rich but still model- and demo-data-limited.
-- **Persistence**: Multi-project client + in-memory backend demo; AsyncStorage guidance for native; no real auth or multi-user.
-- **Native camera**: Permissions + integration complete; simulator relies on demo/gallery fallbacks; device QA and LAN IP for backend calls still matter.
-- **Production gaps**: No real auth, retailer APIs, or production deployment; some demo alerts and sample data remain for fast iteration.
-- **Cross-platform**: Worker + Design Studio photos now consistent (RN ScrollView carousels; no web-only Flickity).
-
-### Tech stack
-
-*Reconciled from [README.md](./README.md) — not delegated.*
-
-| Layer | Stack |
-|-------|-------|
-| **Client** | React Native 0.85 + react-native-web + Vite (web on :3000) |
-| **Language & state** | TypeScript; Zustand (multi-project store) |
-| **Styling** | Tailwind on web (PostCSS); StyleSheet on native; shared `theme.ts` |
-| **Navigation** | react-navigation (native-stack + bottom-tabs + screens + safe-area) |
-| **Camera** | react-native-vision-camera v4 (native); `.web.tsx` upload/preview on web |
-| **Backend** | Express (simple AI proxy + projects + purchases) |
-| **Persistence** | Zustand multi-project with history/save/load + names/metadata; localStorage on web; optional `/api/projects` cloud save |
-| **Prerequisites** | Node >= 22.11; pnpm; Ruby + CocoaPods for iOS; optional `XAI_API_KEY` / `GEMINI_API_KEY` for AI |
-| **Tooling** | `pnpm dev` (web + backend), `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, `pnpm describe:image` (Gemini caption via `~/bin/describeimages`), `pnpm build:web` |
-
-### Project structure
+### Project Structure
 
 ```
 src/
   features/
-    design/          # CameraScreen.tsx + .web.tsx, AIProviderSelector, DesignStudioScreen, BeforeAfterSlider
+    design/          # CameraScreen.tsx + CameraScreen.web.tsx (vision-camera native + solid web upload w/ preview+fallbacks), AIProviderSelector, DesignStudioScreen, BeforeAfterSlider, realImageGen (stub)
     labor/           # LaborSchedulerScreen + scheduler.ts (core logic)
     sourcing/        # SourcingScreen + types
     scoping/         # ScopingScreen (hero + scope tree + burndown)
-    worker/          # WorkerDashboardScreen (themed + getImageSource)
   onboarding/
-  shared/            # theme.ts, media.ts, ReadyToGoCostPill, ProjectHero, OwnerHeader, ProjectSwitcher, etc.
-  navigation/        # AppNavigator.tsx, TabNavigator.tsx, types.ts, MainTabNavigator shim
-  context/           # AppRoleContext (owner/worker role switch)
-  store/             # useDeltaStore.ts (design → sourcing → labor)
+  shared/            # theme.ts, media.ts (URI), ReadyToGoCostPill, ProjectHero, AppButton, index.ts (Phase 1)
+  navigation/        # AppNavigator.tsx (root Stack + Container), TabNavigator.tsx (bottom tabs: Design/Sourcing/Scoping/Scheduling + OwnerHeader + ProjectPipelineBar), types.ts (Tab/Root param lists), MainTabNavigator (compat shim). Phase 1+: react-navigation (Stack + Tabs), web + mobile.
+  context/           # AppRoleContext (owner/worker role switch shared across header + App)
+  features/worker/   # WorkerDashboardScreen (extracted from App.tsx; themed + getImageSource)
+  store/             # useDeltaStore.ts (design -> sourcing -> labor)
   web-shims/
-backend/server.js    # Express, /api/analyze, /api/reimagine, /api/projects, purchases
+backend/server.js    # Express, /api/analyze (describeimages), /api/reimagine (xAI)
 public/              # demo images (ai-room-*.jpg, test-images/before-after/*)
-e2e/                 # playwrong browser tests (vendored tools/playwrong submodule)
 ```
 
-Desktop UI uses max-width containers (~720px) for readability. Cross-platform intent via web shims and `.web.tsx` splits.
+### Current Status
 
-### E2E test coverage (playwrong)
+This is a functional prototype focused on the web experience (easiest to demo and iterate).
 
-[playwrong](https://github.com/qpwo/playwrong) runs a real Chromium window in Xvfb. Key UI hooks use `testID` → `data-testid` on web.
+**Owner flow**: Onboarding (role selection + full-screen before/after hero) → **Design** tab (Design Studio: photo + prompt + AI variations with tweaks + *prominent* cost estimates + breakdowns surfaced directly on cards, make-current summary, confirm-before-send total, dedicated Cost Summary panel, and pipeline with full est. project cost — "ready to go" transparency; for the Example Project the selected/approved design is shown first as hero) → Sourcing (approve items, totals, retailer links) → Scoping (the selected design is the hero; scope tree grouped by trade with points on every subtask; interactive SVG burndown line chart — ideal vs actual — trending to 0 points remaining using Scrum; complete subtasks live to drive the chart; **burndown progress persists per project**; sync to labor) → Scheduling (realistic schedules with breaks and $25/hr costing, **auto-generated when labor tasks exist**). Top owner tabs: **Design** / Sourcing / Scoping / Scheduling (+ project switcher header).
+
+**Worker flow**: Dedicated dashboard showing interesting jobs with working trade filter (Carpentry, Electrical, Painting, Flooring, etc. — "All" shows everything; specific trade filters the list + owner live card), project photos that can be flicked through (cross-platform horizontal scroll on iOS/Android/Web), bullet-point task lists, and **estimated total cost** displayed directly on each job card ("ready to go"). Claim/assign buttons move jobs to a "My Assigned Jobs" section (persisted via store), integrate with owner-sourced items + generated laborTasks (shows live "Owner Project" card pulling from current store data when owner has approved sourcing/labor), and provide actual scheduling visibility (per-claimed-job auto-generated day-by-day schedule with breaks/costs using the shared scheduler logic). Unclaim supported; claiming also syncs tasks into labor state.
+
+- `tsc --noEmit --skipLibCheck` is clean.
+- Enhanced persistence: multi-project support (createProject/switchProject/getProjects/rename/delete/saveCurrent + auto current sync), project names/metadata, legacy migration; full state (approvedDesign + sourcingItems + laborTasks) saved per project. Optional backend save/load via store methods + /api/projects (see backend/server.js). Survives refresh on web via localStorage; improved AsyncStorage guidance.
+- Content is constrained for desktop readability (max-width containers).
+
+### Known Limitations
+
+- AI generation now uses image references (when data URI or public URL provided from upload) + detailed visual analysis prompts for true image understanding and realistic remodel transformations (via xAI /images/edits path when ref available); pure text fallback for non-data cases. Cost est + material suggestions now much richer and directly derived from the reimagination's prompt/tweaks for better accuracy. (Still limited by model capabilities and demo data.)
+- Persistence now supports multi-project history: create/switch/rename/delete/save projects with full design/sourcing/labor state + metadata (names, timestamps); client-side via Zustand (localStorage web) + explicit backend /api/projects routes (in-memory demo on server). Legacy single-project data auto-migrates on load. (AsyncStorage note improved for future native.)
+- Native mobile camera (vision-camera) has permissions + basic integration complete; demo fallbacks ensure usable experience on device/simulator. Full turnkey still benefits from re-build after pod/gradle, and reanimated for advanced features (not needed for photo capture).
+- Some demo data, alerts, and flows remain (rapid iteration); owner-side cost estimates are prominent/direct with breakdowns, summary panels, and confirm flows; sourcing suggestions are dynamic based on design prompt + tweaks.
+- No real auth, multi-user, or production retailer APIs.
+- Worker + Design Studio photos now consistent cross-platform (RN ScrollView carousels; no platform-specific codepaths). URI handling audited + normalized via shared/media.
+
+### E2E testing (playwrong)
+
+[playwrong](https://github.com/qpwo/playwrong.git) is vendored as `tools/playwrong` (git submodule). It runs a real Chromium window in Xvfb and only passes clicks a user could actually make (visible, uncovered, enabled targets).
+
+```sh
+git submodule update --init tools/playwrong
+pnpm setup:playwrong   # builds native mydotool (gcc) or Python fallback; installs e2e venv deps
+pnpm test:e2e          # builds web, starts preview + backend :4000, runs e2e/
+pnpm describe:image public/test-images/before-after/before-1.jpg  # Gemini caption via ~/bin/describeimages
+```
+
+Tests live in `e2e/`:
 
 | Test | Coverage |
 |------|----------|
@@ -144,7 +138,9 @@ Desktop UI uses max-width containers (~720px) for readability. Cross-platform in
 | `test_owner_worker_integration.py` | Owner example data visible on worker dashboard |
 | `test_worker_dashboard.py` | Worker onboarding, trade filter, claim job → assigned |
 
-Setup: `git submodule update --init tools/playwrong` → `pnpm setup:playwrong` → `pnpm test:e2e`. Vision captions: `/api/analyze` shells out to `~/bin/describeimages` when `imageUri` present; `pnpm describe:image <path>` for manual captioning.
+Key UI hooks use `testID` → `data-testid` on web. Clicks use playwrong's visible-target query; CI sets `PLAYWRONG_PHYSICAL_CLICK=1` for real pointer input when native `mydotool` is built.
+
+**Vision captions:** `/api/analyze` shells out to `~/bin/describeimages` (Gemini via `GEMINI_API_KEY` in `~/.halp.env`) when an `imageUri` is present. Override with `DESCRIBE_IMAGES_BIN`. `/api/health` reports `hasDescribeImages`.
 
 For full run commands and mobile setup notes, see [README.md](./README.md#getting-started).
 
