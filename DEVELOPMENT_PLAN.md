@@ -48,7 +48,9 @@ These are the bets that define Delta. Every initiative below should trace back t
 
 *Reconciled against [README.md](./README.md) as of the latest refresh.*
 
-Delta is a **functional web-first prototype**. The owner journey and worker dashboard are both demo-ready on `http://localhost:3000` (with optional backend on port 4000 for real AI).
+Delta is a **cross-platform (React Native + Web) prototype** for an AI-powered home remodeling assistant. Homeowners ("owners") take photos of spaces, reimagine them with AI, source materials from retailers, and generate realistic labor schedules. Workers can join jobs.
+
+Today it is a **functional web-first demo**: the owner journey and worker dashboard are both demo-ready on `http://localhost:3000` (with optional backend on port 4000 for real AI).
 
 ### What's working today
 
@@ -64,10 +66,11 @@ Delta is a **functional web-first prototype**. The owner journey and worker dash
 | **State & persistence** | Zustand multi-project store (design → sourcing → labor per project); localStorage on web; optional `/api/projects` backend save/load; legacy single-project auto-migration. |
 | **AI** | Client provider/key UI; backend image-reference edits when upload provides data URI or public URL; richer prompts for room structure/perspective; dynamic material suggestions and cost estimates from prompt + tweaks. |
 | **Theming** | `src/shared/theme.ts` light/dark via `useTheme()`; applied across App shell, Design, Sourcing, Scoping, Scheduling, worker dashboard; shared `ReadyToGoCostPill`, `ProjectHero`, buttons. |
-| **Navigation** | react-navigation v6+/v7: root Stack + bottom tabs (**Design** / Sourcing / Scoping / Scheduling) + typed param lists. |
+| **Navigation** | `src/navigation/AppNavigator.tsx` (root Native Stack + `NavigationContainer`), `TabNavigator.tsx` (bottom tabs: **Design** / Sourcing / Scoping / Scheduling + `OwnerHeader` + `ProjectPipelineBar`), `types.ts` (typed param lists), `MainTabNavigator` compat shim. react-navigation v6+/v7; web + mobile. |
+| **Role context** | `src/context/AppRoleContext` — owner/worker role switch shared across header and `App`. |
 | **Media** | `src/shared/media.ts` (`normalizeImageUri`, `getImageSource`) used consistently across Design, Scoping, worker carousels, onboarding, sliders. |
-| **Backend** | Express: `/api/analyze`, `/api/reimagine`, `/api/health`, `/api/projects`, purchases routes. |
-| **Quality** | `pnpm typecheck` clean; scheduler + scopeFromLabor unit tests; playwrong e2e suite (onboarding, owner pipeline, project switcher, worker claim, backend health, role switch, integration). |
+| **Backend** | Express (`backend/server.js`): `/api/analyze` (describeimages shell-out), `/api/reimagine` (xAI), `/api/health`, `/api/projects`, purchases routes. |
+| **Quality** | `pnpm typecheck` clean; scheduler + scopeFromLabor unit tests (jest); playwrong e2e via `pnpm test:e2e` (see table below). |
 
 ### Owner flow (end-to-end)
 
@@ -87,7 +90,63 @@ These are honest gaps — not hidden behind historical checklists.
 - **Production gaps**: No real auth, retailer APIs, or production deployment; some demo alerts and sample data remain for fast iteration.
 - **Cross-platform**: Worker + Design Studio photos now consistent (RN ScrollView carousels; no web-only Flickity).
 
-For run commands, tech stack detail, and mobile setup notes, see [README.md](./README.md).
+### Tech stack
+
+*Reconciled from [README.md](./README.md) — not delegated.*
+
+| Layer | Stack |
+|-------|-------|
+| **Client** | React Native 0.85 + react-native-web + Vite (web on :3000) |
+| **Language & state** | TypeScript; Zustand (multi-project store) |
+| **Styling** | Tailwind on web (PostCSS); StyleSheet on native; shared `theme.ts` |
+| **Navigation** | react-navigation (native-stack + bottom-tabs + screens + safe-area) |
+| **Camera** | react-native-vision-camera v4 (native); `.web.tsx` upload/preview on web |
+| **Backend** | Express (simple AI proxy + projects + purchases) |
+| **Persistence** | Zustand multi-project with history/save/load + names/metadata; localStorage on web; optional `/api/projects` cloud save |
+| **Prerequisites** | Node >= 22.11; pnpm; Ruby + CocoaPods for iOS; optional `XAI_API_KEY` / `GEMINI_API_KEY` for AI |
+| **Tooling** | `pnpm dev` (web + backend), `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, `pnpm describe:image` (Gemini caption via `~/bin/describeimages`), `pnpm build:web` |
+
+### Project structure
+
+```
+src/
+  features/
+    design/          # CameraScreen.tsx + .web.tsx, AIProviderSelector, DesignStudioScreen, BeforeAfterSlider
+    labor/           # LaborSchedulerScreen + scheduler.ts (core logic)
+    sourcing/        # SourcingScreen + types
+    scoping/         # ScopingScreen (hero + scope tree + burndown)
+    worker/          # WorkerDashboardScreen (themed + getImageSource)
+  onboarding/
+  shared/            # theme.ts, media.ts, ReadyToGoCostPill, ProjectHero, OwnerHeader, ProjectSwitcher, etc.
+  navigation/        # AppNavigator.tsx, TabNavigator.tsx, types.ts, MainTabNavigator shim
+  context/           # AppRoleContext (owner/worker role switch)
+  store/             # useDeltaStore.ts (design → sourcing → labor)
+  web-shims/
+backend/server.js    # Express, /api/analyze, /api/reimagine, /api/projects, purchases
+public/              # demo images (ai-room-*.jpg, test-images/before-after/*)
+e2e/                 # playwrong browser tests (vendored tools/playwrong submodule)
+```
+
+Desktop UI uses max-width containers (~720px) for readability. Cross-platform intent via web shims and `.web.tsx` splits.
+
+### E2E test coverage (playwrong)
+
+[playwrong](https://github.com/qpwo/playwrong) runs a real Chromium window in Xvfb. Key UI hooks use `testID` → `data-testid` on web.
+
+| Test | Coverage |
+|------|----------|
+| `test_backend_health.py` | `/api/health` routes (analyze, reimagine, projects, purchases) |
+| `test_onboarding.py` | Landing hero, owner/worker CTAs, owner → Design Studio |
+| `test_owner_example.py` | Oak Street House example load + cost pills |
+| `test_owner_pipeline.py` | Full owner flow: pipeline tabs, sourcing submit purchases, scoping burndown, scheduling |
+| `test_owner_role_switch.py` | Owner/worker "Switch role" returns to onboarding |
+| `test_project_switcher.py` | Create project + save to cloud backend |
+| `test_owner_worker_integration.py` | Owner example data visible on worker dashboard |
+| `test_worker_dashboard.py` | Worker onboarding, trade filter, claim job → assigned |
+
+Setup: `git submodule update --init tools/playwrong` → `pnpm setup:playwrong` → `pnpm test:e2e`. Vision captions: `/api/analyze` shells out to `~/bin/describeimages` when `imageUri` present; `pnpm describe:image <path>` for manual captioning.
+
+For full run commands and mobile setup notes, see [README.md](./README.md#getting-started).
 
 ### Servers
 
@@ -130,9 +189,15 @@ Delta serves two primary audiences. We design and prioritize for both — not as
 
 ## Current Priorities & Key Initiatives
 
-These are the **focused bets** for what comes next. Each initiative is self-contained: strategy, projects, timeline/impact, resources, and risks.
+These are the **focused bets** for what comes next. Each initiative follows the W-framework: problem/opportunity, hypothesis, strategy, projects, timeline/impact, resources, and risks.
 
 ### Initiative 1: Production-grade persistence & identity
+
+**Problem & opportunity**  
+Today, persistence is demo-grade: localStorage on web and an in-memory backend. Owners who switch devices or refresh during a long remodel session risk losing work — blocking any credible beta.
+
+**Hypothesis**  
+If we add durable backend storage, native AsyncStorage, and lightweight auth, then users will complete multi-session remodel flows without data loss, because project state survives refresh, device switch, and cloud save.
 
 **Strategy**  
 Move from demo persistence to something a real user could trust across sessions and devices.
@@ -155,6 +220,12 @@ Scope creep into full account management; mitigate by shipping read/write persis
 
 ### Initiative 2: AI depth — room understanding & estimate accuracy
 
+**Problem & opportunity**  
+Ready-to-go cost pills are prominent, but estimates can still feel disconnected from the owner's actual room when vision analysis is shallow. That erodes trust right when owners decide to source materials.
+
+**Hypothesis**  
+If we add room-type vision analysis (`/api/analyze`) and richer SKU matching from prompt + tweaks, then owners will trust ready-to-go estimates enough to proceed to sourcing, because numbers tie to visible room features and selected materials.
+
 **Strategy**  
 Close the gap between "impressive demo" and "I trust this number" by grounding generation and costing in the actual room.
 
@@ -175,6 +246,12 @@ Model cost and latency; mitigate with fallbacks (bundled demo images) already in
 ---
 
 ### Initiative 3: Native mobile polish & device QA
+
+**Problem & opportunity**  
+Web demos prove the flow, but remodel work happens on-site. Without device QA, we cannot claim parity for camera capture, carousels, or LAN backend calls on iOS/Android.
+
+**Hypothesis**  
+If we pass device QA on vision-camera capture and LAN backend connectivity, then field demos on iOS/Android will match web fidelity, because native capture and shared RN components work on real hardware.
 
 **Strategy**  
 Web proves the flow; native proves the product travels to the job site.
@@ -197,6 +274,12 @@ Camera and build tooling friction; mitigated by demo/gallery fallbacks and READM
 
 ### Initiative 4: Retailer & commerce integration
 
+**Problem & opportunity**  
+Sourcing today shows retailer names and running totals, but owners cannot act on approved lines without leaving the prototype mindset. Procurement remains a dead end.
+
+**Hypothesis**  
+If we integrate one retailer (deep links or API) and harden purchase-order submission, then owners will treat sourcing as actionable, because approved items lead to real purchase flows.
+
 **Strategy**  
 Turn approved sourcing lines into real actions — not just labels.
 
@@ -217,6 +300,12 @@ API availability and ToS; mitigate with link-out MVP before full cart integratio
 ---
 
 ### Initiative 5: CI, e2e expansion & contributor ergonomics
+
+**Problem & opportunity**  
+Rapid iteration on owner and worker flows lacks automated guardrails. A refactor can break the demo path (pipeline, burndown, claiming) without anyone noticing until manual QA.
+
+**Hypothesis**  
+If we expand playwrong e2e coverage and add CI running typecheck + unit + e2e, then regressions in the owner → worker story will be caught before merge, because visible-target browser tests exercise the real shipped UI on every change.
 
 **Strategy**  
 Protect the flows we demo most often so refactors do not silently break the owner → worker story.
