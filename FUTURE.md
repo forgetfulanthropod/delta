@@ -1,6 +1,6 @@
 # Delta Future / Advanced Ideas (Phase 5+)
 
-See DEVELOPMENT_PLAN.md for the phased roadmap.
+See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for current priorities and [historical context](./DEVELOPMENT_PLAN.md#historical-context).
 
 ## Computer Vision + LLM
 - Auto-analyze uploaded photo for room type, issues (peeling paint, water damage), suggest materials list.

@@ -2,7 +2,7 @@
 
 See [README.md](./README.md) for the current product description and status.
 
-See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the full historical phased plan (Phase 0–5) and detailed early audit. That document is now marked as largely historical.
+See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the living plan (mission, pillars, key initiatives) and summarized historical phases.
 
 ## Current Priorities (as of latest)
 
@@ -37,5 +37,5 @@ See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the full historical phased 
 - Desktop UI no longer feels overly wide (content constraints).
 - Owner flow remains solid with persistence and consistent styling.
 
-Contributions and feedback welcome. When in doubt, start from the limitations listed in README.md and the "Remaining Work" section in DEVELOPMENT_PLAN.md.
+Contributions and feedback welcome. When in doubt, start from the limitations listed in README.md and the [Current Priorities & Key Initiatives](./DEVELOPMENT_PLAN.md#current-priorities--key-initiatives) section in DEVELOPMENT_PLAN.md.
 

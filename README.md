@@ -103,7 +103,20 @@ pnpm test:e2e          # builds web, starts preview + backend :4000, runs e2e/
 pnpm describe:image public/test-images/before-after/before-1.jpg  # Gemini caption via ~/bin/describeimages
 ```
 
-Tests live in `e2e/` (`test_onboarding.py`, `test_owner_example.py`). Key UI hooks use `testID` → `data-testid` on web. Clicks use playwrong's visible-target query; CI sets `PLAYWRONG_PHYSICAL_CLICK=1` for real pointer input when native `mydotool` is built.
+Tests live in `e2e/`:
+
+| Test | Coverage |
+|------|----------|
+| `test_backend_health.py` | `/api/health` routes (analyze, reimagine, projects, purchases) |
+| `test_onboarding.py` | Landing hero, owner/worker CTAs, owner → Design Studio |
+| `test_owner_example.py` | Oak Street House example load + cost pills |
+| `test_owner_pipeline.py` | Full owner flow: pipeline tabs, sourcing submit purchases, scoping burndown, scheduling |
+| `test_owner_role_switch.py` | Owner/worker "Switch role" returns to onboarding |
+| `test_project_switcher.py` | Create project + save to cloud backend |
+| `test_owner_worker_integration.py` | Owner example data visible on worker dashboard |
+| `test_worker_dashboard.py` | Worker onboarding, trade filter, claim job → assigned |
+
+Key UI hooks use `testID` → `data-testid` on web. Clicks use playwrong's visible-target query; CI sets `PLAYWRONG_PHYSICAL_CLICK=1` for real pointer input when native `mydotool` is built.
 
 **Vision captions:** `/api/analyze` shells out to `~/bin/describeimages` (Gemini via `GEMINI_API_KEY` in `~/.halp.env`) when an `imageUri` is present. Override with `DESCRIBE_IMAGES_BIN`. `/api/health` reports `hasDescribeImages`.
 
@@ -113,7 +126,7 @@ Tests live in `e2e/` (`test_onboarding.py`, `test_owner_example.py`). Key UI hoo
 - Applied to: App shell (tabs, headers), worker dashboard (cards, filters, banners), DesignStudio, Scoping, Sourcing, Scheduling/Labor (headers, cards, inputs, pills).
 - Extracted reusable theme-aware patterns into shared/: `ProjectHero`, `ReadyToGoCostPill` (used in Design + Scoping), basic `AppButton`.
 - Consistent padding/typography via theme values. No prop warnings (StyleSheet + theme-driven inlines). Light remains dominant default; dark propagates where useColorScheme flips.
-- See DEVELOPMENT_PLAN.md for context.
+- See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for mission, pillars, and current priorities (reconciled against this README).
 
 ## Project Structure
 
@@ -146,7 +159,7 @@ This is a functional prototype focused on the web experience (easiest to demo an
 - `tsc --noEmit --skipLibCheck` is clean.
 - Enhanced persistence: multi-project support (createProject/switchProject/getProjects/rename/delete/saveCurrent + auto current sync), project names/metadata, legacy migration; full state (approvedDesign + sourcingItems + laborTasks) saved per project. Optional backend save/load via store methods + /api/projects (see backend/server.js). Survives refresh on web via localStorage; improved AsyncStorage guidance.
 - Content is constrained for desktop readability (max-width containers).
-- See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the historical roadmap, completed work, and current remaining gaps. The plan is being actively reconciled with the actual state.
+- See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the living development plan — mission through key initiatives, plus summarized historical context. This README is the source of truth for current features; the plan is refreshed to stay in sync.
 
 ## Known Limitations
 
@@ -157,7 +170,7 @@ This is a functional prototype focused on the web experience (easiest to demo an
 - No real auth, multi-user, or production retailer APIs.
 - Worker + Design Studio photos now consistent cross-platform (RN ScrollView carousels; no platform-specific codepaths). URI handling audited + normalized via shared/media.
 
-See DEVELOPMENT_PLAN.md for a more detailed gap analysis and historical context.
+See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for prioritized initiatives, non-goals, and historical context.
 
 ## Contributing / Next
 
@@ -177,9 +190,9 @@ Recent changes (Phase 1):
 - Navigation: Proper react-navigation v6+/v7 (native + bottom-tabs + native-stack + screens + safe-area). Clean structure per Phase 1 request: src/navigation/AppNavigator.tsx (root Native Stack + NavigationContainer), TabNavigator.tsx (typed Bottom Tabs: 🛒 Sourcing / 📐 Scoping default / 📅 Scheduling), types.ts (TabParamList + RootStackParamList). All crude button/tabBar + selectedTab state/conditionals removed from App.tsx (owner now <AppNavigator />). Worker dashboard + filters untouched. Web (Vite/RNW) + mobile seamless; vite.config tuned (optimize/externals); pnpm typecheck clean. Servers verified post-edit.
 - Docs updated; pnpm typecheck clean; commit per spec.
 
-See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the full historical roadmap, completed work, and current priorities (reconciled against this README).
+See [DEVELOPMENT_PLAN.md](./DEVELOPMENT_PLAN.md) for the full plan — strategic pillars, current priorities, and archived phase history (reconciled against this README).
 
-PRs welcome. When making changes, please help keep both README.md and DEVELOPMENT_PLAN.md in sync.
+PRs welcome. When making changes, please help keep both README.md and DEVELOPMENT_PLAN.md in sync. The plan follows product-planning best practices (W-framework, user-focused initiatives) and is maintained as a publication alongside this README.
 
 ## License
 
