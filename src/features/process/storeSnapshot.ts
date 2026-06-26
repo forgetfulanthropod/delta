@@ -34,22 +34,29 @@ export interface StoreWizardSlice {
 }
 
 function resolvePrompt(slice: StoreWizardSlice, latest: DesignVersion | undefined): string {
-  if (slice.designPrompt?.trim()) return slice.designPrompt;
+  // Use store value as-is (including '') so describe_vision gating works during wizard.
+  if (slice.designPrompt != null) return slice.designPrompt;
   if (latest?.prompt?.trim()) return latest.prompt;
   if (slice.approvedDesign?.prompt?.trim()) return slice.approvedDesign.prompt;
-  return DEFAULT_PROMPT;
+  return '';
 }
 
+/** Pass partial store tweaks through so per-step advancement works one field at a time. */
 function resolveTweaks(
   slice: StoreWizardSlice,
   latest: DesignVersion | undefined,
-): { style: string; colorPalette: string; layout: string } | undefined {
-  if (slice.designTweaks?.style && slice.designTweaks?.colorPalette && slice.designTweaks?.layout) {
-    return slice.designTweaks;
+): { style: string; colorPalette: string; layout: string } {
+  const store = {
+    style: slice.designTweaks?.style ?? '',
+    colorPalette: slice.designTweaks?.colorPalette ?? '',
+    layout: slice.designTweaks?.layout ?? '',
+  };
+  if (store.style || store.colorPalette || store.layout) {
+    return store;
   }
   if (latest?.tweaks) return latest.tweaks;
   if (slice.approvedDesign?.tweaks) return slice.approvedDesign.tweaks;
-  return undefined;
+  return store;
 }
 
 function resolveBaseImage(slice: StoreWizardSlice, latest: DesignVersion | undefined): string | null {
@@ -90,7 +97,7 @@ export function createInitialStoreSlice(projectName = 'My Remodel'): StoreWizard
     laborTasks: [],
     scopeCompleted: {},
     baseImageUri: null,
-    designPrompt: DEFAULT_PROMPT,
+    designPrompt: '',
     designTweaks: { style: '', colorPalette: '', layout: '' },
     hasScheduleBuilt: false,
   };

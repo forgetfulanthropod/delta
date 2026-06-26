@@ -234,7 +234,7 @@ export default function GuidedProcessScreen() {
             onChangeText={setDesignPrompt}
             multiline
             numberOfLines={4}
-            placeholder="Describe your dream space..."
+            placeholder="Bright modern kitchen with natural materials and better flow"
             style={[styles.input, styles.textArea, { borderColor: t.colors.border, color: t.colors.text }]}
           />
         );

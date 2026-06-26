@@ -464,7 +464,7 @@ export const useDeltaStore = create<DeltaStore>()(
           }
           return { baseImageUri: uri, projects };
         }),
-      designPrompt: DEFAULT_DESIGN_PROMPT,
+      designPrompt: '',
       setDesignPrompt: (prompt) =>
         set((state) => {
           let currentId = state.currentProjectId;
@@ -540,7 +540,7 @@ export const useDeltaStore = create<DeltaStore>()(
             scopeCompleted: {} as Record<string, boolean>,
             scopeBurnSeries: [] as number[],
             baseImageUri: null as string | null,
-            designPrompt: DEFAULT_DESIGN_PROMPT,
+            designPrompt: '',
             designTweaks: { ...EMPTY_DESIGN_TWEAKS },
             hasScheduleBuilt: false,
           };
@@ -578,7 +578,7 @@ export const useDeltaStore = create<DeltaStore>()(
           scopeCompleted: {},
           scopeBurnSeries: [],
           baseImageUri: null,
-          designPrompt: DEFAULT_DESIGN_PROMPT,
+          designPrompt: '',
           designTweaks: { ...EMPTY_DESIGN_TWEAKS },
           hasScheduleBuilt: false,
         };
@@ -592,7 +592,7 @@ export const useDeltaStore = create<DeltaStore>()(
           scopeCompleted: {},
           scopeBurnSeries: [],
           baseImageUri: null,
-          designPrompt: DEFAULT_DESIGN_PROMPT,
+          designPrompt: '',
           designTweaks: { ...EMPTY_DESIGN_TWEAKS },
           hasScheduleBuilt: false,
         }));
@@ -611,7 +611,7 @@ export const useDeltaStore = create<DeltaStore>()(
             scopeCompleted: proj.scopeCompleted || {},
             scopeBurnSeries: proj.scopeBurnSeries || [],
             baseImageUri: proj.baseImageUri ?? null,
-            designPrompt: proj.designPrompt || DEFAULT_DESIGN_PROMPT,
+            designPrompt: proj.designPrompt ?? '',
             designTweaks: proj.designTweaks || { ...EMPTY_DESIGN_TWEAKS },
             hasScheduleBuilt: proj.hasScheduleBuilt ?? false,
           };
@@ -661,7 +661,7 @@ export const useDeltaStore = create<DeltaStore>()(
               scopeCompleted: {},
               scopeBurnSeries: [],
               baseImageUri: null,
-              designPrompt: DEFAULT_DESIGN_PROMPT,
+              designPrompt: '',
               designTweaks: { ...EMPTY_DESIGN_TWEAKS },
               hasScheduleBuilt: false,
             };
@@ -678,7 +678,7 @@ export const useDeltaStore = create<DeltaStore>()(
             scopeCompleted: nextProj.scopeCompleted || {},
             scopeBurnSeries: nextProj.scopeBurnSeries || [],
             baseImageUri: nextProj.baseImageUri ?? null,
-            designPrompt: nextProj.designPrompt || DEFAULT_DESIGN_PROMPT,
+            designPrompt: nextProj.designPrompt ?? '',
             designTweaks: nextProj.designTweaks || { ...EMPTY_DESIGN_TWEAKS },
             hasScheduleBuilt: nextProj.hasScheduleBuilt ?? false,
           };
@@ -820,14 +820,14 @@ export const useDeltaStore = create<DeltaStore>()(
         const ps = persistedState || {};
         if (version < 4) {
           ps.baseImageUri = ps.baseImageUri ?? null;
-          ps.designPrompt = ps.designPrompt || DEFAULT_DESIGN_PROMPT;
+          ps.designPrompt = ps.designPrompt ?? '';
           ps.designTweaks = ps.designTweaks || { ...EMPTY_DESIGN_TWEAKS };
           ps.hasScheduleBuilt = ps.hasScheduleBuilt ?? false;
           if (ps.projects) {
             Object.keys(ps.projects).forEach((id) => {
               ps.projects[id].baseImageUri = ps.projects[id].baseImageUri ?? null;
               ps.projects[id].designPrompt =
-                ps.projects[id].designPrompt || DEFAULT_DESIGN_PROMPT;
+                ps.projects[id].designPrompt ?? '';
               ps.projects[id].designTweaks =
                 ps.projects[id].designTweaks || { ...EMPTY_DESIGN_TWEAKS };
               ps.projects[id].hasScheduleBuilt = ps.projects[id].hasScheduleBuilt ?? false;

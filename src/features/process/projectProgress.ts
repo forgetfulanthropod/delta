@@ -17,7 +17,9 @@ function effectivePrompt(s: ProjectSnapshot): string {
 }
 
 function effectiveTweaks(s: ProjectSnapshot): ProjectSnapshot['tweaks'] {
-  return s.tweaks || s.versions[0]?.tweaks || s.approvedDesign?.tweaks;
+  const t = s.tweaks;
+  if (t && (t.style || t.colorPalette || t.layout)) return t;
+  return s.versions[0]?.tweaks || s.approvedDesign?.tweaks;
 }
 
 function hasPhoto(s: ProjectSnapshot): boolean {

@@ -7,6 +7,10 @@ import {
   overallProgressPercent,
   flagsNeedingAttention,
 } from '../src/features/process/projectProgress';
+import {
+  buildProjectSnapshotFromStore,
+  createInitialStoreSlice,
+} from '../src/features/process/storeSnapshot';
 import type { ProjectSnapshot } from '../src/features/process/types';
 import type { DesignVersion } from '../src/features/design/types';
 
@@ -124,6 +128,36 @@ describe('step navigation helpers', () => {
     expect(getNextStep('welcome')).toBe('capture_photo');
     expect(getPreviousStep('capture_photo')).toBe('welcome');
     expect(getNextStep('project_complete')).toBeNull();
+  });
+});
+
+describe('incremental tweak flow via store-derived snapshot', () => {
+  it('advances one tweak step at a time through buildProjectSnapshotFromStore', () => {
+    const slice = createInitialStoreSlice('Remodel');
+    slice.designPrompt = '';
+    slice.baseImageUri = '/test-images/before-after/before-1.jpg';
+
+    let snap = buildProjectSnapshotFromStore(slice);
+    expect(getRecommendedStep(snap)).toBe('describe_vision');
+
+    slice.designPrompt = 'Bright modern kitchen';
+    snap = buildProjectSnapshotFromStore(slice);
+    expect(getRecommendedStep(snap)).toBe('pick_style');
+    expect(canAdvanceFromStep('describe_vision', snap)).toBe(true);
+
+    slice.designTweaks = { style: 'Farmhouse', colorPalette: '', layout: '' };
+    snap = buildProjectSnapshotFromStore(slice);
+    expect(canAdvanceFromStep('pick_style', snap)).toBe(true);
+    expect(getNextStep('pick_style')).toBe('pick_palette');
+
+    slice.designTweaks.colorPalette = 'Earth tones';
+    snap = buildProjectSnapshotFromStore(slice);
+    expect(canAdvanceFromStep('pick_palette', snap)).toBe(true);
+
+    slice.designTweaks.layout = 'Open plan';
+    snap = buildProjectSnapshotFromStore(slice);
+    expect(canAdvanceFromStep('pick_layout', snap)).toBe(true);
+    expect(getRecommendedStep(snap)).toBe('review_design');
   });
 });
 
