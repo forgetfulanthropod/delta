@@ -1,0 +1,138 @@
+import {
+  type GuidedStepId,
+  type GuidedStepMeta,
+  type ProjectSnapshot,
+  GUIDED_STEP_ORDER,
+} from './types';
+import { getStepIndex } from './projectProgress';
+
+const STEP_COPY: Record<
+  GuidedStepId,
+  { title: string; subtitle: string; question: string; phase: GuidedStepMeta['phase'] }
+> = {
+  welcome: {
+    phase: 'intro',
+    title: 'Welcome',
+    subtitle: 'Let’s remodel your space, one step at a time.',
+    question: 'What should we call this project?',
+  },
+  capture_photo: {
+    phase: 'design',
+    title: 'Your space',
+    subtitle: 'A clear photo helps AI understand the room.',
+    question: 'Show us the space you want to transform.',
+  },
+  describe_vision: {
+    phase: 'design',
+    title: 'Your vision',
+    subtitle: 'Describe the change you want to see.',
+    question: 'What should this space become?',
+  },
+  pick_style: {
+    phase: 'design',
+    title: 'Style',
+    subtitle: 'Pick a direction for the remodel.',
+    question: 'Which style feels right?',
+  },
+  pick_palette: {
+    phase: 'design',
+    title: 'Colors',
+    subtitle: 'Set the mood with a palette.',
+    question: 'Which color palette do you prefer?',
+  },
+  pick_layout: {
+    phase: 'design',
+    title: 'Layout',
+    subtitle: 'How should the space be organized?',
+    question: 'What layout changes matter most?',
+  },
+  review_design: {
+    phase: 'design',
+    title: 'AI concepts',
+    subtitle: 'Review before and after.',
+    question: 'Does this direction feel right?',
+  },
+  approve_design: {
+    phase: 'design',
+    title: 'Approve design',
+    subtitle: 'Lock in your chosen concept.',
+    question: 'Ready to approve this design for sourcing?',
+  },
+  review_sourcing: {
+    phase: 'sourcing',
+    title: 'Materials list',
+    subtitle: 'Retailer suggestions from your design.',
+    question: 'Review the materials we found for you.',
+  },
+  approve_materials: {
+    phase: 'sourcing',
+    title: 'Approve materials',
+    subtitle: 'Confirm what to buy before scoping labor.',
+    question: 'Approve each item you want to include.',
+  },
+  confirm_scope: {
+    phase: 'scoping',
+    title: 'Scope of work',
+    subtitle: 'Break the remodel into trades and tasks.',
+    question: 'Confirm scope items for scheduling.',
+  },
+  build_schedule: {
+    phase: 'scheduling',
+    title: 'Labor schedule',
+    subtitle: 'Day-by-day plan with breaks and costs.',
+    question: 'Build your crew schedule.',
+  },
+  project_complete: {
+    phase: 'done',
+    title: 'You’re set',
+    subtitle: 'Design, sourcing, scope, and schedule are in place.',
+    question: 'Your project is ready to execute.',
+  },
+};
+
+export function getStepMeta(stepId: GuidedStepId): GuidedStepMeta {
+  const copy = STEP_COPY[stepId];
+  const stepIndex = getStepIndex(stepId);
+  return {
+    id: stepId,
+    phase: copy.phase,
+    title: copy.title,
+    subtitle: copy.subtitle,
+    question: copy.question,
+    stepIndex: stepIndex + 1,
+    totalSteps: GUIDED_STEP_ORDER.length,
+  };
+}
+
+/** Advance to next step only when current step requirements are met. */
+export function advanceStep(
+  current: GuidedStepId,
+  snapshot: ProjectSnapshot,
+  canAdvance: (step: GuidedStepId, s: ProjectSnapshot) => boolean,
+): GuidedStepId {
+  const idx = getStepIndex(current);
+  for (let i = idx + 1; i < GUIDED_STEP_ORDER.length; i++) {
+    const candidate = GUIDED_STEP_ORDER[i];
+    if (!canAdvance(current, snapshot) && i === idx + 1) {
+      return current;
+    }
+    return candidate;
+  }
+  return current;
+}
+
+export const STYLE_OPTIONS = ['Modern', 'Farmhouse', 'Coastal', 'Industrial', 'Scandinavian'];
+export const PALETTE_OPTIONS = [
+  'Warm neutrals',
+  'Cool grays',
+  'Earth tones',
+  'Bold contrast',
+  'Soft pastels',
+];
+export const LAYOUT_OPTIONS = [
+  'Open plan',
+  'Defined zones',
+  'Maximize storage',
+  'Entertainment focus',
+  'Work-from-home',
+];

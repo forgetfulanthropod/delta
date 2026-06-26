@@ -23,6 +23,12 @@ export type RootStackParamList = {
   // JobDetail: { jobId: string };
 };
 
+/** Guided owner flow (primary path — replaces tabs). */
+export type ProcessStackParamList = {
+  GuidedProcess: { step?: import('../features/process/types').GuidedStepId } | undefined;
+  ProjectProgress: undefined;
+};
+
 export type RootStackScreenProps<T extends keyof RootStackParamList> =
   import('@react-navigation/native-stack').NativeStackScreenProps<RootStackParamList, T>;
 

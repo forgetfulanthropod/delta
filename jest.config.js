@@ -7,6 +7,7 @@ module.exports = {
         '**/__tests__/scopeFromLabor.test.ts',
         '**/__tests__/analyzeRoom.test.ts',
         '**/__tests__/roomAnalysis.test.ts',
+        '**/__tests__/projectProgress.test.ts',
       ],
       testEnvironment: 'node',
       transform: {
