@@ -35,6 +35,16 @@ const sampleDesign: DesignVersion = {
   createdAt: '2026-01-01T00:00:00Z',
 };
 
+const sampleDesignAlt: DesignVersion = {
+  id: 'v2',
+  imageUri: '/ai-room-1.jpg',
+  prompt: 'Modern kitchen remodel',
+  tweaks: { style: 'Modern', colorPalette: 'Warm neutrals', layout: 'Open plan' },
+  createdAt: '2026-01-02T00:00:00Z',
+};
+
+const samplePair = [sampleDesign, sampleDesignAlt];
+
 describe('computeAreaFlags', () => {
   it('flags design as needs_attention when versions exist but none approved', () => {
     const flags = computeAreaFlags(
@@ -43,7 +53,7 @@ describe('computeAreaFlags', () => {
         baseImage: '/before.jpg',
         prompt: 'Modern kitchen',
         tweaks: sampleDesign.tweaks,
-        versions: [sampleDesign],
+        versions: samplePair,
       }),
     );
     const design = flags.find((f) => f.area === 'design');
@@ -107,7 +117,7 @@ describe('getRecommendedStep', () => {
         prompt: 'Kitchen',
         tweaks: sampleDesign.tweaks,
         approvedDesign: sampleDesign,
-        versions: [sampleDesign],
+        versions: samplePair,
         sourcingItems: [
           { id: '1', name: 'A', retailer: 'Amazon', price: 10, quantity: 1, approved: true },
           { id: '2', name: 'B', retailer: 'Amazon', price: 20, quantity: 1, approved: false },
@@ -157,7 +167,7 @@ describe('flagsNeedingAttention', () => {
       emptySnapshot({
         projectName: 'P',
         baseImage: '/b.jpg',
-        versions: [sampleDesign],
+        versions: samplePair,
         prompt: 'x',
         tweaks: sampleDesign.tweaks,
       }),

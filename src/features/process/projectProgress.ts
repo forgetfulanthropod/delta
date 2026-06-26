@@ -29,7 +29,7 @@ function hasVision(s: ProjectSnapshot): boolean {
 }
 
 function hasGeneratedDesign(s: ProjectSnapshot): boolean {
-  return s.versions.length > 0;
+  return s.versions.length >= 2;
 }
 
 function approvedSourcingCount(s: ProjectSnapshot): number {
@@ -157,7 +157,7 @@ export function computeAreaFlags(snapshot: ProjectSnapshot): AreaFlag[] {
 function designMessage(s: ProjectSnapshot, status: AttentionLevel): string {
   if (status === 'complete') return 'Design approved — ready for sourcing.';
   if (!hasPhoto(s)) return 'Add a photo of your space to get started.';
-  if (!hasGeneratedDesign(s)) return 'Share your hoped outcome and generate an AI concept.';
+  if (!hasGeneratedDesign(s)) return 'Share your hoped outcome and generate two AI directions.';
   if (!s.approvedDesign) return 'Review your design and approve a version.';
   return 'Continue shaping your design.';
 }

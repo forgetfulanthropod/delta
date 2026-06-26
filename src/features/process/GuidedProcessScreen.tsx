@@ -8,11 +8,10 @@ import {
   TouchableOpacity,
   Modal,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useDeltaStore, DEFAULT_DESIGN_TWEAKS } from '../../store/useDeltaStore';
+import { useDeltaStore } from '../../store/useDeltaStore';
 import {
   useTheme,
   ConstrainedView,
@@ -24,10 +23,15 @@ import ElegantImage from '../../shared/ElegantImage';
 import MilkyBackdrop from '../../shared/MilkyBackdrop';
 import GuidedStepCard from '../../shared/GuidedStepCard';
 import { MILKY_INK, MILKY_INK_SOFT, MILKY_PLACEHOLDER, milkyFill } from '../../shared/milkyGradients';
-import BeforeAfterSlider from '../design/BeforeAfterSlider';
 import CameraScreen from '../design/CameraScreen';
 import { DesignVersion } from '../design/types';
-import { apiUrl } from '../../shared/api';
+import DesignDirectionReview from './DesignDirectionReview';
+import {
+  fetchConceptVersion,
+  generateConceptPair,
+  pairFromVersions,
+  versionsFromPair,
+} from './designConcepts';
 import { generateSchedule } from '../labor/scheduler';
 import {
   computeAreaFlags,
@@ -54,7 +58,7 @@ export default function GuidedProcessScreen() {
     approvedDesign,
     setApprovedDesign,
     versions,
-    addVersion,
+    setProjectVersions,
     addSourcingItems,
     sourcingItems,
     toggleApproveItem,
@@ -78,6 +82,7 @@ export default function GuidedProcessScreen() {
   const [showCamera, setShowCamera] = useState(false);
   const [materialIndex, setMaterialIndex] = useState(0);
   const [draftProjectName, setDraftProjectName] = useState('');
+  const [selectedConceptSlot, setSelectedConceptSlot] = useState<0 | 1 | null>(null);
 
   useEffect(() => {
     const normalized = normalizeGuidedStep(route.params?.step);
@@ -115,6 +120,8 @@ export default function GuidedProcessScreen() {
     if (trimmed) renameProject(currentProjectId, trimmed);
   }, [currentProjectId, draftProjectName, renameProject]);
 
+  const conceptPair = useMemo(() => pairFromVersions(versions), [versions]);
+
   const goNext = useCallback(() => {
     if (stepId === 'welcome') {
       if (!draftProjectName.trim()) return;
@@ -122,9 +129,26 @@ export default function GuidedProcessScreen() {
     } else if (!canAdvanceFromStep(stepId, snapshot)) {
       return;
     }
+    if (stepId === 'review_design') {
+      const slot = selectedConceptSlot ?? 0;
+      const pair = conceptPair;
+      const chosen = pair[slot];
+      const other = pair[1 - slot];
+      if (chosen && other) {
+        setProjectVersions(versionsFromPair([chosen, other]));
+      }
+    }
     const next = getNextStep(stepId);
     if (next) setStepId(next);
-  }, [stepId, snapshot, draftProjectName, commitProjectName]);
+  }, [
+    stepId,
+    snapshot,
+    draftProjectName,
+    commitProjectName,
+    selectedConceptSlot,
+    conceptPair,
+    setProjectVersions,
+  ]);
 
   const goBack = useCallback(() => {
     const prev = getPreviousStep(stepId);
@@ -145,50 +169,51 @@ export default function GuidedProcessScreen() {
     if (currentProjectId) renameProject(currentProjectId, 'The Oak Street House');
   };
 
-  const generateDesign = async () => {
-    if (!baseImage) return;
+  const applyConceptPair = useCallback(
+    (pair: [DesignVersion, DesignVersion]) => {
+      setProjectVersions(versionsFromPair(pair));
+      setSelectedConceptSlot(null);
+    },
+    [setProjectVersions],
+  );
+
+  const generateBothDirections = useCallback(async () => {
+    if (!baseImage || !prompt.trim()) return;
     setIsGenerating(true);
-    const enhanced = `Best hoped outcome for this remodel: ${prompt.trim()}`;
     try {
-      const res = await fetch(apiUrl('/api/reimagine'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageUri: baseImage,
-          prompt: enhanced,
-          provider: connectedProvider || 'x',
-          apiKey: 'demo-x',
-        }),
-      });
-      const data = await res.json();
-      if (data.imageUri) {
-        addVersion({
-          id: Date.now().toString(),
-          imageUri: data.imageUri,
-          prompt,
-          tweaks: { ...DEFAULT_DESIGN_TWEAKS },
-          createdAt: new Date().toISOString(),
-        });
-        setIsGenerating(false);
-        return;
-      }
-    } catch {
-      /* fallback below */
+      const pair = await generateConceptPair(baseImage, prompt, connectedProvider);
+      applyConceptPair(pair);
+    } finally {
+      setIsGenerating(false);
     }
-    const fallbacks = [
-      '/test-images/before-after/after-1.jpg',
-      '/ai-room-1.jpg',
-      '/ai-room-2.jpg',
-    ];
-    addVersion({
-      id: Date.now().toString(),
-      imageUri: fallbacks[Math.floor(Math.random() * fallbacks.length)],
-      prompt,
-      tweaks: { ...DEFAULT_DESIGN_TWEAKS },
-      createdAt: new Date().toISOString(),
-    });
-    setIsGenerating(false);
-  };
+  }, [baseImage, prompt, connectedProvider, applyConceptPair]);
+
+  const regenerateBothDirections = useCallback(async () => {
+    await generateBothDirections();
+  }, [generateBothDirections]);
+
+  const regenerateOtherDirection = useCallback(async () => {
+    if (!baseImage || !prompt.trim() || selectedConceptSlot === null) return;
+    const otherSlot = (1 - selectedConceptSlot) as 0 | 1;
+    setIsGenerating(true);
+    try {
+      const replacement = await fetchConceptVersion(baseImage, prompt, connectedProvider);
+      const nextPair: [DesignVersion | null, DesignVersion | null] = [...conceptPair];
+      nextPair[otherSlot] = replacement;
+      if (nextPair[0] && nextPair[1]) {
+        setProjectVersions(versionsFromPair([nextPair[0], nextPair[1]]));
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [
+    baseImage,
+    prompt,
+    connectedProvider,
+    selectedConceptSlot,
+    conceptPair,
+    setProjectVersions,
+  ]);
 
   const approveAndSource = (version: DesignVersion) => {
     setApprovedDesign(version);
@@ -267,28 +292,15 @@ export default function GuidedProcessScreen() {
 
       case 'review_design':
         return (
-          <View>
-            {baseImage && versions.length > 0 ? (
-              <BeforeAfterSlider
-                before={baseImage}
-                after={versions[versions.length - 1].imageUri}
-                height={280}
-                idleAnimate
-                showHint={false}
-                style={{ marginBottom: 8 }}
-              />
-            ) : (
-              <ElegantImage uri={baseImage || '/test-images/before-after/before-1.jpg'} label="Before" />
-            )}
-            {!versions.length && (
-              <PrimaryButton
-                title={isGenerating ? 'Generating…' : 'Generate AI concept'}
-                onPress={generateDesign}
-                disabled={isGenerating}
-              />
-            )}
-            {isGenerating && <ActivityIndicator color={t.colors.accent} style={{ marginTop: 12 }} />}
-          </View>
+          <DesignDirectionReview
+            concepts={conceptPair}
+            selectedSlot={selectedConceptSlot}
+            onSelectSlot={setSelectedConceptSlot}
+            isGenerating={isGenerating}
+            onGeneratePair={generateBothDirections}
+            onRegenerateBoth={regenerateBothDirections}
+            onRegenerateOther={regenerateOtherDirection}
+          />
         );
 
       case 'approve_design': {

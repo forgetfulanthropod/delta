@@ -26,7 +26,7 @@ const STEP_COPY: Record<
   review_design: {
     phase: 'design',
     title: 'AI concepts',
-    subtitle: 'Review before and after.',
+    subtitle: 'Compare two directions — regenerate both or keep one and refresh the other.',
     question: 'Does this direction feel right?',
   },
   approve_design: {

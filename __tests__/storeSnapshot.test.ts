@@ -18,13 +18,21 @@ const sampleDesign: DesignVersion = {
   createdAt: '2026-01-01T00:00:00Z',
 };
 
+const sampleDesignAlt: DesignVersion = {
+  id: 'v2',
+  imageUri: '/ai-room-1.jpg',
+  prompt: 'Modern kitchen remodel',
+  tweaks: { style: 'Modern', colorPalette: 'Warm neutrals', layout: 'Open plan' },
+  createdAt: '2026-01-02T00:00:00Z',
+};
+
 function applyWizardProgress(slice: StoreWizardSlice): StoreWizardSlice {
   return {
     ...slice,
     baseImageUri: '/test-images/before-after/before-1.jpg',
     designPrompt: 'Modern kitchen remodel',
     designTweaks: { style: 'Modern', colorPalette: 'Warm neutrals', layout: 'Open plan' },
-    versions: [sampleDesign],
+    versions: [sampleDesign, sampleDesignAlt],
     approvedDesign: sampleDesign,
     sourcingItems: [
       { id: '1', name: 'Flooring', retailer: "Lowe's", price: 4, quantity: 100, approved: true },
