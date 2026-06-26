@@ -27,6 +27,8 @@ export const MILKY = {
 /** Readable text on milky surfaces (replaces hot pink accent). */
 export const MILKY_INK = '#4A3F5C';
 export const MILKY_INK_SOFT = '#6B5F7A';
+/** Light example/placeholder copy inside milky inputs. */
+export const MILKY_PLACEHOLDER = '#B8AECC';
 export const MILKY_BORDER = 'rgba(180, 160, 210, 0.35)';
 
 type MilkyKey = keyof typeof MILKY;

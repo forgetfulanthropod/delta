@@ -23,7 +23,7 @@ import {
 import ElegantImage from '../../shared/ElegantImage';
 import MilkyBackdrop from '../../shared/MilkyBackdrop';
 import GuidedStepCard from '../../shared/GuidedStepCard';
-import { MILKY_INK, MILKY_INK_SOFT, milkyFill } from '../../shared/milkyGradients';
+import { MILKY_INK, MILKY_INK_SOFT, MILKY_PLACEHOLDER, milkyFill } from '../../shared/milkyGradients';
 import BeforeAfterSlider from '../design/BeforeAfterSlider';
 import CameraScreen from '../design/CameraScreen';
 import { DesignVersion } from '../design/types';
@@ -231,6 +231,7 @@ export default function GuidedProcessScreen() {
             returnKeyType="done"
             blurOnSubmit={false}
             placeholder="e.g. Oak Street Kitchen"
+            placeholderTextColor={MILKY_PLACEHOLDER}
             style={[styles.input, { borderColor: t.colors.border, color: t.colors.text }]}
           />
         );
@@ -259,6 +260,7 @@ export default function GuidedProcessScreen() {
             multiline
             numberOfLines={5}
             placeholder="When this is finished, I hope the space feels open, calm, and welcoming — somewhere our family actually wants to spend time."
+            placeholderTextColor={MILKY_PLACEHOLDER}
             style={[styles.input, styles.textArea, styles.hopeTextArea, { borderColor: t.colors.border, color: t.colors.text }]}
           />
         );
