@@ -21,6 +21,9 @@ import {
   ReadyToGoCostPill,
 } from '../../shared';
 import ElegantImage from '../../shared/ElegantImage';
+import MilkyBackdrop from '../../shared/MilkyBackdrop';
+import GuidedStepCard from '../../shared/GuidedStepCard';
+import { MILKY_INK, MILKY_INK_SOFT, milkyFill } from '../../shared/milkyGradients';
 import BeforeAfterSlider from '../design/BeforeAfterSlider';
 import CameraScreen from '../design/CameraScreen';
 import { DesignVersion } from '../design/types';
@@ -395,33 +398,41 @@ export default function GuidedProcessScreen() {
   };
 
   return (
-    <View style={[styles.shell, { backgroundColor: t.colors.background }]} testID="guided-process-screen">
-      <View style={[styles.topBar, { borderBottomColor: t.colors.border }]}>
+    <View style={styles.shell} testID="guided-process-screen">
+      <MilkyBackdrop />
+
+      <View style={[styles.topBar, milkyFill('header', 'rgba(255,255,255,0.9)')]}>
         <ConstrainedView style={styles.topInner}>
           <TouchableOpacity onPress={() => navigation.navigate('ProjectProgress')} testID="guided-progress-link">
-            <Text style={[styles.progressLink, { color: t.colors.accent }]}>
+            <Text style={styles.progressLink}>
               Overview {attentionCount > 0 ? `(${attentionCount} flagged)` : ''}
             </Text>
           </TouchableOpacity>
-          <Text style={[styles.stepCounter, { color: t.colors.textMuted }]}>
+          <Text style={[styles.stepCounter, { color: MILKY_INK_SOFT }]}>
             Step {meta.stepIndex} of {meta.totalSteps}
           </Text>
         </ConstrainedView>
-        <View style={[styles.progressTrack, { backgroundColor: t.colors.border }]}>
-          <View style={[styles.progressFill, { width: `${progressPct}%`, backgroundColor: t.colors.accent }]} />
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, milkyFill('progress', '#C4B5FD'), { width: `${progressPct}%` }]} />
         </View>
       </View>
 
-      <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} keyboardShouldPersistTaps="handled">
-        <ConstrainedView>
-          <Text style={[styles.phase, { color: t.colors.accent }]}>{meta.title}</Text>
-          <Text style={[styles.question, { color: t.colors.text }]}>{meta.question}</Text>
-          <Text style={[styles.subtitle, { color: t.colors.textSecondary }]}>{meta.subtitle}</Text>
-          {renderStepBody()}
+      <ScrollView
+        style={styles.body}
+        contentContainerStyle={styles.bodyContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ConstrainedView style={styles.bodyInner}>
+          <GuidedStepCard>
+            <Text style={styles.phase}>{meta.title}</Text>
+            <Text style={[styles.question, { color: t.colors.text }]}>{meta.question}</Text>
+            <Text style={[styles.subtitle, { color: t.colors.textSecondary }]}>{meta.subtitle}</Text>
+            {renderStepBody()}
+          </GuidedStepCard>
         </ConstrainedView>
       </ScrollView>
 
-      <View style={[styles.footer, { borderTopColor: t.colors.border, backgroundColor: t.colors.surface }]}>
+      <View style={[styles.footer, milkyFill('footer', 'rgba(255,255,255,0.95)')]}>
         <ConstrainedView style={styles.footerInner}>
           <SecondaryButton title="Back" onPress={goBack} disabled={!getPreviousStep(stepId)} />
           <PrimaryButton
@@ -432,7 +443,7 @@ export default function GuidedProcessScreen() {
           />
         </ConstrainedView>
         <TouchableOpacity onPress={resumeRecommended} style={styles.resumeLink}>
-          <Text style={{ color: t.colors.textSecondary, fontSize: 12 }}>Resume where I left off</Text>
+          <Text style={{ color: MILKY_INK_SOFT, fontSize: 12 }}>Resume where I left off</Text>
         </TouchableOpacity>
       </View>
 
@@ -464,13 +475,11 @@ function OptionGrid({
             onPress={() => onSelect(opt)}
             style={[
               styles.optionChip,
-              {
-                borderColor: active ? t.colors.accent : t.colors.border,
-                backgroundColor: active ? t.colors.accentLight : t.colors.surface,
-              },
+              active ? milkyFill('chipActive', '#EDE9FE') : { backgroundColor: 'rgba(255,255,255,0.7)' },
+              { borderColor: active ? '#C4B5FD' : t.colors.border },
             ]}
           >
-            <Text style={{ color: active ? t.colors.accent : t.colors.text, fontWeight: active ? '700' : '500' }}>
+            <Text style={{ color: active ? MILKY_INK : t.colors.text, fontWeight: active ? '700' : '500' }}>
               {opt}
             </Text>
           </TouchableOpacity>
@@ -481,24 +490,54 @@ function OptionGrid({
 }
 
 const styles = StyleSheet.create({
-  shell: { flex: 1, minHeight: 0 },
-  topBar: { borderBottomWidth: 1, paddingTop: 8 },
+  shell: { flex: 1, minHeight: 0, position: 'relative' },
+  topBar: { borderBottomWidth: 1, borderBottomColor: 'rgba(180, 160, 210, 0.25)', paddingTop: 8, zIndex: 2 },
   topInner: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 8 },
-  progressLink: { fontSize: 14, fontWeight: '700' },
+  progressLink: { fontSize: 14, fontWeight: '700', color: MILKY_INK },
   stepCounter: { fontSize: 12, fontWeight: '600' },
-  progressTrack: { height: 4, marginHorizontal: 16, marginBottom: 8, borderRadius: 2, overflow: 'hidden' },
-  progressFill: { height: '100%' },
-  body: { flex: 1 },
-  bodyContent: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 32 },
-  phase: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6 },
-  question: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5, marginTop: 6 },
-  subtitle: { fontSize: 15, marginTop: 8, marginBottom: 16, lineHeight: 22 },
+  progressTrack: {
+    height: 6,
+    marginHorizontal: 16,
+    marginBottom: 10,
+    borderRadius: 3,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.55)',
+  },
+  progressFill: { height: '100%', borderRadius: 3 },
+  body: { flex: 1, zIndex: 1 },
+  bodyContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 32,
+    minHeight: '72%',
+  } as any,
+  bodyInner: { alignItems: 'center', width: '100%' },
+  phase: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    color: MILKY_INK_SOFT,
+    textAlign: 'center',
+  },
+  question: {
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.6,
+    marginTop: 10,
+    textAlign: 'center',
+    lineHeight: 34,
+  },
+  subtitle: { fontSize: 15, marginTop: 10, marginBottom: 20, lineHeight: 22, textAlign: 'center' },
   input: {
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 17,
+    textAlign: 'center',
+    backgroundColor: 'rgba(255,255,255,0.8)',
   },
   textArea: { minHeight: 100, textAlignVertical: 'top' },
   placeholder: {
@@ -510,7 +549,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
   },
-  optionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  optionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
   optionChip: {
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -529,7 +568,7 @@ const styles = StyleSheet.create({
   itemName: { fontSize: 18, fontWeight: '700', marginBottom: 4 },
   itemPrice: { fontSize: 22, fontWeight: '800', marginTop: 8 },
   doneText: { fontSize: 15, lineHeight: 22, marginTop: 8 },
-  footer: { borderTopWidth: 1, paddingVertical: 12, paddingHorizontal: 16 },
+  footer: { borderTopWidth: 1, borderTopColor: 'rgba(180, 160, 210, 0.25)', paddingVertical: 14, paddingHorizontal: 16, zIndex: 2 },
   footerInner: { flexDirection: 'row', alignItems: 'center' },
   resumeLink: { alignItems: 'center', marginTop: 8 },
 });

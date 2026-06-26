@@ -5,6 +5,7 @@ import ProjectSwitcher from './ProjectSwitcher';
 import { useTheme } from './theme';
 import { useAppRole } from '../context/AppRoleContext';
 import ConstrainedView from './ConstrainedView';
+import { MILKY_BANDS, MILKY_INK, MILKY_INK_SOFT, milkyFill } from './milkyGradients';
 
 export default function OwnerHeader() {
   const t = useTheme();
@@ -12,22 +13,20 @@ export default function OwnerHeader() {
   const { setRole } = useAppRole();
 
   return (
-    <View
-      style={[
-        styles.bar,
-        {
-          backgroundColor: t.colors.headerBg,
-          borderBottomColor: t.colors.border,
-          paddingTop: Math.max(insets.top, 8),
-        },
-      ]}
-    >
+    <View style={styles.wrap}>
+      <View
+        style={[
+          styles.bar,
+          milkyFill('header', 'rgba(255,255,255,0.9)'),
+          { paddingTop: Math.max(insets.top, 8) },
+        ]}
+      >
       <ConstrainedView style={styles.inner}>
         <View style={styles.brand}>
-          <Text style={[styles.logo, { color: t.colors.accent }]}>Δ</Text>
+          <Text style={[styles.logo, { color: MILKY_BANDS[0] }]}>Δ</Text>
           <View>
             <Text style={[styles.title, { color: t.colors.text }]}>Delta</Text>
-            <Text style={[styles.tagline, { color: t.colors.textSecondary }]}>
+            <Text style={[styles.tagline, { color: MILKY_INK_SOFT }]}>
               Remodel with AI
             </Text>
           </View>
@@ -38,20 +37,26 @@ export default function OwnerHeader() {
             onPress={() => setRole(null)}
             style={[styles.roleBtn, { borderColor: t.colors.border }]}
           >
-            <Text style={{ color: t.colors.textSecondary, fontSize: 12, fontWeight: '600' }}>
+            <Text style={{ color: MILKY_INK_SOFT, fontSize: 12, fontWeight: '600' }}>
               Switch role
             </Text>
           </TouchableOpacity>
         </View>
       </ConstrainedView>
+      </View>
+      <View style={[styles.rainbowBand, milkyFill('rainbowBand', MILKY_BANDS[0])]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: { zIndex: 3 },
   bar: {
-    borderBottomWidth: 1,
     paddingBottom: 10,
+  },
+  rainbowBand: {
+    height: 4,
+    width: '100%',
   },
   inner: {
     flexDirection: 'row',

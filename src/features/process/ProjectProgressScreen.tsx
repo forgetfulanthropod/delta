@@ -5,16 +5,18 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useDeltaStore } from '../../store/useDeltaStore';
 import { useTheme, ConstrainedView, PrimaryButton } from '../../shared';
 import ElegantImage from '../../shared/ElegantImage';
+import MilkyBackdrop from '../../shared/MilkyBackdrop';
+import { MILKY_BANDS, MILKY_INK, MILKY_INK_SOFT, milkyFill } from '../../shared/milkyGradients';
 import { computeAreaFlags, overallProgressPercent, flagsNeedingAttention } from './projectProgress';
 import { useProjectSnapshot } from './useProjectSnapshot';
 import type { ProcessStackParamList } from '../../navigation/types';
 import type { AreaFlag, AttentionLevel } from './types';
 
 const FLAG_COLOR: Record<AttentionLevel, string> = {
-  complete: '#2e7d32',
-  in_progress: '#f9a825',
-  needs_attention: '#FF385C',
-  not_started: '#bbb',
+  complete: MILKY_BANDS[3],
+  in_progress: MILKY_BANDS[2],
+  needs_attention: MILKY_BANDS[1],
+  not_started: '#D8D0E8',
 };
 
 const FLAG_ICON: Record<AttentionLevel, string> = {
@@ -39,26 +41,24 @@ export default function ProjectProgressScreen() {
     '/test-images/before-after/after-1.jpg';
 
   return (
-    <ScrollView
-      style={[styles.screen, { backgroundColor: t.colors.background }]}
-      contentContainerStyle={styles.content}
-      testID="project-progress-screen"
-    >
-      <ConstrainedView>
+    <View style={styles.screenWrap} testID="project-progress-screen">
+      <MilkyBackdrop />
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <ConstrainedView style={styles.centered}>
         <Text style={[styles.title, { color: t.colors.text }]}>Project overview</Text>
         <Text style={[styles.subtitle, { color: t.colors.textSecondary }]}>
           TurboTax-style checkpoint — see what’s done and what needs you.
         </Text>
 
-        <View style={[styles.overallBar, { backgroundColor: t.colors.surfaceAlt, borderColor: t.colors.border }]}>
+        <View style={[styles.overallBar, milkyFill('card', '#FFFFFF'), { borderColor: t.colors.border }]}>
           <Text style={[styles.overallLabel, { color: t.colors.text }]}>Overall progress</Text>
-          <View style={[styles.track, { backgroundColor: t.colors.border }]}>
+          <View style={styles.track}>
             <View
-              style={[styles.fill, { width: `${overall}%`, backgroundColor: t.colors.accent }]}
+              style={[styles.fill, milkyFill('progress', '#C4B5FD'), { width: `${overall}%` }]}
               testID="progress-overall-fill"
             />
           </View>
-          <Text style={[styles.overallPct, { color: t.colors.accent }]}>{overall}% complete</Text>
+          <Text style={[styles.overallPct, { color: MILKY_INK }]}>{overall}% complete</Text>
         </View>
 
         <ElegantImage
@@ -70,10 +70,10 @@ export default function ProjectProgressScreen() {
 
         {attention.length > 0 ? (
           <View
-            style={[styles.alertBanner, { backgroundColor: t.colors.accentLight, borderColor: t.colors.accent }]}
+            style={[styles.alertBanner, milkyFill('chipActive', '#EDE9FE'), { borderColor: t.colors.border }]}
             testID="progress-attention-banner"
           >
-            <Text style={[styles.alertTitle, { color: t.colors.accent }]}>
+            <Text style={[styles.alertTitle, { color: MILKY_INK }]}>
               {attention.length} area{attention.length > 1 ? 's' : ''} need attention
             </Text>
           </View>
@@ -91,10 +91,11 @@ export default function ProjectProgressScreen() {
           style={{ marginTop: 16 }}
         />
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backLink}>
-          <Text style={{ color: t.colors.textSecondary, fontWeight: '600' }}>← Back to current step</Text>
+          <Text style={{ color: MILKY_INK_SOFT, fontWeight: '600' }}>← Back to current step</Text>
         </TouchableOpacity>
       </ConstrainedView>
     </ScrollView>
+    </View>
   );
 }
 
@@ -106,7 +107,7 @@ function FlagCard({ flag, onJump }: { flag: AreaFlag; onJump: () => void }) {
     <TouchableOpacity
       testID={`progress-flag-${flag.area}`}
       onPress={onJump}
-      style={[styles.flagCard, { borderColor: t.colors.border, backgroundColor: t.colors.surface }]}
+      style={[styles.flagCard, milkyFill('card', '#FFFFFF'), { borderColor: t.colors.border }]}
       activeOpacity={0.85}
     >
       <View style={styles.flagHeader}>
@@ -123,17 +124,19 @@ function FlagCard({ flag, onJump }: { flag: AreaFlag; onJump: () => void }) {
         <View style={[styles.miniFill, { width: `${flag.percentComplete}%`, backgroundColor: color }]} />
       </View>
       {(flag.status === 'needs_attention' || flag.status === 'in_progress') && (
-        <Text style={[styles.flagAction, { color: t.colors.accent }]}>Tap to continue →</Text>
+        <Text style={[styles.flagAction, { color: MILKY_INK }]}>Tap to continue →</Text>
       )}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  content: { paddingBottom: 48 },
-  title: { fontSize: 32, fontWeight: '800', letterSpacing: -1, marginTop: 8 },
-  subtitle: { fontSize: 15, marginTop: 6, marginBottom: 20, lineHeight: 22 },
+  screenWrap: { flex: 1, position: 'relative' },
+  screen: { flex: 1, zIndex: 1 },
+  content: { paddingBottom: 48, paddingTop: 16 },
+  centered: { alignItems: 'center' },
+  title: { fontSize: 32, fontWeight: '800', letterSpacing: -1, marginTop: 8, textAlign: 'center' },
+  subtitle: { fontSize: 15, marginTop: 6, marginBottom: 20, lineHeight: 22, textAlign: 'center' },
   overallBar: {
     borderWidth: 1,
     borderRadius: 14,
@@ -141,7 +144,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   overallLabel: { fontSize: 14, fontWeight: '700', marginBottom: 8 },
-  track: { height: 8, borderRadius: 4, overflow: 'hidden' },
+  track: { height: 8, borderRadius: 4, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.55)' },
   fill: { height: '100%', borderRadius: 4 },
   overallPct: { fontSize: 13, fontWeight: '700', marginTop: 8 },
   alertBanner: {
@@ -166,7 +169,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  flagIconText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  flagIconText: { color: MILKY_INK, fontWeight: '800', fontSize: 14 },
   flagLabel: { fontSize: 16, fontWeight: '700' },
   flagMessage: { fontSize: 13, marginTop: 2, lineHeight: 18 },
   flagPct: { fontSize: 14, fontWeight: '800' },

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Image, Text, StyleSheet, type ViewStyle } from 'react-native';
 import { getImageSource } from './media';
 import { useTheme } from './theme';
+import { MILKY_INK, milkyFill } from './milkyGradients';
 
 interface ElegantImageProps {
   uri: string;
@@ -36,7 +37,7 @@ export default function ElegantImage({
       ]}
     >
       {label ? (
-        <View style={[styles.labelChip, { backgroundColor: t.colors.accent }]}>
+        <View style={[styles.labelChip, milkyFill('labelChip', '#C4B5FD')]}>
           <Text style={styles.labelText}>{label}</Text>
         </View>
       ) : null}
@@ -69,7 +70,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   labelText: {
-    color: '#fff',
+    color: MILKY_INK,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.4,

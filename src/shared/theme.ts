@@ -1,4 +1,5 @@
-import { useColorScheme } from 'react-native';
+import { StyleSheet, useColorScheme } from 'react-native';
+import { MILKY_INK, MILKY_INK_SOFT, MILKY_BORDER, milkyFill } from './milkyGradients';
 
 export interface Theme {
   colors: {
@@ -35,18 +36,18 @@ export interface Theme {
 }
 
 const baseColorsLight = {
-  accent: '#FF385C',
-  primary: '#FF385C',
+  accent: MILKY_INK,
+  primary: MILKY_INK,
   textPrimary: '#222',
   textSecondary: '#666',
   textMuted: '#888',
   textLight: '#fff',
-  background: '#fff',
-  backgroundAlt: '#f8f8f8',
-  backgroundLight: '#fafafa',
+  background: '#FDF8FF',
+  backgroundAlt: '#F8F4FF',
+  backgroundLight: '#FAF7FF',
   backgroundSuccess: '#e6f4ea',
-  border: '#eee',
-  borderLight: '#e0e0e0',
+  border: MILKY_BORDER,
+  borderLight: '#E8E0F4',
   borderDark: '#ddd',
   success: '#2e7d32',
   successLight: '#E8F5E9',
@@ -61,19 +62,19 @@ const baseColorsLight = {
 const light: Theme = {
   colors: {
     ...baseColorsLight,
-    background: '#fff',
-    surface: '#fff',
-    surfaceAlt: '#f8f8f8',
-    text: '#222',
-    textSecondary: '#666',
-    textMuted: '#888',
-    border: '#eee',
-    accent: '#FF385C',
-    accentLight: '#ffe4e9',
+    background: '#FDF8FF',
+    surface: 'rgba(255,255,255,0.92)',
+    surfaceAlt: '#F5F0FF',
+    text: '#2D2640',
+    textSecondary: MILKY_INK_SOFT,
+    textMuted: '#8A7E9A',
+    border: MILKY_BORDER,
+    accent: MILKY_INK,
+    accentLight: '#EDE9FE',
     success: '#2e7d32',
     successLight: '#e8f5e9',
     cardBg: '#fff',
-    headerBg: '#fff',
+    headerBg: 'rgba(255,255,255,0.88)',
     tabBarBg: '#fff',
     pillBg: '#e8f5e9',
     pillBorder: '#a5d6a7',
@@ -148,6 +149,76 @@ export const SPACING = light.spacing;
 export const RADII = light.radii || { md: 12, lg: 16, pill: 999 };
 export const TYPOGRAPHY = light.typography || {};
 export const CONSTRAINED_STYLE: any = { maxWidth: 720, width: '100%', alignSelf: 'center' };
-export const sharedStyles: any = {};
+
+const _sharedStyles = StyleSheet.create({
+  constrained: CONSTRAINED_STYLE,
+  primaryButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: MILKY_BORDER,
+    ...milkyFill('primaryBtn', '#DDD6FE'),
+  },
+  primaryButtonText: {
+    color: MILKY_INK,
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  secondaryButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.65)',
+    borderWidth: 1,
+    borderColor: MILKY_BORDER,
+  },
+  secondaryButtonText: {
+    color: MILKY_INK_SOFT,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: MILKY_BORDER,
+    padding: 16,
+  },
+  emptyState: {
+    padding: 24,
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: MILKY_BORDER,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+  },
+  heroWrap: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: MILKY_BORDER,
+  },
+  subtleButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    borderWidth: 1,
+    borderColor: MILKY_BORDER,
+  },
+  subtleButtonText: {
+    color: MILKY_INK_SOFT,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+}) as any;
+
+export const sharedStyles: any = _sharedStyles;
 
 export default { useTheme, COLORS, SPACING, RADII, TYPOGRAPHY, sharedStyles, CONSTRAINED_STYLE };
