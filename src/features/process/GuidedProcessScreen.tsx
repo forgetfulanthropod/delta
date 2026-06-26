@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -77,14 +77,24 @@ export default function GuidedProcessScreen() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [materialIndex, setMaterialIndex] = useState(0);
+  const [draftProjectName, setDraftProjectName] = useState('');
 
   useEffect(() => {
     const normalized = normalizeGuidedStep(route.params?.step);
     if (normalized) setStepId(normalized);
   }, [route.params?.step]);
 
+  const prevStepRef = useRef<GuidedStepId | null>(null);
+  useEffect(() => {
+    if (stepId === 'welcome' && prevStepRef.current !== 'welcome') {
+      setDraftProjectName(
+        currentProjectId ? (projects[currentProjectId]?.name ?? '') : '',
+      );
+    }
+    prevStepRef.current = stepId;
+  }, [stepId, currentProjectId, projects]);
+
   const snapshot = useProjectSnapshot();
-  const projectName = snapshot.projectName || 'My Remodel';
   const baseImage = snapshot.baseImage;
   const prompt = designPrompt;
 
@@ -93,14 +103,28 @@ export default function GuidedProcessScreen() {
   const attentionCount = flags.filter(
     (f) => f.status === 'needs_attention' || f.status === 'in_progress',
   ).length;
-  const canContinue = canAdvanceFromStep(stepId, snapshot);
+  const canContinue =
+    stepId === 'welcome'
+      ? draftProjectName.trim().length > 0
+      : canAdvanceFromStep(stepId, snapshot);
   const progressPct = Math.round((meta.stepIndex / meta.totalSteps) * 100);
 
+  const commitProjectName = useCallback(() => {
+    if (!currentProjectId) return;
+    const trimmed = draftProjectName.trim();
+    if (trimmed) renameProject(currentProjectId, trimmed);
+  }, [currentProjectId, draftProjectName, renameProject]);
+
   const goNext = useCallback(() => {
-    if (!canAdvanceFromStep(stepId, snapshot)) return;
+    if (stepId === 'welcome') {
+      if (!draftProjectName.trim()) return;
+      commitProjectName();
+    } else if (!canAdvanceFromStep(stepId, snapshot)) {
+      return;
+    }
     const next = getNextStep(stepId);
     if (next) setStepId(next);
-  }, [stepId, snapshot]);
+  }, [stepId, snapshot, draftProjectName, commitProjectName]);
 
   const goBack = useCallback(() => {
     const prev = getPreviousStep(stepId);
@@ -201,8 +225,11 @@ export default function GuidedProcessScreen() {
         return (
           <TextInput
             testID="guided-project-name"
-            value={projectName}
-            onChangeText={(name) => currentProjectId && renameProject(currentProjectId, name)}
+            value={draftProjectName}
+            onChangeText={setDraftProjectName}
+            onSubmitEditing={commitProjectName}
+            returnKeyType="done"
+            blurOnSubmit={false}
             placeholder="e.g. Oak Street Kitchen"
             style={[styles.input, { borderColor: t.colors.border, color: t.colors.text }]}
           />
