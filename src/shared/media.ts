@@ -1,5 +1,18 @@
 import { Platform } from 'react-native';
 
+/** Vite base path (e.g. /delta/ on GitHub Pages, / in local dev). */
+function getWebAssetBase(): string {
+  try {
+    const base = import.meta.env?.BASE_URL;
+    if (typeof base === 'string' && base !== '/') {
+      return base.endsWith('/') ? base.slice(0, -1) : base;
+    }
+  } catch {
+    // import.meta unavailable outside Vite (e.g. Metro native)
+  }
+  return '';
+}
+
 /**
  * URI handling audit + helper for cross-platform consistency (Phase 1 Camera/Media).
  *
@@ -38,11 +51,8 @@ export function normalizeImageUri(uri: string | null | undefined): string {
 
   // Public/relative paths (most common for demo + examples)
   if (trimmed.startsWith('/')) {
-    // Keep as-is for web compatibility and current good-state carousels/heroes.
-    // On native, these resolve in Metro dev server / bundled assets in many RN setups
-    // or when using dev server for images. For production native, consider pre-bundled
-    // or a CDN/baseUrl override here if needed (out of Phase 1 scope).
-    return trimmed;
+    const base = Platform.OS === 'web' ? getWebAssetBase() : '';
+    return `${base}${trimmed}`;
   }
 
   // Bare filename or other: treat as public root relative (defensive)
