@@ -74,6 +74,9 @@ function reactNativeCjsInterop() {
 }
 
 export default defineConfig({
+  // GitHub Pages project site: https://forgetfulanthropod.github.io/delta/
+  // Local dev uses VITE_BASE=/ (see package.json "web" script).
+  base: process.env.VITE_BASE ?? '/delta/',
   plugins: [reactNativeCjsInterop(), react()],
   server: {
     port: 3000,
