@@ -61,7 +61,7 @@ describe('computeAreaFlags', () => {
     expect(sourcing?.percentComplete).toBe(0);
   });
 
-  it('marks design complete when approved', () => {
+  it('marks design complete at 100% when approved', () => {
     const flags = computeAreaFlags(
       emptySnapshot({
         projectName: 'Done',
@@ -70,7 +70,9 @@ describe('computeAreaFlags', () => {
         versions: [sampleDesign],
       }),
     );
-    expect(flags.find((f) => f.area === 'design')?.status).toBe('complete');
+    const design = flags.find((f) => f.area === 'design');
+    expect(design?.status).toBe('complete');
+    expect(design?.percentComplete).toBe(100);
   });
 
   it('flags scheduling in progress when labor tasks exist', () => {

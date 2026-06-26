@@ -1,38 +1,22 @@
 import { useMemo } from 'react';
 import { useDeltaStore } from '../../store/useDeltaStore';
+import { buildProjectSnapshotFromStore } from './storeSnapshot';
 import type { ProjectSnapshot } from './types';
 
-export function useProjectSnapshot(
-  extras?: Partial<Pick<ProjectSnapshot, 'baseImage' | 'prompt' | 'tweaks' | 'hasSchedule' | 'projectName'>>,
-): ProjectSnapshot {
-  const store = useDeltaStore();
-  const proj = store.currentProjectId ? store.projects[store.currentProjectId] : null;
+export function useProjectSnapshot(): ProjectSnapshot {
+  const slice = useDeltaStore((s) => ({
+    currentProjectId: s.currentProjectId,
+    projects: s.projects,
+    approvedDesign: s.approvedDesign,
+    versions: s.versions,
+    sourcingItems: s.sourcingItems,
+    laborTasks: s.laborTasks,
+    scopeCompleted: s.scopeCompleted,
+    baseImageUri: s.baseImageUri,
+    designPrompt: s.designPrompt,
+    designTweaks: s.designTweaks,
+    hasScheduleBuilt: s.hasScheduleBuilt,
+  }));
 
-  return useMemo(
-    () => ({
-      projectName: extras?.projectName ?? proj?.name ?? 'My Remodel',
-      baseImage: extras?.baseImage ?? null,
-      prompt: extras?.prompt,
-      tweaks: extras?.tweaks,
-      approvedDesign: store.approvedDesign,
-      versions: store.versions || [],
-      sourcingItems: store.sourcingItems || [],
-      laborTasks: store.laborTasks || [],
-      scopeCompleted: store.scopeCompleted || {},
-      hasSchedule: extras?.hasSchedule ?? (store.laborTasks || []).length > 0,
-    }),
-    [
-      extras?.projectName,
-      extras?.baseImage,
-      extras?.prompt,
-      extras?.tweaks,
-      extras?.hasSchedule,
-      proj?.name,
-      store.approvedDesign,
-      store.versions,
-      store.sourcingItems,
-      store.laborTasks,
-      store.scopeCompleted,
-    ],
-  );
+  return useMemo(() => buildProjectSnapshotFromStore(slice), [slice]);
 }

@@ -1,9 +1,4 @@
-import {
-  type GuidedStepId,
-  type GuidedStepMeta,
-  type ProjectSnapshot,
-  GUIDED_STEP_ORDER,
-} from './types';
+import { type GuidedStepId, type GuidedStepMeta, GUIDED_STEP_ORDER } from './types';
 import { getStepIndex } from './projectProgress';
 
 const STEP_COPY: Record<
@@ -102,23 +97,6 @@ export function getStepMeta(stepId: GuidedStepId): GuidedStepMeta {
     stepIndex: stepIndex + 1,
     totalSteps: GUIDED_STEP_ORDER.length,
   };
-}
-
-/** Advance to next step only when current step requirements are met. */
-export function advanceStep(
-  current: GuidedStepId,
-  snapshot: ProjectSnapshot,
-  canAdvance: (step: GuidedStepId, s: ProjectSnapshot) => boolean,
-): GuidedStepId {
-  const idx = getStepIndex(current);
-  for (let i = idx + 1; i < GUIDED_STEP_ORDER.length; i++) {
-    const candidate = GUIDED_STEP_ORDER[i];
-    if (!canAdvance(current, snapshot) && i === idx + 1) {
-      return current;
-    }
-    return candidate;
-  }
-  return current;
 }
 
 export const STYLE_OPTIONS = ['Modern', 'Farmhouse', 'Coastal', 'Industrial', 'Scandinavian'];

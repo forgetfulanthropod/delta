@@ -59,47 +59,33 @@ export default function GuidedProcessScreen() {
     laborTasks,
     toggleScopeItem,
     scopeCompleted,
+    baseImageUri,
+    setBaseImageUri,
+    designPrompt,
+    setDesignPrompt,
+    designTweaks,
+    setDesignTweaks,
+    hasScheduleBuilt,
+    setHasScheduleBuilt,
   } = store;
 
   const [stepId, setStepId] = useState<GuidedStepId>(
     route.params?.step ?? 'welcome',
   );
-  const [projectName, setProjectName] = useState(
-    projects[currentProjectId || '']?.name || 'My Remodel',
-  );
-  const [baseImage, setBaseImage] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState(
-    'Bright modern kitchen with natural materials and better flow',
-  );
-  const [tweaks, setTweaks] = useState({
-    style: 'Modern',
-    colorPalette: 'Warm neutrals',
-    layout: 'Open plan',
-  });
-  const [connectedProvider, setConnectedProvider] = useState<string | null>('x');
+  const [connectedProvider] = useState<string | null>('x');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
-  const [hasSchedule, setHasSchedule] = useState(false);
   const [materialIndex, setMaterialIndex] = useState(0);
 
   useEffect(() => {
     if (route.params?.step) setStepId(route.params.step);
   }, [route.params?.step]);
 
-  useEffect(() => {
-    const hero = approvedDesign?.imageUri || versions[0]?.imageUri;
-    if (hero && !baseImage) setBaseImage(hero);
-    if (approvedDesign?.prompt) setPrompt(approvedDesign.prompt);
-    if (approvedDesign?.tweaks) setTweaks(approvedDesign.tweaks);
-  }, [approvedDesign, versions, baseImage]);
-
-  const snapshot = useProjectSnapshot({
-    projectName,
-    baseImage,
-    prompt,
-    tweaks,
-    hasSchedule,
-  });
+  const snapshot = useProjectSnapshot();
+  const projectName = snapshot.projectName || 'My Remodel';
+  const baseImage = snapshot.baseImage;
+  const prompt = designPrompt;
+  const tweaks = designTweaks;
 
   const meta = getStepMeta(stepId);
   const flags = useMemo(() => computeAreaFlags(snapshot), [snapshot]);
@@ -125,20 +111,23 @@ export default function GuidedProcessScreen() {
   };
 
   const handlePhoto = (uri: string) => {
-    setBaseImage(uri);
+    setBaseImageUri(uri);
     setShowCamera(false);
   };
 
   const loadExample = () => {
-    setBaseImage('/test-images/before-after/before-1.jpg');
-    setProjectName('The Oak Street House');
-    renameProject(currentProjectId || '', 'The Oak Street House');
+    setBaseImageUri('/test-images/before-after/before-1.jpg');
+    if (currentProjectId) renameProject(currentProjectId, 'The Oak Street House');
   };
 
   const generateDesign = async () => {
     if (!baseImage) return;
     setIsGenerating(true);
-    const enhanced = `${prompt} in ${tweaks.style} style with ${tweaks.colorPalette} color palette and ${tweaks.layout} layout.`;
+    const genTweaks =
+      tweaks.style && tweaks.colorPalette && tweaks.layout
+        ? tweaks
+        : { style: 'Modern', colorPalette: 'Warm neutrals', layout: 'Open plan' };
+    const enhanced = `${prompt} in ${genTweaks.style} style with ${genTweaks.colorPalette} color palette and ${genTweaks.layout} layout.`;
     try {
       const res = await fetch(apiUrl('/api/reimagine'), {
         method: 'POST',
@@ -156,7 +145,7 @@ export default function GuidedProcessScreen() {
           id: Date.now().toString(),
           imageUri: data.imageUri,
           prompt,
-          tweaks: { ...tweaks },
+          tweaks: { ...(tweaks.style ? tweaks : { style: 'Modern', colorPalette: 'Warm neutrals', layout: 'Open plan' }) },
           createdAt: new Date().toISOString(),
         });
         setIsGenerating(false);
@@ -174,7 +163,7 @@ export default function GuidedProcessScreen() {
       id: Date.now().toString(),
       imageUri: fallbacks[Math.floor(Math.random() * fallbacks.length)],
       prompt,
-      tweaks: { ...tweaks },
+      tweaks: { ...(tweaks.style ? tweaks : { style: 'Modern', colorPalette: 'Warm neutrals', layout: 'Open plan' }) },
       createdAt: new Date().toISOString(),
     });
     setIsGenerating(false);
@@ -205,7 +194,7 @@ export default function GuidedProcessScreen() {
   const buildSchedule = () => {
     if (laborTasks.length === 0) return;
     generateSchedule(laborTasks);
-    setHasSchedule(true);
+    setHasScheduleBuilt(true);
     Alert.alert('Schedule built', 'Your day-by-day labor plan is ready.');
   };
 
@@ -216,10 +205,9 @@ export default function GuidedProcessScreen() {
           <TextInput
             testID="guided-project-name"
             value={projectName}
-            onChangeText={setProjectName}
+            onChangeText={(name) => currentProjectId && renameProject(currentProjectId, name)}
             placeholder="e.g. Oak Street Kitchen"
             style={[styles.input, { borderColor: t.colors.border, color: t.colors.text }]}
-            onBlur={() => currentProjectId && renameProject(currentProjectId, projectName)}
           />
         );
 
@@ -243,7 +231,7 @@ export default function GuidedProcessScreen() {
           <TextInput
             testID="guided-prompt"
             value={prompt}
-            onChangeText={setPrompt}
+            onChangeText={setDesignPrompt}
             multiline
             numberOfLines={4}
             placeholder="Describe your dream space..."
@@ -252,18 +240,28 @@ export default function GuidedProcessScreen() {
         );
 
       case 'pick_style':
-        return <OptionGrid options={STYLE_OPTIONS} selected={tweaks.style} onSelect={(v) => setTweaks({ ...tweaks, style: v })} />;
+        return (
+          <OptionGrid
+            options={STYLE_OPTIONS}
+            selected={tweaks.style}
+            onSelect={(v) => setDesignTweaks({ ...tweaks, style: v })}
+          />
+        );
       case 'pick_palette':
         return (
           <OptionGrid
             options={PALETTE_OPTIONS}
             selected={tweaks.colorPalette}
-            onSelect={(v) => setTweaks({ ...tweaks, colorPalette: v })}
+            onSelect={(v) => setDesignTweaks({ ...tweaks, colorPalette: v })}
           />
         );
       case 'pick_layout':
         return (
-          <OptionGrid options={LAYOUT_OPTIONS} selected={tweaks.layout} onSelect={(v) => setTweaks({ ...tweaks, layout: v })} />
+          <OptionGrid
+            options={LAYOUT_OPTIONS}
+            selected={tweaks.layout}
+            onSelect={(v) => setDesignTweaks({ ...tweaks, layout: v })}
+          />
         );
 
       case 'review_design':
@@ -367,7 +365,7 @@ export default function GuidedProcessScreen() {
       case 'build_schedule':
         return (
           <View>
-            {hasSchedule ? (
+            {hasScheduleBuilt ? (
               <Text style={{ color: t.colors.success, fontWeight: '700' }}>
                 Schedule generated for {laborTasks.length} tasks across 8-hour days with breaks.
               </Text>

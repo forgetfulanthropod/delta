@@ -8,6 +8,7 @@ module.exports = {
         '**/__tests__/analyzeRoom.test.ts',
         '**/__tests__/roomAnalysis.test.ts',
         '**/__tests__/projectProgress.test.ts',
+        '**/__tests__/storeSnapshot.test.ts',
       ],
       testEnvironment: 'node',
       transform: {

@@ -5,6 +5,21 @@ import { DesignVersion } from '../features/design/types';
 import { SourcingItem } from '../features/sourcing/types';
 import { Task } from '../features/labor/types';
 
+export const DEFAULT_DESIGN_PROMPT =
+  'Bright modern kitchen with natural materials and better flow';
+
+export const DEFAULT_DESIGN_TWEAKS = {
+  style: 'Modern',
+  colorPalette: 'Warm neutrals',
+  layout: 'Open plan',
+};
+
+export const EMPTY_DESIGN_TWEAKS = {
+  style: '',
+  colorPalette: '',
+  layout: '',
+};
+
 interface ProjectData {
   id: string;
   name: string;
@@ -16,6 +31,10 @@ interface ProjectData {
   versions: DesignVersion[];
   scopeCompleted?: Record<string, boolean>;
   scopeBurnSeries?: number[];
+  baseImageUri?: string | null;
+  designPrompt?: string;
+  designTweaks?: { style: string; colorPalette: string; layout: string };
+  hasScheduleBuilt?: boolean;
 }
 
 interface DeltaStore {
@@ -46,6 +65,16 @@ interface DeltaStore {
   addVersion: (version: DesignVersion) => void;
   setProjectVersions: (versions: DesignVersion[]) => void;
   clearVersions: () => void;
+
+  // Guided wizard state (persisted per project for progress flags)
+  baseImageUri: string | null;
+  setBaseImageUri: (uri: string | null) => void;
+  designPrompt: string;
+  setDesignPrompt: (prompt: string) => void;
+  designTweaks: { style: string; colorPalette: string; layout: string };
+  setDesignTweaks: (tweaks: { style: string; colorPalette: string; layout: string }) => void;
+  hasScheduleBuilt: boolean;
+  setHasScheduleBuilt: (built: boolean) => void;
 
   // Worker experience (Priority #4): claiming/assignment flows, my assigned jobs, owner data integration
   workerAssignedJobs: any[];
@@ -418,6 +447,75 @@ export const useDeltaStore = create<DeltaStore>()(
           return { versions: [], currentProjectId: currentId, projects };
         }),
 
+      baseImageUri: null,
+      setBaseImageUri: (uri) =>
+        set((state) => {
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (currentId && projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                baseImageUri: uri,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { baseImageUri: uri, projects };
+        }),
+      designPrompt: DEFAULT_DESIGN_PROMPT,
+      setDesignPrompt: (prompt) =>
+        set((state) => {
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (currentId && projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                designPrompt: prompt,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { designPrompt: prompt, projects };
+        }),
+      designTweaks: { ...EMPTY_DESIGN_TWEAKS },
+      setDesignTweaks: (tweaks) =>
+        set((state) => {
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (currentId && projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                designTweaks: tweaks,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { designTweaks: tweaks, projects };
+        }),
+      hasScheduleBuilt: false,
+      setHasScheduleBuilt: (built) =>
+        set((state) => {
+          let currentId = state.currentProjectId;
+          let projects = state.projects || {};
+          if (currentId && projects[currentId]) {
+            projects = {
+              ...projects,
+              [currentId]: {
+                ...projects[currentId],
+                hasScheduleBuilt: built,
+                updatedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return { hasScheduleBuilt: built, projects };
+        }),
+
       // Worker state (top-level for demo role separation; integrates with laborTasks on claim; kept out of per-owner-project)
       workerAssignedJobs: [],
       claimJob: (job) =>
@@ -441,6 +539,10 @@ export const useDeltaStore = create<DeltaStore>()(
             versions: [] as DesignVersion[],
             scopeCompleted: {} as Record<string, boolean>,
             scopeBurnSeries: [] as number[],
+            baseImageUri: null as string | null,
+            designPrompt: DEFAULT_DESIGN_PROMPT,
+            designTweaks: { ...EMPTY_DESIGN_TWEAKS },
+            hasScheduleBuilt: false,
           };
           let projects = state.projects || {};
           if (state.currentProjectId && projects[state.currentProjectId]) {
@@ -475,6 +577,10 @@ export const useDeltaStore = create<DeltaStore>()(
           versions: [],
           scopeCompleted: {},
           scopeBurnSeries: [],
+          baseImageUri: null,
+          designPrompt: DEFAULT_DESIGN_PROMPT,
+          designTweaks: { ...EMPTY_DESIGN_TWEAKS },
+          hasScheduleBuilt: false,
         };
         set((state) => ({
           projects: { ...(state.projects || {}), [id]: newProj },
@@ -485,6 +591,10 @@ export const useDeltaStore = create<DeltaStore>()(
           versions: [],
           scopeCompleted: {},
           scopeBurnSeries: [],
+          baseImageUri: null,
+          designPrompt: DEFAULT_DESIGN_PROMPT,
+          designTweaks: { ...EMPTY_DESIGN_TWEAKS },
+          hasScheduleBuilt: false,
         }));
         return id;
       },
@@ -500,6 +610,10 @@ export const useDeltaStore = create<DeltaStore>()(
             versions: proj.versions || [],
             scopeCompleted: proj.scopeCompleted || {},
             scopeBurnSeries: proj.scopeBurnSeries || [],
+            baseImageUri: proj.baseImageUri ?? null,
+            designPrompt: proj.designPrompt || DEFAULT_DESIGN_PROMPT,
+            designTweaks: proj.designTweaks || { ...EMPTY_DESIGN_TWEAKS },
+            hasScheduleBuilt: proj.hasScheduleBuilt ?? false,
           };
         }),
       saveCurrentProject: () =>
@@ -518,6 +632,10 @@ export const useDeltaStore = create<DeltaStore>()(
                 versions: state.versions,
                 scopeCompleted: state.scopeCompleted,
                 scopeBurnSeries: state.scopeBurnSeries,
+                baseImageUri: state.baseImageUri,
+                designPrompt: state.designPrompt,
+                designTweaks: state.designTweaks,
+                hasScheduleBuilt: state.hasScheduleBuilt,
                 updatedAt: new Date().toISOString(),
               },
             },
@@ -542,6 +660,10 @@ export const useDeltaStore = create<DeltaStore>()(
               versions: [],
               scopeCompleted: {},
               scopeBurnSeries: [],
+              baseImageUri: null,
+              designPrompt: DEFAULT_DESIGN_PROMPT,
+              designTweaks: { ...EMPTY_DESIGN_TWEAKS },
+              hasScheduleBuilt: false,
             };
           }
           const nextId = remaining[0];
@@ -555,6 +677,10 @@ export const useDeltaStore = create<DeltaStore>()(
             versions: nextProj.versions || [],
             scopeCompleted: nextProj.scopeCompleted || {},
             scopeBurnSeries: nextProj.scopeBurnSeries || [],
+            baseImageUri: nextProj.baseImageUri ?? null,
+            designPrompt: nextProj.designPrompt || DEFAULT_DESIGN_PROMPT,
+            designTweaks: nextProj.designTweaks || { ...EMPTY_DESIGN_TWEAKS },
+            hasScheduleBuilt: nextProj.hasScheduleBuilt ?? false,
           };
         }),
       renameProject: (id: string, newName: string) =>
@@ -683,11 +809,31 @@ export const useDeltaStore = create<DeltaStore>()(
         versions: state.versions,
         scopeCompleted: state.scopeCompleted,
         scopeBurnSeries: state.scopeBurnSeries,
+        baseImageUri: state.baseImageUri,
+        designPrompt: state.designPrompt,
+        designTweaks: state.designTweaks,
+        hasScheduleBuilt: state.hasScheduleBuilt,
         workerAssignedJobs: state.workerAssignedJobs,
       }),
-      version: 3,
+      version: 4,
       migrate: (persistedState: any, version: number) => {
         const ps = persistedState || {};
+        if (version < 4) {
+          ps.baseImageUri = ps.baseImageUri ?? null;
+          ps.designPrompt = ps.designPrompt || DEFAULT_DESIGN_PROMPT;
+          ps.designTweaks = ps.designTweaks || { ...EMPTY_DESIGN_TWEAKS };
+          ps.hasScheduleBuilt = ps.hasScheduleBuilt ?? false;
+          if (ps.projects) {
+            Object.keys(ps.projects).forEach((id) => {
+              ps.projects[id].baseImageUri = ps.projects[id].baseImageUri ?? null;
+              ps.projects[id].designPrompt =
+                ps.projects[id].designPrompt || DEFAULT_DESIGN_PROMPT;
+              ps.projects[id].designTweaks =
+                ps.projects[id].designTweaks || { ...EMPTY_DESIGN_TWEAKS };
+              ps.projects[id].hasScheduleBuilt = ps.projects[id].hasScheduleBuilt ?? false;
+            });
+          }
+        }
         if (version < 3) {
           ps.scopeCompleted = ps.scopeCompleted || {};
           ps.scopeBurnSeries = ps.scopeBurnSeries || [];

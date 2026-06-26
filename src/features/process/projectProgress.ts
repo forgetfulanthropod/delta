@@ -7,16 +7,34 @@ import {
   GUIDED_STEP_ORDER,
 } from './types';
 
+function effectivePrompt(s: ProjectSnapshot): string {
+  return (
+    s.prompt?.trim() ||
+    s.versions[0]?.prompt?.trim() ||
+    s.approvedDesign?.prompt?.trim() ||
+    ''
+  );
+}
+
+function effectiveTweaks(s: ProjectSnapshot): ProjectSnapshot['tweaks'] {
+  return s.tweaks || s.versions[0]?.tweaks || s.approvedDesign?.tweaks;
+}
+
 function hasPhoto(s: ProjectSnapshot): boolean {
-  return !!(s.baseImage || s.versions.length > 0);
+  return !!(
+    s.baseImage ||
+    s.versions.length > 0 ||
+    s.approvedDesign?.imageUri
+  );
 }
 
 function hasVision(s: ProjectSnapshot): boolean {
-  return !!(s.prompt && s.prompt.trim().length > 3);
+  return effectivePrompt(s).length > 3;
 }
 
 function hasTweaks(s: ProjectSnapshot): boolean {
-  return !!(s.tweaks?.style && s.tweaks?.colorPalette && s.tweaks?.layout);
+  const t = effectiveTweaks(s);
+  return !!(t?.style && t?.colorPalette && t?.layout);
 }
 
 function hasGeneratedDesign(s: ProjectSnapshot): boolean {
@@ -39,13 +57,13 @@ function scopeCompletedCount(s: ProjectSnapshot): number {
 }
 
 function designPercent(s: ProjectSnapshot): number {
+  if (s.approvedDesign) return 100;
   let n = 0;
   if (s.projectName?.trim()) n += 15;
   if (hasPhoto(s)) n += 20;
   if (hasVision(s)) n += 15;
   if (hasTweaks(s)) n += 15;
   if (hasGeneratedDesign(s)) n += 20;
-  if (s.approvedDesign) n += 15;
   return Math.min(100, n);
 }
 
@@ -64,7 +82,7 @@ function scopingPercent(s: ProjectSnapshot): number {
 }
 
 function schedulingPercent(s: ProjectSnapshot): number {
-  if (!s.hasSchedule && (s.laborTasks || []).length === 0) return 0;
+  if ((s.laborTasks || []).length === 0) return 0;
   return s.hasSchedule ? 100 : 40;
 }
 
