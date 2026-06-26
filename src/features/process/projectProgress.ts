@@ -16,12 +16,6 @@ function effectivePrompt(s: ProjectSnapshot): string {
   );
 }
 
-function effectiveTweaks(s: ProjectSnapshot): ProjectSnapshot['tweaks'] {
-  const t = s.tweaks;
-  if (t && (t.style || t.colorPalette || t.layout)) return t;
-  return s.versions[0]?.tweaks || s.approvedDesign?.tweaks;
-}
-
 function hasPhoto(s: ProjectSnapshot): boolean {
   return !!(
     s.baseImage ||
@@ -32,11 +26,6 @@ function hasPhoto(s: ProjectSnapshot): boolean {
 
 function hasVision(s: ProjectSnapshot): boolean {
   return effectivePrompt(s).length > 3;
-}
-
-function hasTweaks(s: ProjectSnapshot): boolean {
-  const t = effectiveTweaks(s);
-  return !!(t?.style && t?.colorPalette && t?.layout);
 }
 
 function hasGeneratedDesign(s: ProjectSnapshot): boolean {
@@ -62,10 +51,9 @@ function designPercent(s: ProjectSnapshot): number {
   if (s.approvedDesign) return 100;
   let n = 0;
   if (s.projectName?.trim()) n += 15;
-  if (hasPhoto(s)) n += 20;
-  if (hasVision(s)) n += 15;
-  if (hasTweaks(s)) n += 15;
-  if (hasGeneratedDesign(s)) n += 20;
+  if (hasPhoto(s)) n += 25;
+  if (hasVision(s)) n += 30;
+  if (hasGeneratedDesign(s)) n += 30;
   return Math.min(100, n);
 }
 
@@ -169,7 +157,7 @@ export function computeAreaFlags(snapshot: ProjectSnapshot): AreaFlag[] {
 function designMessage(s: ProjectSnapshot, status: AttentionLevel): string {
   if (status === 'complete') return 'Design approved — ready for sourcing.';
   if (!hasPhoto(s)) return 'Add a photo of your space to get started.';
-  if (!hasGeneratedDesign(s)) return 'Describe your vision and generate an AI concept.';
+  if (!hasGeneratedDesign(s)) return 'Share your hoped outcome and generate an AI concept.';
   if (!s.approvedDesign) return 'Review your design and approve a version.';
   return 'Continue shaping your design.';
 }
@@ -202,9 +190,6 @@ export function getRecommendedStep(snapshot: ProjectSnapshot): GuidedStepId {
   if (!snapshot.projectName?.trim()) return 'welcome';
   if (!hasPhoto(snapshot)) return 'capture_photo';
   if (!hasVision(snapshot)) return 'describe_vision';
-  if (!snapshot.tweaks?.style) return 'pick_style';
-  if (!snapshot.tweaks?.colorPalette) return 'pick_palette';
-  if (!snapshot.tweaks?.layout) return 'pick_layout';
   if (!hasGeneratedDesign(snapshot)) return 'review_design';
   if (!snapshot.approvedDesign) return 'approve_design';
   if ((snapshot.sourcingItems || []).length === 0) return 'review_sourcing';
@@ -240,12 +225,6 @@ export function canAdvanceFromStep(stepId: GuidedStepId, snapshot: ProjectSnapsh
       return hasPhoto(snapshot);
     case 'describe_vision':
       return hasVision(snapshot);
-    case 'pick_style':
-      return !!snapshot.tweaks?.style;
-    case 'pick_palette':
-      return !!snapshot.tweaks?.colorPalette;
-    case 'pick_layout':
-      return !!snapshot.tweaks?.layout;
     case 'review_design':
       return hasGeneratedDesign(snapshot);
     case 'approve_design':

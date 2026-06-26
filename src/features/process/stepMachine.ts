@@ -19,27 +19,9 @@ const STEP_COPY: Record<
   },
   describe_vision: {
     phase: 'design',
-    title: 'Your vision',
-    subtitle: 'Describe the change you want to see.',
-    question: 'What should this space become?',
-  },
-  pick_style: {
-    phase: 'design',
-    title: 'Style',
-    subtitle: 'Pick a direction for the remodel.',
-    question: 'Which style feels right?',
-  },
-  pick_palette: {
-    phase: 'design',
-    title: 'Colors',
-    subtitle: 'Set the mood with a palette.',
-    question: 'Which color palette do you prefer?',
-  },
-  pick_layout: {
-    phase: 'design',
-    title: 'Layout',
-    subtitle: 'How should the space be organized?',
-    question: 'What layout changes matter most?',
+    title: 'Your hope',
+    subtitle: 'Picture the finished space — how you want it to feel when you walk in.',
+    question: 'Describe your best hope for the outcome.',
   },
   review_design: {
     phase: 'design',
@@ -99,18 +81,12 @@ export function getStepMeta(stepId: GuidedStepId): GuidedStepMeta {
   };
 }
 
-export const STYLE_OPTIONS = ['Modern', 'Farmhouse', 'Coastal', 'Industrial', 'Scandinavian'];
-export const PALETTE_OPTIONS = [
-  'Warm neutrals',
-  'Cool grays',
-  'Earth tones',
-  'Bold contrast',
-  'Soft pastels',
-];
-export const LAYOUT_OPTIONS = [
-  'Open plan',
-  'Defined zones',
-  'Maximize storage',
-  'Entertainment focus',
-  'Work-from-home',
-];
+/** Legacy picker steps removed from wizard — map to describe_vision if still referenced. */
+const REMOVED_STEPS = new Set(['pick_style', 'pick_palette', 'pick_layout']);
+
+export function normalizeGuidedStep(step?: string | null): GuidedStepId | undefined {
+  if (!step) return undefined;
+  if (REMOVED_STEPS.has(step)) return 'describe_vision';
+  if ((GUIDED_STEP_ORDER as string[]).includes(step)) return step as GuidedStepId;
+  return undefined;
+}

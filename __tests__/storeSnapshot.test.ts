@@ -72,29 +72,14 @@ describe('buildProjectSnapshotFromStore', () => {
     expect(canAdvanceFromStep('capture_photo', buildProjectSnapshotFromStore(slice))).toBe(true);
   });
 
-  it('partial style-only tweaks allow pick_style advance and resume at pick_palette', () => {
+  it('hoped outcome description resumes at review_design', () => {
     const slice = createInitialStoreSlice('Kitchen');
     slice.baseImageUri = '/before.jpg';
-    slice.designPrompt = 'Modern open kitchen';
-    slice.designTweaks = { style: 'Modern', colorPalette: '', layout: '' };
+    slice.designPrompt =
+      'I hope the finished space feels bright, uncluttered, and easy to cook in with friends.';
 
     const snap = buildProjectSnapshotFromStore(slice);
-    expect(snap.tweaks?.style).toBe('Modern');
-    expect(snap.tweaks?.colorPalette).toBe('');
-    expect(canAdvanceFromStep('pick_style', snap)).toBe(true);
-    expect(canAdvanceFromStep('pick_palette', snap)).toBe(false);
-    expect(getRecommendedStep(snap)).toBe('pick_palette');
-  });
-
-  it('style + palette advances to pick_layout step', () => {
-    const slice = createInitialStoreSlice('Kitchen');
-    slice.baseImageUri = '/before.jpg';
-    slice.designPrompt = 'Modern open kitchen';
-    slice.designTweaks = { style: 'Coastal', colorPalette: 'Cool grays', layout: '' };
-
-    const snap = buildProjectSnapshotFromStore(slice);
-    expect(canAdvanceFromStep('pick_palette', snap)).toBe(true);
-    expect(canAdvanceFromStep('pick_layout', snap)).toBe(false);
-    expect(getRecommendedStep(snap)).toBe('pick_layout');
+    expect(canAdvanceFromStep('describe_vision', snap)).toBe(true);
+    expect(getRecommendedStep(snap)).toBe('review_design');
   });
 });

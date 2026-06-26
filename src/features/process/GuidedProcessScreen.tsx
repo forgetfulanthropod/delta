@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useDeltaStore } from '../../store/useDeltaStore';
+import { useDeltaStore, DEFAULT_DESIGN_TWEAKS } from '../../store/useDeltaStore';
 import {
   useTheme,
   ConstrainedView,
@@ -36,7 +36,7 @@ import {
   getNextStep,
   getPreviousStep,
 } from './projectProgress';
-import { getStepMeta, STYLE_OPTIONS, PALETTE_OPTIONS, LAYOUT_OPTIONS } from './stepMachine';
+import { getStepMeta, normalizeGuidedStep } from './stepMachine';
 import { buildSourcingSuggestions, laborTasksFromSourcing } from './guidedActions';
 import { useProjectSnapshot } from './useProjectSnapshot';
 import type { ProcessStackParamList } from '../../navigation/types';
@@ -66,14 +66,12 @@ export default function GuidedProcessScreen() {
     setBaseImageUri,
     designPrompt,
     setDesignPrompt,
-    designTweaks,
-    setDesignTweaks,
     hasScheduleBuilt,
     setHasScheduleBuilt,
   } = store;
 
   const [stepId, setStepId] = useState<GuidedStepId>(
-    route.params?.step ?? 'welcome',
+    normalizeGuidedStep(route.params?.step) ?? 'welcome',
   );
   const [connectedProvider] = useState<string | null>('x');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -81,14 +79,14 @@ export default function GuidedProcessScreen() {
   const [materialIndex, setMaterialIndex] = useState(0);
 
   useEffect(() => {
-    if (route.params?.step) setStepId(route.params.step);
+    const normalized = normalizeGuidedStep(route.params?.step);
+    if (normalized) setStepId(normalized);
   }, [route.params?.step]);
 
   const snapshot = useProjectSnapshot();
   const projectName = snapshot.projectName || 'My Remodel';
   const baseImage = snapshot.baseImage;
   const prompt = designPrompt;
-  const tweaks = designTweaks;
 
   const meta = getStepMeta(stepId);
   const flags = useMemo(() => computeAreaFlags(snapshot), [snapshot]);
@@ -126,11 +124,7 @@ export default function GuidedProcessScreen() {
   const generateDesign = async () => {
     if (!baseImage) return;
     setIsGenerating(true);
-    const genTweaks =
-      tweaks.style && tweaks.colorPalette && tweaks.layout
-        ? tweaks
-        : { style: 'Modern', colorPalette: 'Warm neutrals', layout: 'Open plan' };
-    const enhanced = `${prompt} in ${genTweaks.style} style with ${genTweaks.colorPalette} color palette and ${genTweaks.layout} layout.`;
+    const enhanced = `Best hoped outcome for this remodel: ${prompt.trim()}`;
     try {
       const res = await fetch(apiUrl('/api/reimagine'), {
         method: 'POST',
@@ -148,7 +142,7 @@ export default function GuidedProcessScreen() {
           id: Date.now().toString(),
           imageUri: data.imageUri,
           prompt,
-          tweaks: { ...(tweaks.style ? tweaks : { style: 'Modern', colorPalette: 'Warm neutrals', layout: 'Open plan' }) },
+          tweaks: { ...DEFAULT_DESIGN_TWEAKS },
           createdAt: new Date().toISOString(),
         });
         setIsGenerating(false);
@@ -166,7 +160,7 @@ export default function GuidedProcessScreen() {
       id: Date.now().toString(),
       imageUri: fallbacks[Math.floor(Math.random() * fallbacks.length)],
       prompt,
-      tweaks: { ...(tweaks.style ? tweaks : { style: 'Modern', colorPalette: 'Warm neutrals', layout: 'Open plan' }) },
+      tweaks: { ...DEFAULT_DESIGN_TWEAKS },
       createdAt: new Date().toISOString(),
     });
     setIsGenerating(false);
@@ -236,34 +230,9 @@ export default function GuidedProcessScreen() {
             value={prompt}
             onChangeText={setDesignPrompt}
             multiline
-            numberOfLines={4}
-            placeholder="Bright modern kitchen with natural materials and better flow"
-            style={[styles.input, styles.textArea, { borderColor: t.colors.border, color: t.colors.text }]}
-          />
-        );
-
-      case 'pick_style':
-        return (
-          <OptionGrid
-            options={STYLE_OPTIONS}
-            selected={tweaks.style}
-            onSelect={(v) => setDesignTweaks({ ...tweaks, style: v })}
-          />
-        );
-      case 'pick_palette':
-        return (
-          <OptionGrid
-            options={PALETTE_OPTIONS}
-            selected={tweaks.colorPalette}
-            onSelect={(v) => setDesignTweaks({ ...tweaks, colorPalette: v })}
-          />
-        );
-      case 'pick_layout':
-        return (
-          <OptionGrid
-            options={LAYOUT_OPTIONS}
-            selected={tweaks.layout}
-            onSelect={(v) => setDesignTweaks({ ...tweaks, layout: v })}
+            numberOfLines={5}
+            placeholder="When this is finished, I hope the space feels open, calm, and welcoming — somewhere our family actually wants to spend time."
+            style={[styles.input, styles.textArea, styles.hopeTextArea, { borderColor: t.colors.border, color: t.colors.text }]}
           />
         );
 
@@ -454,41 +423,6 @@ export default function GuidedProcessScreen() {
   );
 }
 
-function OptionGrid({
-  options,
-  selected,
-  onSelect,
-}: {
-  options: string[];
-  selected: string;
-  onSelect: (v: string) => void;
-}) {
-  const t = useTheme();
-  return (
-    <View style={styles.optionGrid}>
-      {options.map((opt) => {
-        const active = opt === selected;
-        return (
-          <TouchableOpacity
-            key={opt}
-            testID={`guided-option-${opt.replace(/\s+/g, '-')}`}
-            onPress={() => onSelect(opt)}
-            style={[
-              styles.optionChip,
-              active ? milkyFill('chipActive', '#EDE9FE') : { backgroundColor: 'rgba(255,255,255,0.7)' },
-              { borderColor: active ? '#C4B5FD' : t.colors.border },
-            ]}
-          >
-            <Text style={{ color: active ? MILKY_INK : t.colors.text, fontWeight: active ? '700' : '500' }}>
-              {opt}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   shell: { flex: 1, minHeight: 0, position: 'relative' },
   topBar: { borderBottomWidth: 1, borderBottomColor: 'rgba(180, 160, 210, 0.25)', paddingTop: 8, zIndex: 2 },
@@ -540,6 +474,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.8)',
   },
   textArea: { minHeight: 100, textAlignVertical: 'top' },
+  hopeTextArea: { minHeight: 140, textAlign: 'left', lineHeight: 24 },
   placeholder: {
     height: 200,
     borderWidth: 1,
@@ -548,13 +483,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-  },
-  optionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
-  optionChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1.5,
   },
   listHint: { marginBottom: 12, fontSize: 14 },
   itemRow: {

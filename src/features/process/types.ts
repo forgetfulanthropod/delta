@@ -33,9 +33,6 @@ export type GuidedStepId =
   | 'welcome'
   | 'capture_photo'
   | 'describe_vision'
-  | 'pick_style'
-  | 'pick_palette'
-  | 'pick_layout'
   | 'review_design'
   | 'approve_design'
   | 'review_sourcing'
@@ -58,9 +55,6 @@ export const GUIDED_STEP_ORDER: GuidedStepId[] = [
   'welcome',
   'capture_photo',
   'describe_vision',
-  'pick_style',
-  'pick_palette',
-  'pick_layout',
   'review_design',
   'approve_design',
   'review_sourcing',
