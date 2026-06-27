@@ -9,6 +9,7 @@ module.exports = {
         '**/__tests__/roomAnalysis.test.ts',
         '**/__tests__/projectProgress.test.ts',
         '**/__tests__/storeSnapshot.test.ts',
+        '**/__tests__/estimateProjectCost.test.ts',
       ],
       testEnvironment: 'node',
       transform: {

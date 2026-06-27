@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TESTS = [
     ROOT / 'e2e' / 'test_onboarding.py',
-    ROOT / 'e2e' / 'test_owner_example.py',
+    ROOT / 'e2e' / 'test_guided_process.py',
 ]
 
 

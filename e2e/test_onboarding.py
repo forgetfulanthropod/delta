@@ -27,9 +27,9 @@ async def amain() -> None:
         assert hidden == [], 'missing testids should not match'
 
         await click_testid(app, 'onboarding-owner')
-        await wait_for_text(app, 'Design Studio', timeout_s=25)
+        await wait_for_text(app, 'What should we call this project?', timeout_s=25)
 
-        print('PASS onboarding: landing UI visible, owner flow opens Design Studio')
+        print('PASS onboarding: landing UI visible, owner flow opens guided process')
     finally:
         await app.close()
 

@@ -26,12 +26,20 @@ import { MILKY_INK, MILKY_INK_SOFT, MILKY_PLACEHOLDER, milkyFill } from '../../s
 import CameraScreen from '../design/CameraScreen';
 import { DesignVersion } from '../design/types';
 import DesignDirectionReview from './DesignDirectionReview';
+import GuidedScopeStep from './GuidedScopeStep';
+import GuidedScheduleStep from './GuidedScheduleStep';
 import {
   fetchConceptVersion,
   generateConceptPair,
   pairFromVersions,
   versionsFromPair,
 } from './designConcepts';
+import {
+  estimateProjectCost,
+  sourcingMaterialsTotal,
+  laborCostFromTasks,
+} from '../design/estimateProjectCost';
+import type { ScheduleResult } from '../labor/types';
 import { generateSchedule } from '../labor/scheduler';
 import {
   computeAreaFlags,
@@ -83,6 +91,7 @@ export default function GuidedProcessScreen() {
   const [materialIndex, setMaterialIndex] = useState(0);
   const [draftProjectName, setDraftProjectName] = useState('');
   const [selectedConceptSlot, setSelectedConceptSlot] = useState<0 | 1 | null>(null);
+  const [schedulePreview, setSchedulePreview] = useState<ScheduleResult | null>(null);
 
   useEffect(() => {
     const normalized = normalizeGuidedStep(route.params?.step);
@@ -216,10 +225,26 @@ export default function GuidedProcessScreen() {
   ]);
 
   const approveAndSource = (version: DesignVersion) => {
-    setApprovedDesign(version);
-    const items = buildSourcingSuggestions(version);
-    addSourcingItems(items);
-    Alert.alert('Design approved', `${items.length} materials added to your list.`);
+    const cost = estimateProjectCost(version);
+    Alert.alert(
+      'Approve design & source materials',
+      `Estimated TOTAL project cost: $${cost.total}\n\n` +
+        `• Materials: $${cost.materials}\n` +
+        `• Labor: $${cost.labor} (${cost.hours}h @ $25/hr)\n\n` +
+        `We'll add retailer suggestions to your materials list.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: `Approve ($${cost.total})`,
+          onPress: () => {
+            setApprovedDesign(version);
+            const items = buildSourcingSuggestions(version);
+            addSourcingItems(items);
+            Alert.alert('Design approved', `${items.length} materials added to your list.`);
+          },
+        },
+      ],
+    );
   };
 
   const approveCurrentMaterial = () => {
@@ -239,10 +264,21 @@ export default function GuidedProcessScreen() {
 
   const buildSchedule = () => {
     if (laborTasks.length === 0) return;
-    generateSchedule(laborTasks);
+    const result = generateSchedule(laborTasks);
+    setSchedulePreview(result);
     setHasScheduleBuilt(true);
-    Alert.alert('Schedule built', 'Your day-by-day labor plan is ready.');
   };
+
+  const materialsTotal = useMemo(
+    () => sourcingMaterialsTotal(sourcingItems, true),
+    [sourcingItems],
+  );
+  const materialsListTotal = useMemo(
+    () => sourcingMaterialsTotal(sourcingItems),
+    [sourcingItems],
+  );
+  const laborTotals = useMemo(() => laborCostFromTasks(laborTasks), [laborTasks]);
+  const projectGrandTotal = materialsTotal + laborTotals.labor;
 
   const renderStepBody = () => {
     switch (stepId) {
@@ -304,27 +340,50 @@ export default function GuidedProcessScreen() {
         );
 
       case 'approve_design': {
-        const v = versions[versions.length - 1];
+        const v = versions[0];
         if (!v) return <Text style={{ color: t.colors.textMuted }}>Generate a design first.</Text>;
+        const cost = estimateProjectCost(v);
         return (
-          <View>
-            <ElegantImage uri={v.imageUri} label="Proposed" caption={v.prompt} />
-            <ReadyToGoCostPill total={4500} materials={2800} labor={1700} hours={68} />
-            <PrimaryButton title="Approve & add materials" onPress={() => approveAndSource(v)} style={{ marginTop: 12 }} />
+          <View testID="guided-approve-design">
+            <ElegantImage uri={v.imageUri} label="Your direction" caption={v.prompt} />
+            <ReadyToGoCostPill
+              total={cost.total}
+              materials={cost.materials}
+              labor={cost.labor}
+              hours={cost.hours}
+            />
+            <PrimaryButton
+              testID="guided-approve-design-btn"
+              title="Approve & add materials"
+              onPress={() => approveAndSource(v)}
+              style={{ marginTop: 12 }}
+            />
           </View>
         );
       }
 
       case 'review_sourcing':
         return (
-          <View>
+          <View testID="guided-review-sourcing">
+            <ReadyToGoCostPill
+              total={materialsListTotal + laborTotals.labor}
+              materials={materialsListTotal}
+              labor={laborTotals.labor}
+              hours={laborTotals.hours}
+              compact
+            />
             <Text style={[styles.listHint, { color: t.colors.textSecondary }]}>
               {sourcingItems.length} items from Lowe&apos;s, Amazon, and Home Depot
             </Text>
-            {sourcingItems.slice(0, 4).map((item) => (
+            {sourcingItems.map((item) => (
               <View key={item.id} style={[styles.itemRow, { borderColor: t.colors.border }]}>
-                <Text style={{ color: t.colors.text, fontWeight: '600', flex: 1 }}>{item.name}</Text>
-                <Text style={{ color: t.colors.textSecondary }}>${item.price}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: t.colors.text, fontWeight: '600' }}>{item.name}</Text>
+                  <Text style={{ color: t.colors.textMuted, fontSize: 12 }}>{item.retailer}</Text>
+                </View>
+                <Text style={{ color: t.colors.textSecondary, fontWeight: '700' }}>
+                  ${(item.price * item.quantity).toLocaleString()}
+                </Text>
               </View>
             ))}
           </View>
@@ -348,54 +407,59 @@ export default function GuidedProcessScreen() {
                 ${(current.price * current.quantity).toLocaleString()}
               </Text>
             </View>
-            <PrimaryButton title="Approve this item" onPress={approveCurrentMaterial} />
+            <ReadyToGoCostPill
+              total={materialsTotal + laborTotals.labor}
+              materials={materialsTotal}
+              labor={laborTotals.labor}
+              hours={laborTotals.hours}
+              compact
+              style={{ marginBottom: 12 }}
+            />
+            <PrimaryButton
+              testID="guided-approve-material"
+              title="Approve this item"
+              onPress={approveCurrentMaterial}
+            />
           </View>
         );
       }
 
       case 'confirm_scope':
         return (
-          <View>
-            {laborTasks.length === 0 ? (
-              <PrimaryButton title="Generate labor tasks from materials" onPress={generateLaborFromMaterials} />
-            ) : (
-              laborTasks.map((task) => (
-                <TouchableOpacity
-                  key={task.id}
-                  onPress={() => toggleScopeItem(task.id)}
-                  style={[styles.itemRow, { borderColor: t.colors.border }]}
-                >
-                  <Text style={{ color: scopeCompleted[task.id] ? t.colors.success : t.colors.text }}>
-                    {scopeCompleted[task.id] ? '✓ ' : '○ '}
-                    {task.name} ({task.estimatedHours}h)
-                  </Text>
-                </TouchableOpacity>
-              ))
-            )}
-          </View>
+          <GuidedScopeStep
+            laborTasks={laborTasks}
+            scopeCompleted={scopeCompleted}
+            onToggle={toggleScopeItem}
+            onGenerateTasks={generateLaborFromMaterials}
+          />
         );
 
       case 'build_schedule':
         return (
-          <View>
-            {hasScheduleBuilt ? (
-              <Text style={{ color: t.colors.success, fontWeight: '700' }}>
-                Schedule generated for {laborTasks.length} tasks across 8-hour days with breaks.
-              </Text>
-            ) : (
-              <PrimaryButton title="Build schedule" onPress={buildSchedule} />
-            )}
-          </View>
+          <GuidedScheduleStep
+            schedule={schedulePreview}
+            laborHours={laborTotals.hours}
+            materialsTotal={materialsTotal}
+            onBuild={buildSchedule}
+          />
         );
 
       case 'project_complete':
         return (
-          <View>
+          <View testID="guided-project-complete">
             <ElegantImage
               uri={approvedDesign?.imageUri || versions[0]?.imageUri || '/test-images/before-after/after-1.jpg'}
               label="Finished"
               caption="Design → Sourcing → Scope → Schedule"
             />
+            {projectGrandTotal > 0 ? (
+              <ReadyToGoCostPill
+                total={projectGrandTotal}
+                materials={materialsTotal}
+                labor={laborTotals.labor}
+                hours={laborTotals.hours}
+              />
+            ) : null}
             <Text style={[styles.doneText, { color: t.colors.text }]}>
               Your remodel plan is ready. Review the overview anytime for flags on areas that change.
             </Text>
@@ -446,6 +510,7 @@ export default function GuidedProcessScreen() {
         <ConstrainedView style={styles.footerInner}>
           <SecondaryButton title="Back" onPress={goBack} disabled={!getPreviousStep(stepId)} />
           <PrimaryButton
+            testID="guided-continue-btn"
             title={stepId === 'project_complete' ? 'View overview' : 'Continue'}
             onPress={stepId === 'project_complete' ? () => navigation.navigate('ProjectProgress') : goNext}
             disabled={!canContinue && stepId !== 'project_complete'}
