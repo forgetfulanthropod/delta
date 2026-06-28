@@ -483,6 +483,14 @@ export default function GuidedProcessScreen() {
                 hours={laborTotals.hours}
               />
             ) : null}
+            {schedulePreview ? (
+              <GuidedScheduleStep
+                schedule={schedulePreview}
+                laborHours={laborTotals.hours}
+                materialsTotal={materialsTotal}
+                onBuild={() => {}}
+              />
+            ) : null}
             <Text style={[styles.doneText, { color: t.colors.text }]}>
               Your remodel plan is ready. Review the overview anytime for flags on areas that change.
             </Text>
