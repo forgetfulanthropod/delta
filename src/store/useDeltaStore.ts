@@ -728,12 +728,16 @@ export const useDeltaStore = create<DeltaStore>()(
             body: JSON.stringify({
               id: proj.id,
               name: proj.name,
-              approvedDesign: proj.approvedDesign,
-              sourcingItems: proj.sourcingItems,
-              laborTasks: proj.laborTasks,
+              approvedDesign: proj.approvedDesign ?? state.approvedDesign,
+              sourcingItems: proj.sourcingItems ?? state.sourcingItems,
+              laborTasks: proj.laborTasks ?? state.laborTasks,
               versions: proj.versions || state.versions || [],
               scopeCompleted: proj.scopeCompleted || state.scopeCompleted || {},
               scopeBurnSeries: proj.scopeBurnSeries || state.scopeBurnSeries || [],
+              baseImageUri: proj.baseImageUri ?? state.baseImageUri,
+              designPrompt: proj.designPrompt ?? state.designPrompt,
+              designTweaks: proj.designTweaks ?? state.designTweaks,
+              hasScheduleBuilt: proj.hasScheduleBuilt ?? state.hasScheduleBuilt,
             }),
           });
           const data = await res.json().catch(() => ({}));
@@ -763,6 +767,10 @@ export const useDeltaStore = create<DeltaStore>()(
               versions: p.versions || [],
               scopeCompleted: p.scopeCompleted || {},
               scopeBurnSeries: p.scopeBurnSeries || [],
+              baseImageUri: p.baseImageUri ?? null,
+              designPrompt: p.designPrompt ?? '',
+              designTweaks: p.designTweaks || { ...EMPTY_DESIGN_TWEAKS },
+              hasScheduleBuilt: p.hasScheduleBuilt ?? false,
             };
             set((s: any) => ({
               projects: { ...(s.projects || {}), [localId]: loaded },
@@ -773,6 +781,10 @@ export const useDeltaStore = create<DeltaStore>()(
               versions: loaded.versions,
               scopeCompleted: loaded.scopeCompleted || {},
               scopeBurnSeries: loaded.scopeBurnSeries || [],
+              baseImageUri: loaded.baseImageUri ?? null,
+              designPrompt: loaded.designPrompt ?? '',
+              designTweaks: loaded.designTweaks || { ...EMPTY_DESIGN_TWEAKS },
+              hasScheduleBuilt: loaded.hasScheduleBuilt ?? false,
             }));
             console.log('[persist] Loaded project from backend:', localId);
           }

@@ -23,3 +23,4 @@ export { default as ProjectPipelineBar } from './ProjectPipelineBar';
 export { default as ElegantImage } from './ElegantImage';
 export { useBackendHealth } from './useBackendHealth';
 export { apiUrl, getApiBaseUrl } from './api';
+export { platformAlert } from './platformAlert';

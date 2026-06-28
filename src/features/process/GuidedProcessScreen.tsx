@@ -7,7 +7,6 @@ import {
   TextInput,
   TouchableOpacity,
   Modal,
-  Alert,
 } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,6 +17,7 @@ import {
   PrimaryButton,
   SecondaryButton,
   ReadyToGoCostPill,
+  platformAlert,
 } from '../../shared';
 import ElegantImage from '../../shared/ElegantImage';
 import MilkyBackdrop from '../../shared/MilkyBackdrop';
@@ -49,7 +49,12 @@ import {
   getPreviousStep,
 } from './projectProgress';
 import { getStepMeta, normalizeGuidedStep } from './stepMachine';
-import { buildSourcingSuggestions, laborTasksFromSourcing } from './guidedActions';
+import {
+  buildSourcingSuggestions,
+  enrichSourcingFromAnalysis,
+  laborTasksFromSourcing,
+} from './guidedActions';
+import { analyzeRoom } from '../design/analyzeRoom';
 import { useProjectSnapshot } from './useProjectSnapshot';
 import type { ProcessStackParamList } from '../../navigation/types';
 import type { GuidedStepId } from './types';
@@ -224,23 +229,27 @@ export default function GuidedProcessScreen() {
     setProjectVersions,
   ]);
 
-  const approveAndSource = (version: DesignVersion) => {
+  const approveAndSource = async (version: DesignVersion) => {
     const cost = estimateProjectCost(version);
-    Alert.alert(
+    const analysis = await analyzeRoom(prompt, version.tweaks, baseImage);
+    const scopeNote = analysis?.scopeHint ? `\n\nRoom insight: ${analysis.scopeHint}` : '';
+    platformAlert(
       'Approve design & source materials',
       `Estimated TOTAL project cost: $${cost.total}\n\n` +
         `• Materials: $${cost.materials}\n` +
-        `• Labor: $${cost.labor} (${cost.hours}h @ $25/hr)\n\n` +
-        `We'll add retailer suggestions to your materials list.`,
+        `• Labor: $${cost.labor} (${cost.hours}h @ $25/hr)` +
+        scopeNote +
+        `\n\nWe'll add retailer suggestions to your materials list.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: `Approve ($${cost.total})`,
           onPress: () => {
             setApprovedDesign(version);
-            const items = buildSourcingSuggestions(version);
+            const baseItems = buildSourcingSuggestions(version);
+            const items = enrichSourcingFromAnalysis(baseItems, analysis);
             addSourcingItems(items);
-            Alert.alert('Design approved', `${items.length} materials added to your list.`);
+            platformAlert('Design approved', `${items.length} materials added to your list.`);
           },
         },
       ],
@@ -259,7 +268,7 @@ export default function GuidedProcessScreen() {
     const approved = sourcingItems.filter((i) => i.approved);
     const tasks = laborTasksFromSourcing(approved);
     setLaborTasks(tasks);
-    Alert.alert('Scope ready', `${tasks.length} labor tasks created.`);
+    platformAlert('Scope ready', `${tasks.length} labor tasks created.`);
   };
 
   const buildSchedule = () => {
@@ -308,7 +317,12 @@ export default function GuidedProcessScreen() {
               </View>
             )}
             <PrimaryButton title="Take or upload photo" onPress={() => setShowCamera(true)} />
-            <SecondaryButton title="Use example house" onPress={loadExample} style={{ marginTop: 8 }} />
+            <SecondaryButton
+              testID="guided-use-example"
+              title="Use example house"
+              onPress={loadExample}
+              style={{ marginTop: 8 }}
+            />
           </View>
         );
 
@@ -380,6 +394,15 @@ export default function GuidedProcessScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: t.colors.text, fontWeight: '600' }}>{item.name}</Text>
                   <Text style={{ color: t.colors.textMuted, fontSize: 12 }}>{item.retailer}</Text>
+                  {item.url ? (
+                    <Text
+                      testID={`guided-sourcing-link-${item.id}`}
+                      style={{ color: t.colors.accent, fontSize: 11, marginTop: 2 }}
+                      numberOfLines={1}
+                    >
+                      {item.url}
+                    </Text>
+                  ) : null}
                 </View>
                 <Text style={{ color: t.colors.textSecondary, fontWeight: '700' }}>
                   ${(item.price * item.quantity).toLocaleString()}

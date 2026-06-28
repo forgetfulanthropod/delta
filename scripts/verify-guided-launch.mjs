@@ -17,6 +17,11 @@ const requiredTestIds = [
   'progress-flag-list',
   'progress-attention-banner',
   'guided-progress-link',
+  'guided-use-example',
+  'guided-generate-directions',
+  'guided-approve-design-btn',
+  'guided-build-schedule',
+  'guided-project-complete',
 ];
 const requiredPatterns = ['progress-flag-${', 'progress-overall-fill'];
 

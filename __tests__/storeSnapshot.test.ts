@@ -80,6 +80,16 @@ describe('buildProjectSnapshotFromStore', () => {
     expect(canAdvanceFromStep('capture_photo', buildProjectSnapshotFromStore(slice))).toBe(true);
   });
 
+  it('guided fields survive snapshot build for backend-shaped slice', () => {
+    const slice = applyWizardProgress(createInitialStoreSlice('Oak St'));
+    slice.hasScheduleBuilt = true;
+    slice.designPrompt = 'Warm open kitchen';
+    const snap = buildProjectSnapshotFromStore(slice);
+    expect(snap.hasSchedule).toBe(true);
+    expect(snap.prompt).toContain('kitchen');
+    expect(snap.baseImage).toBe('/test-images/before-after/before-1.jpg');
+  });
+
   it('hoped outcome description resumes at review_design', () => {
     const slice = createInitialStoreSlice('Kitchen');
     slice.baseImageUri = '/before.jpg';

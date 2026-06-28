@@ -10,6 +10,8 @@ module.exports = {
         '**/__tests__/projectProgress.test.ts',
         '**/__tests__/storeSnapshot.test.ts',
         '**/__tests__/estimateProjectCost.test.ts',
+        '**/__tests__/guidedActions.test.ts',
+        '**/__tests__/projectStore.test.js',
       ],
       testEnvironment: 'node',
       transform: {
